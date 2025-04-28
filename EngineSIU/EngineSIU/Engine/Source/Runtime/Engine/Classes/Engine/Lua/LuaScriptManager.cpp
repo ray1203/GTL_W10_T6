@@ -153,7 +153,7 @@ void FLuaScriptManager::HotReloadLuaScript()
 {
     TSet<FString> ChangedScriptName;
     TMap<FString, FLuaTableScriptInfo> CopiedScriptCacheMap = ScriptCacheMap;
-    for (const auto& ScriptCached : CopiedScriptCacheMap)
+    for (const TMap<FString, FLuaTableScriptInfo>::PairType& ScriptCached : CopiedScriptCacheMap)
     {
         FString ScriptName = ScriptCached.Key;
         FLuaTableScriptInfo LuaScriptInfo = ScriptCached.Value;
@@ -165,9 +165,9 @@ void FLuaScriptManager::HotReloadLuaScript()
         }
     }
 
-    for (const auto& ChangedScript : ChangedScriptName)
+    for (const FString& ChangedScript : ChangedScriptName)
     {
-        for (const auto* LuaComponent : ActiveLuaComponents)
+        for (const ULuaScriptComponent* LuaComponent : ActiveLuaComponents)
         {
             if (LuaComponent->GetScriptName() == ChangedScript)
             {
