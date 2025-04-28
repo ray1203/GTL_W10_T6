@@ -188,6 +188,10 @@ void FBillboardRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewpo
         }
         else if (UTextComponent* TextComp = Cast<UTextComponent>(BillboardComp))
         {
+            if (TextComp->GetText().length() == 0)
+            {
+                continue;
+            }
             FBufferInfo Buffers;
             float Height = TextComp->Texture->Height;
             float Width = TextComp->Texture->Width;
