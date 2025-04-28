@@ -46,6 +46,11 @@ inline void ULuaScriptComponent::ActivateFunction(const FString& FunctionName, A
 {
     if (SelfTable.valid() && SelfTable[*FunctionName].valid())
     {
-        SelfTable[*FunctionName](SelfTable, std::forward<Args>(args)...);
+        auto Result = SelfTable[*FunctionName](SelfTable, std::forward<Args>(args)...);
+        if (!Result.valid())
+        {
+            sol::error err = Result;
+            UE_LOG(LogLevel::Error, TEXT("Lua Error: %s"), *FString(err.what()));
+        }
     }
 }
