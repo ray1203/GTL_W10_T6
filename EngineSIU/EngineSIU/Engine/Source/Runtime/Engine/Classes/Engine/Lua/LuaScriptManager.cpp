@@ -99,7 +99,7 @@ sol::table FLuaScriptManager::CreateLuaTable(const FString& ScriptName)
     }
 
     return NewEnv;
-}
+} 
 
 void FLuaScriptManager::RegisterActiveLuaComponent(ULuaScriptComponent* LuaComponent)
 {
@@ -110,43 +110,6 @@ void FLuaScriptManager::UnRigisterActiveLuaComponent(ULuaScriptComponent* LuaCom
 {
     if (ActiveLuaComponents.Contains(LuaComponent))
         ActiveLuaComponents.Remove(LuaComponent);
-}
-
-void FLuaScriptManager::ReloadLuaScript(const FString& ScriptName)
-{
-    if (!std::filesystem::exists(*ScriptName))
-    {
-        UE_LOG(LogLevel::Error, TEXT("InValid Lua File name."));
-        return;
-    }
-
-    if (!ScriptCacheMap.Contains(ScriptName))
-    {
-        return;
-    }
-
-    ScriptCacheMap.Remove(ScriptName);
-
-    sol::protected_function_result Result = LuaState.script_file(*ScriptName);
-    if (!Result.valid())
-    {
-        sol::error err = Result;
-        UE_LOG(LogLevel::Error, TEXT("Lua Error: %s"), *FString(err.what()));
-        return;
-    }
-
-    sol::object ReturnValue = Result.get<sol::object>();
-    if (!ReturnValue.is<sol::table>())
-    {
-        UE_LOG(LogLevel::Error, TEXT("Lua Error: %s"), *FString("Script file did not return a table."));
-        return;
-    }
-
-    FLuaTableScriptInfo NewInfo;
-    NewInfo.ScriptTable = ReturnValue.as<sol::table>();
-    NewInfo.LastWriteTime = std::filesystem::last_write_time(*ScriptName);
-    ScriptCacheMap.Add(ScriptName, NewInfo);
-    UE_LOG(LogLevel::Display, TEXT("Reload Lua Script: %s"), *ScriptName);
 }
 
 void FLuaScriptManager::HotReloadLuaScript()
@@ -160,7 +123,11 @@ void FLuaScriptManager::HotReloadLuaScript()
         auto depTime = std::filesystem::last_write_time(GetData(ScriptName));
         if (LuaScriptInfo.LastWriteTime != depTime)
         {
-            ReloadLuaScript(ScriptName);
+            if (ScriptCacheMap.Contains(ScriptName))
+            {
+                ScriptCacheMap.Remove(ScriptName);
+            }
+
             ChangedScriptName.Add(ScriptName);
         }
     }
@@ -172,6 +139,7 @@ void FLuaScriptManager::HotReloadLuaScript()
             if (LuaComponent->GetScriptName() == ChangedScript)
             {
                 LuaComponent->GetOwner()->BindSelfLuaProperties();
+                UE_LOG(LogLevel::Display, TEXT("Lua Script Reloaded: %s"), *ChangedScript);
             } 
         }
     }

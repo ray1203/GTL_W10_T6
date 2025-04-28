@@ -39,7 +39,6 @@ public:
     void RegisterActiveLuaComponent(ULuaScriptComponent* LuaComponent);
     void UnRigisterActiveLuaComponent(ULuaScriptComponent* LuaComponent);
 
-    void ReloadLuaScript(const FString& ScriptName);
     void HotReloadLuaScript();
 
 };
