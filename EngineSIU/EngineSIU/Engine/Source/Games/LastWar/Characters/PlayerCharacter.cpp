@@ -200,7 +200,7 @@ void APlayerCharacter::RegisterLuaType(sol::state& Lua)
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
         "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage),
         "AddCharacterMeshCount", &ThisClass::AddCharacterMeshCount,
-        "SetCharacterMeshCount", &ThisClass::SetCharacterMeshCount
+        "CharacterMeshCount", sol::property(&ThisClass::GetCharacterMeshCount, &ThisClass::SetCharacterMeshCount)
     )
 }
 
@@ -228,6 +228,7 @@ void APlayerCharacter::SetCharacterMeshCount(int32 InCount)
 {
     CharacterMeshCount = InCount;
     CharacterMeshCount = FMath::Max(1, CharacterMeshCount);
+    CharacterMeshCount = FMath::Min(CharacterMeshCount, 15);
     
     while (StaticMeshComponents.Num() < CharacterMeshCount)
     {

@@ -22,7 +22,7 @@ function ReturnTable:Tick(DeltaTime)
 
 
     self.LifeTimer = self.LifeTimer + DeltaTime
-    if self.LifeTimer >= 10.0 then
+    if self.LifeTimer >= 3.0 then
         self.this:Destroy()
     end
 

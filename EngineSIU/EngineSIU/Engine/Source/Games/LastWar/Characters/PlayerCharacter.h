@@ -42,6 +42,7 @@ public:
     float GetHealth() const { return Health; }
     float GetSpeed() const { return Speed; }
     float GetAttackDamage() const { return AttackDamage; }
+    int32 GetCharacterMeshCount() const { return CharacterMeshCount; }
 
     // === Setter ===
     void SetHealth(float NewHealth) { Health = NewHealth; }
