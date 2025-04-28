@@ -56,6 +56,8 @@ void APlayerCharacter::Tick(float DeltaTime)
     {
         EnableInput(Cast<APlayerController>(Controller));
         Health = 100.0f;
+        SetCharacterMeshCount(1);
+        SetActorLocation(FVector(0.0f, 0.0f, 0.0f));
     }
 
 }

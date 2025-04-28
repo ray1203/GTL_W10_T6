@@ -8,6 +8,7 @@
 #include "Audio/AudioManager.h"
 
 bool LastWarUI::bShowGameOver = false;
+int LastWarUI::Score = 0;
 
 LastWarUI::LastWarUI()
 {
@@ -35,33 +36,43 @@ void LastWarUI::Render()
         {
             Player->OnDeath.AddDynamic(this, &LastWarUI::GameOver);
 
-            // 2) 현재 체력 문자열 준비
-            char buf[64];
-            float hp = Player->GetHealth();
-            snprintf(buf, sizeof(buf), "HP: %.0f", hp);
+            // 1) Prepare strings
+            char hpBuf[64];
+            snprintf(hpBuf, sizeof(hpBuf), "HP: %.0f", Player->GetHealth());
 
-            // 3) 화면 정보
+            char scoreBuf[64];
+            snprintf(scoreBuf, sizeof(scoreBuf), "Score: %d", Score);
+
+            // 2) Calc sizes
             ImGuiIO& io = ImGui::GetIO();
-            ImVec2 displaySize = io.DisplaySize;
+            ImVec2 hpSize = ImGui::CalcTextSize(hpBuf);
+            ImVec2 scoreSize = ImGui::CalcTextSize(scoreBuf);
 
-            // 4) 텍스트 크기 계산
-            ImVec2 textSize = ImGui::CalcTextSize(buf);
+            // 3) Determine window width = max(hpSize.x, scoreSize.x)
+            float winW = hpSize.x > scoreSize.x ? hpSize.x : scoreSize.x;
 
-            // 5) 위치 계산 (상단 센터, Y는 10px 정도 아래)
+            // 4) Position at top center, y = 10px
             ImVec2 pos;
-            pos.x = (displaySize.x - textSize.x) * 0.5f;
+            pos.x = (io.DisplaySize.x - winW) * 0.5f;
             pos.y = 10.0f;
-
-            // 6) 투명 배경의 작은 창을 띄워서 그 위치에만 텍스트 렌더링
             ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-            ImGui::Begin("##HealthOverlay", nullptr,
+
+            // 5) Begin transparent auto-resize window
+            ImGuiWindowFlags flags =
                 ImGuiWindowFlags_NoDecoration
                 | ImGuiWindowFlags_NoBackground
                 | ImGuiWindowFlags_NoInputs
-                | ImGuiWindowFlags_AlwaysAutoResize);
+                | ImGuiWindowFlags_AlwaysAutoResize;
+            ImGui::Begin("##StatsOverlay", nullptr, flags);
 
+            // 6) Optional: scale up font
             ImGui::SetWindowFontScale(2.0f);
-            ImGui::TextUnformatted(buf);
+
+            // 7) Draw two lines
+            ImGui::TextUnformatted(hpBuf);
+            ImGui::TextUnformatted(scoreBuf);
+
+            // 8) Restore scale and end
             ImGui::SetWindowFontScale(1.0f);
             ImGui::End();
         }

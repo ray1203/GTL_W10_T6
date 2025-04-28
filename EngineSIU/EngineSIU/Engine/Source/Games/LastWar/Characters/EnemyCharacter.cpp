@@ -8,6 +8,7 @@
 
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
+#include "Games/LastWar/UI/LastWarUI.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -67,6 +68,7 @@ void AEnemyCharacter::OnBeginOverlap(AActor* OtherActor)
     {
         if (LuaScriptComponent)
         {
+            LastWarUI::Score += 1;
             LuaScriptComponent->ActivateFunction("OnOverlapBullet", Bullet);
         }
     }

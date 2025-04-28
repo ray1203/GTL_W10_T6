@@ -16,5 +16,6 @@ public:
     void RestartGame();
   
     static bool bShowGameOver;
+    static int Score;
 };
 
