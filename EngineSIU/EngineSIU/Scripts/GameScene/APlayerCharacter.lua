@@ -35,10 +35,10 @@ function ReturnTable:EndPlay(EndPlayReason)
 
 end
 
-function ReturnTable:OnOverlapEnemy(Other, Damage)
+function ReturnTable:OnOverlapEnemy(Other)
     print("Other Damage", Damage)
     Other:Destroy()
-    self.this.Health = self.this.Health - Damage
+    self.this.Health = self.this.Health - Other.Damage
     print("Health ", self.this.Health)
 end
 
