@@ -2,13 +2,26 @@
 #include "Components/InputComponent.h"  
 #include "Controller.h"
 #include "Components/Shapes/CapsuleComponent.h"
+#include "Components/LuaScriptComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
+#include "Components/StaticMeshComponent.h"
 
 ACharacter::ACharacter()  
 {  
     CollisionCapsule = AddComponent<UCapsuleComponent>("CollisionCapsule");
     RootComponent = CollisionCapsule;
-}  
+    BodyMesh = AddComponent<UStaticMeshComponent>("BodyMesh");
+    BodyMesh->SetupAttachment(RootComponent);
+}
+
+UObject* ACharacter::Duplicate(UObject* InOuter)
+{
+    UObject* NewActor = Super::Duplicate(InOuter);
+    ACharacter* PlayerCharacter = Cast<ACharacter>(NewActor);
+    PlayerCharacter->BodyMesh = GetComponentByFName<UStaticMeshComponent>("BodyMesh");
+
+    return NewActor;
+}
 
 void ACharacter::BeginPlay()  
 {  
@@ -43,6 +56,13 @@ void ACharacter::RegisterLuaType(sol::state& Lua)
 bool ACharacter::BindSelfLuaProperties()
 {
     Super::BindSelfLuaProperties();
+
+    sol::table& LuaTable = LuaScriptComponent->GetLuaSelfTable();
+    if (!LuaTable.valid())
+    {
+        return false;
+    }
+    LuaTable["this"] = this;
        
     return true;
 }

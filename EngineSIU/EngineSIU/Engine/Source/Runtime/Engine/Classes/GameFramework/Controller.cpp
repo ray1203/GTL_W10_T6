@@ -1,6 +1,6 @@
 #include "Controller.h"
 #include "Pawn.h"
-
+#include "Components/InputComponent.h"
 
 void AController::BeginPlay()
 {

@@ -26,6 +26,8 @@
 #include "Actors/SpotLightActor.h"
 #include "Actors/AmbientLightActor.h"
 
+#include "Games/LastWar/Core/Spawner.h"
+
 void ControlEditorPanel::Render()
 {
     /* Pre Setup */
@@ -294,7 +296,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label= "Particle",  .OBJ= OBJ_PARTICLE },
             { .Label= "Text",      .OBJ= OBJ_TEXT },
             { .Label= "Fireball",  .OBJ = OBJ_FIREBALL},
-            { .Label= "Fog",       .OBJ= OBJ_FOG }
+            { .Label= "Fog",       .OBJ= OBJ_FOG },
+            { .Label = "Spawner",  .OBJ = OBJ_Spawner}
         };
 
         for (const auto& primitive : primitives)
@@ -311,10 +314,6 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor->SetActorLabel(TEXT("OBJ_SPHERE"));
                     USphereComp* SphereComp = SpawnedActor->AddComponent<USphereComp>();
                     SphereComp->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Sphere.obj"));
-
-
-
-
                     break;
                 }
                 case OBJ_CUBE:
@@ -387,6 +386,11 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<AHeightFogActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_FOG"));
                     break;
+                }
+                case OBJ_Spawner:
+                {
+                    SpawnedActor = World->SpawnActor<ASpawnerActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Spawner"));
                 }
                 case OBJ_TRIANGLE:
                 case OBJ_CAMERA:

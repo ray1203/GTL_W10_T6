@@ -12,6 +12,7 @@
 #include "UnrealEd/SceneManager.h"
 #include "Games/LastWar/Characters/PlayerCharacter.h"
 #include "Games/LastWar/Characters/EnemyCharacter.h"
+#include "Games/LastWar/Characters/Wall.h"
 
 namespace PrivateEditorSelection
 {
@@ -186,6 +187,7 @@ void UEditorEngine::StartPIE()
     PC->Possess(PlayerCharacter);
 
     ACharacter* EnemyChracter = ActiveWorld->SpawnActor<AEnemyCharacter>();
+    AWall* Wall = ActiveWorld->SpawnActor<AWall>();
 
     // 3) 월드에 컨트롤러 등록
     ActiveWorld->AddPlayerController(PC);
