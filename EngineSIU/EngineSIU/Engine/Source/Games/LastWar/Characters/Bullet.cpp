@@ -17,6 +17,12 @@ void ABullet::BeginPlay()
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &ABullet::OnBeginOverlap);
 }
 
+void ABullet::InitBullet(float InBulletSpeed, float InBulletDamage)
+{
+    BulletSpeed = InBulletSpeed;
+    BulletDamage = InBulletDamage;
+}
+
 void ABullet::OnBeginOverlap(AActor* OtherActor)
 {
     if (OtherActor == this)
@@ -31,7 +37,11 @@ void ABullet::OnBeginOverlap(AActor* OtherActor)
 
 void ABullet::RegisterLuaType(sol::state& Lua)
 {
-    DEFINE_LUA_TYPE_WITH_PARENT(ABullet, sol::bases<AActor>());
+    DEFINE_LUA_TYPE_WITH_PARENT(ABullet, sol::bases<AActor>(),
+        "InitBullet", &ABullet::InitBullet,
+        "BulletSpeed", sol::property(&ABullet::GetBulletSpeed, &ABullet::SetBulletSpeed),
+        "BulletDamage", sol::property(&ABullet::GetBulletDamage, &ABullet::SetBulletDamage)
+        );
 }
 
 bool ABullet::BindSelfLuaProperties()
