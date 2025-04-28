@@ -16,41 +16,38 @@ void UPrimitiveComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 }
 
-int UPrimitiveComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
+bool UPrimitiveComponent::IntersectRayTriangle(const FVector& RayOrigin, const FVector& RayDirection, const FVector& v0, const FVector& v1, const FVector& v2, float& OutHitDistance) const
 {
-    return 0;
-}
+    const FVector Edge1 = v1 - v0;
+    const FVector Edge2 = v2 - v0;
 
-bool UPrimitiveComponent::IntersectRayTriangle(const FVector& rayOrigin, const FVector& rayDirection,
-    const FVector& v0, const FVector& v1, const FVector& v2, float& hitDistance) const
-{
-    constexpr float epsilon = 1e-6f;
-    FVector edge1 = v1 - v0;
-    FVector edge2 = v2 - v0;
-    FVector h = rayDirection.Cross(edge2);
-    float a = edge1.Dot(h);
-
-    if (fabs(a) < epsilon)
-        return false;
-
+    FVector FrayDirection = RayDirection;
+    FVector h = FrayDirection.Cross(Edge2);
+    float a = Edge1.Dot(h);
+    
+    if (fabs(a) < SMALL_NUMBER)
+    {
+        return false; // Ray와 삼각형이 평행한 경우
+    }
     float f = 1.0f / a;
-    FVector s = rayOrigin - v0;
+    FVector s = RayOrigin - v0;
     float u = f * s.Dot(h);
     if (u < 0.0f || u > 1.0f)
-        return false;
-
-    FVector q = s.Cross(edge1);
-    float v = f * rayDirection.Dot(q);
-    if (v < 0.0f || (u + v) > 1.0f)
-        return false;
-
-    float t = f * edge2.Dot(q);
-    if (t > epsilon)
     {
-        hitDistance = t;
+        return false;
+    }
+    FVector q = s.Cross(Edge1);
+    float v = f * FrayDirection.Dot(q);
+    if (v < 0.0f || (u + v) > 1.0f)
+    {
+        return false;
+    }
+    float t = f * Edge2.Dot(q);
+    if (t > SMALL_NUMBER)
+    {
+        OutHitDistance = t;
         return true;
     }
-
     return false;
 }
 

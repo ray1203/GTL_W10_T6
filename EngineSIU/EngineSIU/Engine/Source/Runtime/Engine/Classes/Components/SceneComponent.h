@@ -17,16 +17,16 @@ public:
     void SetProperties(const TMap<FString, FString>& InProperties) override;
 
     virtual void TickComponent(float DeltaTime) override;
-    virtual int CheckRayIntersection(FVector& InRayOrigin, FVector& InRayDirection, float& pfNearHitDistance);
+    virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const;
     virtual void DestroyComponent(bool bPromoteChildren = false) override;
 
-    virtual FVector GetForwardVector();
-    virtual FVector GetRightVector();
-    virtual FVector GetUpVector() const;
+    FVector GetForwardVector() const;
+    FVector GetRightVector() const;
+    FVector GetUpVector() const;
     
-    void AddLocation(FVector InAddValue);
-    void AddRotation(FVector InAddValue);
-    void AddScale(FVector InAddValue);
+    void AddLocation(const FVector& InAddValue);
+    void AddRotation(const FRotator& InAddValue);
+    void AddScale(const FVector& InAddValue);
 
     USceneComponent* GetAttachParent() const { return AttachParent; }
     const TArray<USceneComponent*>& GetAttachChildren() const { return AttachChildren; }
@@ -36,13 +36,19 @@ public:
     void DetachFromComponent(USceneComponent* Target);
 
 public:
-    void SetRelativeLocation(FVector InNewLocation) { RelativeLocation = InNewLocation; }
-    void SetRelativeRotation(FRotator InNewRotation) { RelativeRotation = InNewRotation; }
-    void SetRelativeScale3D(FVector NewScale) { RelativeScale3D = NewScale; }
+    void SetRelativeLocation(const FVector& InLocation) { RelativeLocation = InLocation; }
+    void SetRelativeRotation(const FRotator& InRotation);
+    void SetRelativeRotation(const FQuat& InQuat);
+    void SetRelativeScale3D(const FVector& InScale) { RelativeScale3D = InScale; }
     
     FVector GetRelativeLocation() const { return RelativeLocation; }
     FRotator GetRelativeRotation() const { return RelativeRotation; }
     FVector GetRelativeScale3D() const { return RelativeScale3D; }
+
+    void SetWorldLocation(const FVector& InLocation);
+    void SetWorldRotation(const FRotator& InRotation);
+    void SetWorldRotation(const FQuat& InQuat);
+    void SetWorldScale3D(const FVector& InScale);
 
     FVector GetWorldLocation() const;
     FRotator GetWorldRotation() const;

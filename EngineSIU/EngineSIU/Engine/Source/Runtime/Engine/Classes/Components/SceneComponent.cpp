@@ -68,11 +68,9 @@ void USceneComponent::TickComponent(float DeltaTime)
 }
 
 
-int USceneComponent::CheckRayIntersection(FVector& InRayOrigin, FVector& InRayDirection, float& pfNearHitDistance)
+int USceneComponent::CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const
 {
-    // TODO: 나중에 지워도 될듯
-    int nIntersections = 0;
-    return nIntersections;
+    return 0;
 }
 
 void USceneComponent::DestroyComponent(bool bPromoteChildren)
@@ -124,44 +122,43 @@ void USceneComponent::DestroyComponent(bool bPromoteChildren)
     Super::DestroyComponent(bPromoteChildren);
 }
 
-FVector USceneComponent::GetForwardVector()
+FVector USceneComponent::GetForwardVector() const
 {
-	FVector Forward = FVector(1.f, 0.f, 0.0f);
-	Forward = JungleMath::FVectorRotate(Forward, RelativeRotation);
+    FVector Forward = FVector::ForwardVector;
+    Forward = JungleMath::FVectorRotate(Forward, GetWorldRotation());
 	return Forward;
 }
 
-FVector USceneComponent::GetRightVector()
+FVector USceneComponent::GetRightVector() const
 {
-	FVector Right = FVector(0.f, 1.f, 0.0f);
-	Right = JungleMath::FVectorRotate(Right, RelativeRotation);
+    FVector Right = FVector::RightVector;
+    Right = JungleMath::FVectorRotate(Right, GetWorldRotation());
 	return Right;
 }
 
 FVector USceneComponent::GetUpVector() const
 {
-	FVector Up = FVector(0.f, 0.f, 1.0f);
-	Up = JungleMath::FVectorRotate(Up, RelativeRotation);
+    FVector Up = FVector::UpVector;
+    Up = JungleMath::FVectorRotate(Up, GetWorldRotation());
 	return Up;
 }
 
 
-void USceneComponent::AddLocation(FVector InAddValue)
+void USceneComponent::AddLocation(const FVector& InAddValue)
 {
 	RelativeLocation = RelativeLocation + InAddValue;
 
 }
 
-void USceneComponent::AddRotation(FVector InAddValue)
+void USceneComponent::AddRotation(const FRotator& InAddValue)
 {
 	RelativeRotation = RelativeRotation + InAddValue;
-
+    RelativeRotation.Normalize();
 }
 
-void USceneComponent::AddScale(FVector InAddValue)
+void USceneComponent::AddScale(const FVector& InAddValue)
 {
 	RelativeScale3D = RelativeScale3D + InAddValue;
-
 }
 
 void USceneComponent::AttachToComponent(USceneComponent* InParent)
@@ -202,82 +199,114 @@ void USceneComponent::DetachFromComponent(USceneComponent* Target)
     Target->AttachChildren.Remove(this);
 }
 
-FVector USceneComponent::GetWorldLocation() const
+void USceneComponent::SetRelativeRotation(const FRotator& InRotation)
 {
+    SetRelativeRotation(InRotation.ToQuaternion());
+}
+
+void USceneComponent::SetRelativeRotation(const FQuat& InQuat)
+{
+    FQuat NormalizedQuat = InQuat.Normalize();
+    RelativeRotation = NormalizedQuat.Rotator();
+    RelativeRotation.Normalize();
+}
+
+void USceneComponent::SetWorldLocation(const FVector& InLocation)
+{
+    // TODO: 코드 최적화 방법 생각하기
+    FMatrix NewRelativeMatrix = FMatrix::CreateTranslationMatrix(InLocation);
     if (AttachParent)
     {
-        return AttachParent->GetWorldLocation() + RelativeLocation;
+        FMatrix ParentMatrix = AttachParent->GetWorldMatrix().GetMatrixWithoutScale();
+        NewRelativeMatrix = NewRelativeMatrix * FMatrix::Inverse(ParentMatrix);
     }
-    return RelativeLocation;
+    FVector NewRelativeLocation = NewRelativeMatrix.GetTranslationVector();
+    RelativeLocation = NewRelativeLocation;
+}
+
+void USceneComponent::SetWorldRotation(const FRotator& InRotation)
+{
+    SetWorldRotation(InRotation.ToQuaternion());
+}
+
+void USceneComponent::SetWorldRotation(const FQuat& InQuat)
+{
+    // TODO: 코드 최적화 방법 생각하기
+    FMatrix NewRelativeMatrix = InQuat.ToMatrix();
+    if (AttachParent)
+    {
+        FMatrix ParentMatrix = AttachParent->GetWorldMatrix().GetMatrixWithoutScale();
+        NewRelativeMatrix = NewRelativeMatrix * FMatrix::Inverse(ParentMatrix);
+    }
+    FQuat NewRelativeRotation = FQuat(NewRelativeMatrix);
+    RelativeRotation = FRotator(NewRelativeRotation);
+    RelativeRotation.Normalize();   
+}
+
+void USceneComponent::SetWorldScale3D(const FVector& InScale)
+{
+    // TODO: 코드 최적화 방법 생각하기
+    FMatrix NewRelativeMatrix = FMatrix::CreateScaleMatrix(InScale.X, InScale.Y, InScale.Z);
+    if (AttachParent)
+    {
+        FMatrix ParentMatrix = FMatrix::GetScaleMatrix(AttachParent->RelativeScale3D);
+        NewRelativeMatrix = NewRelativeMatrix * FMatrix::Inverse(ParentMatrix);
+    }
+    FVector NewRelativeScale = NewRelativeMatrix.GetScaleVector();
+    RelativeScale3D = NewRelativeScale;
+}
+
+FVector USceneComponent::GetWorldLocation() const
+{
+    return GetWorldMatrix().GetTranslationVector();
 }
 
 FRotator USceneComponent::GetWorldRotation() const
 {
-    if (AttachParent)
-    {
-        return AttachParent->GetWorldRotation().ToQuaternion() * RelativeRotation.ToQuaternion();
-    }
-    return RelativeRotation;
+    FMatrix WorldMatrix = GetWorldMatrix().GetMatrixWithoutScale();
+    FQuat Quat = WorldMatrix.ToQuat();
+    return FRotator(Quat);
 }
 
 FVector USceneComponent::GetWorldScale3D() const
 {
-    if (AttachParent)
-    {
-        return AttachParent->GetWorldScale3D() * RelativeScale3D;
-    }
-    return RelativeScale3D;
+    return GetWorldMatrix().GetScaleVector();
 }
 
 FMatrix USceneComponent::GetScaleMatrix() const
 {
-    FMatrix ScaleMat = FMatrix::GetScaleMatrix(RelativeScale3D);
-    if (AttachParent)
-    {
-        FMatrix ParentScaleMat = AttachParent->GetScaleMatrix();
-        ScaleMat = ScaleMat * ParentScaleMat;
-    }
-    return ScaleMat;
+    return FMatrix::GetScaleMatrix(RelativeScale3D);
 }
 
 FMatrix USceneComponent::GetRotationMatrix() const
 {
-    FMatrix RotationMat = FMatrix::GetRotationMatrix(RelativeRotation);
-    if (AttachParent)
-    {
-        FMatrix ParentRotationMat = AttachParent->GetRotationMatrix();
-        RotationMat = RotationMat * ParentRotationMat;
-    }
-    return RotationMat;
+    return FMatrix::GetRotationMatrix(RelativeRotation);
 }
 
 FMatrix USceneComponent::GetTranslationMatrix() const
 {
-    FMatrix TranslationMat = FMatrix::GetTranslationMatrix(RelativeLocation);
-    if (AttachParent)
-    {
-        FMatrix ParentTranslationMat = AttachParent->GetTranslationMatrix();
-        TranslationMat = TranslationMat * ParentTranslationMat;
-    }
-    return TranslationMat;
+    return FMatrix::GetTranslationMatrix(RelativeLocation);
 }
 
 FMatrix USceneComponent::GetWorldMatrix() const
 {
-    FMatrix ScaleMat = FMatrix::GetScaleMatrix(RelativeScale3D);
-    FMatrix RotationMat = FMatrix::GetRotationMatrix(RelativeRotation);
-    FMatrix TranslationMat = FMatrix::GetTranslationMatrix(RelativeLocation);
+    FMatrix ScaleMat = GetScaleMatrix();
+    FMatrix RotationMat = GetRotationMatrix();
+    FMatrix TranslationMat = GetTranslationMatrix();
 
     FMatrix RTMat = RotationMat * TranslationMat;
-    if (AttachParent)
+    USceneComponent* Parent = AttachParent;
+    while (Parent)
     {
-        FMatrix ParentScaleMat = AttachParent->GetScaleMatrix();
-        FMatrix ParentRotationMat = AttachParent->GetRotationMatrix();
-        FMatrix ParentTranslationMat = AttachParent->GetTranslationMatrix();
+        FMatrix ParentScaleMat = Parent->GetScaleMatrix();
+        FMatrix ParentRotationMat = Parent->GetRotationMatrix();
+        FMatrix ParentTranslationMat = Parent->GetTranslationMatrix();
         
         ScaleMat = ScaleMat * ParentScaleMat;
         FMatrix ParentRTMat = ParentRotationMat * ParentTranslationMat;
         RTMat = RTMat * ParentRTMat;
+
+        Parent = Parent->AttachParent;
     }
     return ScaleMat * RTMat;
 }
@@ -304,15 +333,15 @@ FMatrix USceneComponent::GetWorldRTMatrix() const
 
 void USceneComponent::SetupAttachment(USceneComponent* InParent)
 {
-    if (
-        InParent != AttachParent                                  // 설정하려는 Parent가 기존의 Parent와 다르거나
+    if (InParent != AttachParent                                  // 설정하려는 Parent가 기존의 Parent와 다르거나
         && InParent != this                                       // InParent가 본인이 아니고
         && InParent != nullptr                                    // InParent가 유효한 포인터 이며
         && (
             AttachParent == nullptr                               // AttachParent도 유효하며
             || !AttachParent->AttachChildren.Contains(this)  // 한번이라도 SetupAttachment가 호출된적이 없는 경우
-        ) 
-    ) {
+            ) 
+        )
+    {
         AttachParent = InParent;
 
         // TODO: .AddUnique의 실행 위치를 RegisterComponent로 바꾸거나 해야할 듯

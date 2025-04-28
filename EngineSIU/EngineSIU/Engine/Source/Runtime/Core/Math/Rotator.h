@@ -14,11 +14,11 @@ struct FRotator
     float Yaw;
     float Roll;
 
-    FRotator()
+    explicit FRotator()
         : Pitch(0.0f), Yaw(0.0f), Roll(0.0f)
     {}
 
-    FRotator(float InPitch, float InYaw, float InRoll)
+    explicit FRotator(float InPitch, float InYaw, float InRoll)
         : Pitch(InPitch), Yaw(InYaw), Roll(InRoll)
     {}
 
@@ -26,8 +26,8 @@ struct FRotator
         : Pitch(Other.Pitch), Yaw(Other.Yaw), Roll(Other.Roll)
     {}
 
-    FRotator(const FVector& InVector);
-    FRotator(const FQuat& InQuat);
+    explicit FRotator(const FVector& InVector);
+    explicit FRotator(const FQuat& InQuat);
 
     FRotator operator+(const FRotator& Other) const;
     FRotator& operator+=(const FRotator& Other);
@@ -60,11 +60,12 @@ struct FRotator
     FVector RotateVector(const FVector& Vec) const;
     FMatrix ToMatrix() const;
 
-    float Clamp(float Angle) const;
+    static float ClampAxis(float Angle);
     FRotator GetNormalized() const;
     void Normalize();
-
     
     FString ToString() const;
     bool InitFromString(const FString& InSourceString);
+
+    static float NormalizeAxis(float Angle);
 };

@@ -1,4 +1,5 @@
 #pragma once
+#include "Rotator.h"
 #include "Serialization/Archive.h"
 
 struct FVector;
@@ -10,19 +11,19 @@ struct FQuat
     float W, X, Y, Z;
 
     // 기본 생성자
-    FQuat()
+    explicit FQuat()
         : W(1.0f), X(0.0f), Y(0.0f), Z(0.0f)
     {}
 
     // FQuat 생성자 추가: 회전 축과 각도를 받아서 FQuat 생성
-    FQuat(const FVector& Axis, float Angle);
+    explicit FQuat(const FVector& Axis, float Angle);
 
     // W, X, Y, Z 값으로 초기화
-    FQuat(float InW, float InX, float InY, float InZ)
+    explicit FQuat(float InW, float InX, float InY, float InZ)
         : W(InW), X(InX), Y(InY), Z(InZ)
     {}
 
-    FQuat(const FMatrix& InMatrix);
+    explicit FQuat(const FMatrix& InMatrix);
 
     // 쿼터니언의 곱셈 연산 (회전 결합)
     FQuat operator*(const FQuat& Other) const;
@@ -43,6 +44,10 @@ struct FQuat
 
     // 쿼터니언을 회전 행렬로 변환
     FMatrix ToMatrix() const;
+
+    bool Equals(const FQuat& Q, float Tolerance = KINDA_SMALL_NUMBER) const;
+
+    FRotator Rotator() const;
 };
 
 inline FArchive& operator<<(FArchive& Ar, FQuat& Q)

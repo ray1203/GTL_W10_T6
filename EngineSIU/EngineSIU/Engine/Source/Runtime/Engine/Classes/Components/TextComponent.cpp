@@ -96,7 +96,7 @@ void UTextComponent::SetRowColumnCount(int cellsPerRow, int cellsPerColumn)
     ColumnCount = cellsPerColumn;
 }
 
-int UTextComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
+int UTextComponent::CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const
 {
     if (!(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)))
     {
@@ -119,7 +119,7 @@ int UTextComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirecti
         float hitDistance = 0.0f;
         if (CheckPickingOnNDC(LetterQuad, hitDistance))
         {
-            pfNearHitDistance = hitDistance;
+            OutHitDistance = hitDistance;
             return 1;
         }
     }

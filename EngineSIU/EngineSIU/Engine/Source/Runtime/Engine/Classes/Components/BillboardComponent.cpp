@@ -27,7 +27,7 @@ UObject* UBillboardComponent::Duplicate(UObject* InOuter)
         NewComponent->finalIndexV = finalIndexV;
         NewComponent->Texture = FEngineLoop::ResourceManager.GetTexture(TexturePath.ToWideString());
         NewComponent->TexturePath = TexturePath;
-        NewComponent->m_parent = m_parent;
+        NewComponent->UUIDParent = UUIDParent;
         NewComponent->bIsEditorBillboard = bIsEditorBillboard;
     }
     return NewComponent;
@@ -68,7 +68,7 @@ void UBillboardComponent::TickComponent(float DeltaTime)
     Super::TickComponent(DeltaTime);
 }
 
-int UBillboardComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
+int UBillboardComponent::CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const
 {
     TArray<FVector> Vertices =
     {
@@ -78,19 +78,19 @@ int UBillboardComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
         FVector(-1.0f, -1.0f, 0.0f),
     };
 
-    return CheckPickingOnNDC(Vertices, pfNearHitDistance) ? 1 : 0;
+    return CheckPickingOnNDC(Vertices, OutHitDistance) ? 1 : 0;
 }
 
-void UBillboardComponent::SetTexture(const FWString& _fileName)
+void UBillboardComponent::SetTexture(const FWString& InFilePath)
 {
-    Texture = FEngineLoop::ResourceManager.GetTexture(_fileName);
-    TexturePath = FString(_fileName.c_str());
+    Texture = FEngineLoop::ResourceManager.GetTexture(InFilePath);
+    TexturePath = FString(InFilePath.c_str());
     //std::string str(_fileName.begin(), _fileName.end());
 }
 
-void UBillboardComponent::SetUUIDParent(USceneComponent* _parent)
+void UBillboardComponent::SetUUIDParent(USceneComponent* InUUIDParent)
 {
-    m_parent = _parent;
+    UUIDParent = InUUIDParent;
 }
 
 FMatrix UBillboardComponent::CreateBillboardMatrix() const
@@ -105,12 +105,16 @@ FMatrix UBillboardComponent::CreateBillboardMatrix() const
     CameraView.M[2][2] = -CameraView.M[2][2];
     FMatrix LookAtCamera = FMatrix::Transpose(CameraView);
 
-    FVector worldLocation = RelativeLocation;
-    if (m_parent)
-        worldLocation += m_parent->GetWorldLocation();
-    FVector worldScale = RelativeScale3D;
-    FMatrix S = FMatrix::CreateScaleMatrix(worldScale.X, worldScale.Y, worldScale.Z);
-    FMatrix T = FMatrix::CreateTranslationMatrix(worldLocation);
+    FVector WorldLocation = GetWorldLocation();
+    if (UUIDParent)
+    {
+        WorldLocation = UUIDParent->GetWorldLocation() + RelativeLocation;
+    }
+
+    FVector WorldScale = RelativeScale3D;
+    FMatrix S = FMatrix::CreateScaleMatrix(WorldScale.X, WorldScale.Y, WorldScale.Z);
+    FMatrix T = FMatrix::CreateTranslationMatrix(WorldLocation);
+
     // 최종 빌보드 행렬 = Scale * Rotation(LookAt) * Translation
     return S * LookAtCamera * T;
 }
@@ -118,6 +122,8 @@ FMatrix UBillboardComponent::CreateBillboardMatrix() const
 
 bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices, float& hitDistance) const
 {
+    // TODO: 이 로직으로는 멀티 뷰포트에서 빌보드 피킹 안됨.
+
     // 마우스 위치를 클라이언트 좌표로 가져온 후 NDC 좌표로 변환
     POINT mousePos;
     GetCursorPos(&mousePos);
@@ -131,10 +137,11 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
     float ndcX = (2.0f * mousePos.x / viewport.Width) - 1.0f;
     float ndcY = -((2.0f * mousePos.y / viewport.Height) - 1.0f);
 
+    std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
     // MVP 행렬 계산
     FMatrix M = CreateBillboardMatrix();
-    FMatrix V = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
-    FMatrix P = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetProjectionMatrix();
+    FMatrix V = ActiveViewport->GetViewMatrix();
+    FMatrix P = ActiveViewport->GetProjectionMatrix();
     FMatrix MVP = M * V * P;
 
     // quadVertices를 MVP로 변환하여 NDC 공간에서의 최소/최대값 구하기
@@ -161,8 +168,9 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
     // 마우스 NDC 좌표가 quad의 NDC 경계 사각형 내에 있는지 검사
     if (ndcX >= minX && ndcX <= maxX && ndcY >= minY && ndcY <= maxY)
     {
-        // 임의로 hitDistance 설정 (필요 시 실제 깊이 계산)
-        hitDistance = 1000.0f;
+        const FVector WorldLocation = GetWorldLocation();
+        const FVector CameraLocation = ActiveViewport->GetCameraLocation();
+        hitDistance = (WorldLocation - CameraLocation).Length();
         return true;
     }
     return false;
