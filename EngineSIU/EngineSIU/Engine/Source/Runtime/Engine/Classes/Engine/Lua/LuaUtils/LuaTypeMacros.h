@@ -8,8 +8,8 @@ static bool bRegisteredLuaProperties = false;                                   
 if (!bRegisteredLuaProperties)                                                          \
 {                                                                                       \
     Lua.new_usertype<CLASS_NAME>(#CLASS_NAME,                                            \
-        sol::constructors<CLASS_NAME()>(),                                               \
-        __VA_ARGS__                                                                     \
+        sol::constructors<CLASS_NAME()>()                                               \
+        __VA_OPT__(, __VA_ARGS__)                                                     \
     );                                                                                  \
     bRegisteredLuaProperties = true;                                                    \
 }                                                                                       \
@@ -23,8 +23,8 @@ if (!bRegisteredLuaProperties)                                                  
 {                                                                                       \
     Lua.new_usertype<CLASS_NAME>(#CLASS_NAME,                                           \
         sol::base<BASE_CLASS_NAME>(),                                                    \
-        sol::constructors<CLASS_NAME()>(),                                                \
-        __VA_ARGS__                                                                      \
+        sol::constructors<CLASS_NAME()>()                                               \
+        __VA_OPT__(, __VA_ARGS__)                                                     \
     );                                                                                  \
     bRegisteredLuaProperties = true;                                                    \
 } 

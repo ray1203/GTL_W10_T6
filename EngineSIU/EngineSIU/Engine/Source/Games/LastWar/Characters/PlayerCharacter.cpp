@@ -3,6 +3,11 @@
 #include "Components/InputComponent.h"  
 #include "Components/StaticMeshComponent.h"
 #include "Engine/FLoaderOBJ.h"
+#include "Delegates/DelegateCombination.h"
+#include "EnemyCharacter.h"
+
+#include "Components/LuaScriptComponent.h"
+#include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -17,8 +22,9 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
 }
-
+  
 void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -54,3 +60,42 @@ void APlayerCharacter::MoveRight(float Value)
         AddMovementInput(GetActorRightVector(), Value);
     }
 }
+
+void APlayerCharacter::HandleOverlap(AActor* OtherActor)  
+{  
+   if (Cast<AEnemyCharacter>(OtherActor))  
+   {  
+       if (IsActorBeingDestroyed())  
+       {  
+           return;  
+       }  
+       UE_LOG(LogLevel::Display, "Handle Overlap %s,  %s", GetData(OtherActor->GetName()), GetData(GetName()));  
+   }  
+
+   if (LuaScriptComponent)  
+   {  
+       LuaScriptComponent->ActivateFunction("OnOverlap", OtherActor);
+   }  
+}
+
+void APlayerCharacter::RegisterLuaType(sol::state& Lua)
+{
+    DEFINE_LUA_TYPE_WITH_PARENT(APlayerCharacter, ACharacter,
+        "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
+        "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
+        "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage)
+    )
+}
+
+bool APlayerCharacter::BindSelfLuaProperties()
+{
+    Super::BindSelfLuaProperties();
+    sol::table& LuaTable = LuaScriptComponent->GetLuaSelfTable();
+    if (!LuaTable.valid())
+    {
+        return false;
+    }
+    LuaTable["Health"] = Health;
+    return true;
+}
+ 

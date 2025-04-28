@@ -130,7 +130,7 @@ void AActor::BeginPlay()
     {  
         Comp->BeginPlay();
     }
-    OnActorEndOverlapHandle = OnActorEndOverlap.AddDynamic(this, &AActor::HandleOverlap);
+
 }
 
 void AActor::Tick(float DeltaTime)
@@ -432,7 +432,8 @@ void AActor::RegisterLuaType(sol::state& Lua)
         /*"ActorName", &ThisClass::GetName,*/ // FString은 넘어가지 않는 중 내부에서 사용 불가.
         "ActorLocation", sol::property(&ThisClass::GetActorLocation, &ThisClass::SetActorLocation),
         "ActorRotation", sol::property(&ThisClass::GetActorRotation, &ThisClass::SetActorRotation),
-        "ActorScale", sol::property(&ThisClass::GetActorScale, &ThisClass::SetActorScale)
+        "ActorScale", sol::property(&ThisClass::GetActorScale, &ThisClass::SetActorScale),
+        "Destroy", &ThisClass::Destroy
     )
 }
 

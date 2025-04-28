@@ -11,6 +11,7 @@
 #include "tinyfiledialogs/tinyfiledialogs.h"
 #include "UnrealEd/SceneManager.h"
 #include "Games/LastWar/Characters/PlayerCharacter.h"
+#include "Games/LastWar/Characters/EnemyCharacter.h"
 
 namespace PrivateEditorSelection
 {
@@ -184,12 +185,12 @@ void UEditorEngine::StartPIE()
     ACharacter* PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
+    ACharacter* EnemyChracter = ActiveWorld->SpawnActor<AEnemyCharacter>();
+
     // 3) 월드에 컨트롤러 등록
     ActiveWorld->AddPlayerController(PC);
 
     PIEWorld->BeginPlay();
-    // 여기서 Actor들의 BeginPlay를 해줄지 안에서 해줄 지 고민.
-    // WorldList.Add(GetWorldContextFromWorld(PIEWorld));
 }
 
 void UEditorEngine::EndPIE()

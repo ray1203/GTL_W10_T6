@@ -2,6 +2,7 @@
 #include "Controller.h"
 #include "Components/InputComponent.h"
 #include "PlayerController.h"
+#include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 
 void APawn::BeginPlay()
 {
@@ -105,4 +106,16 @@ void APawn::EnableInput(APlayerController* PlayerController)
 void APawn::DisableInput(APlayerController* PlayerController)
 {
     Super::DisableInput(PlayerController);
+}
+
+void APawn::RegisterLuaType(sol::state& Lua)
+{
+    DEFINE_LUA_TYPE_WITH_PARENT(APawn, AActor);
+}
+
+bool APawn::BindSelfLuaProperties()
+{
+    Super::BindSelfLuaProperties();
+
+    return true;
 }

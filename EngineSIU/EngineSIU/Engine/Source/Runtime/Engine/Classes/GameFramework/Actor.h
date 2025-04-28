@@ -137,16 +137,6 @@ public:
 
     void ProcessOverlaps();
 
-    void HandleOverlap(AActor* OtherActor)
-    {
-        if (IsActorBeingDestroyed())
-        {
-            return;
-        }
-        UE_LOG(LogLevel::Display, "Handle Overlap %s,  %s", GetData(OtherActor->GetName()), GetData(GetName()));
-        Destroy();
-    }
-
     virtual void EnableInput(APlayerController* PlayerController);
     virtual void DisableInput(APlayerController* PlayerController);
 
@@ -206,7 +196,7 @@ public: // Lua Script.
     virtual bool BindSelfLuaProperties(); // LuaEnv에서 사용할 멤버 변수 등록 함수.
 
 	bool bUseScript = true;
-private:
+protected:
 	ULuaScriptComponent* LuaScriptComponent = nullptr;
 
 };
