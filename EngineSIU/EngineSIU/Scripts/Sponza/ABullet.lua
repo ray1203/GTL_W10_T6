@@ -25,12 +25,12 @@ function ReturnTable:EndPlay(EndPlayReason)
 
 end
 
-function ReturnTable:OnBeginOverlap(OtherActor)
+function ReturnTable:OnBeginOverlap(OwnerActor, OtherActor)
 
 
     print("BeginOverlap Bullet", OtherActor)
 
-    
+
 end
 
 return ReturnTable
