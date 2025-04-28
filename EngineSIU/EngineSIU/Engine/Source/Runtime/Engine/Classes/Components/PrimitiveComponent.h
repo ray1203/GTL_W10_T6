@@ -36,4 +36,10 @@ public:
     bool IsOverlappingActor(const AActor* Other) const;
     void UpdateOverlaps();
     virtual bool CheckOverlap(const UPrimitiveComponent* Other) const { return false; }
+
+    bool GetOverlapCheck() const { return bOverlapCheck; }
+    void SetOverlapCheck(bool bInOverlapCheck) { bOverlapCheck = bInOverlapCheck; }
+
+private:
+    bool bOverlapCheck = true;
 };

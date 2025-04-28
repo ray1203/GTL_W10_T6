@@ -26,7 +26,5 @@ public:
 private:
     FColor ShapeColor;
     bool bDrawOnlyIfSelected;
-
-
 };
 
