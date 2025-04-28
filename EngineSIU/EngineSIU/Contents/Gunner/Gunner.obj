@@ -52134,8 +52134,6 @@ vt 0.272674 0.503472
 vt 0.268919 0.765173
 vt 0.232918 0.808785
 s 1
-mtllib base.mtl
-
 o SomeMeshName
 
 usemtl Material_222
