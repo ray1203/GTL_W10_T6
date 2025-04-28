@@ -1,22 +1,29 @@
 #include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
-#include "Components/InputComponent.h"  
-#include "Components/StaticMeshComponent.h"
+#include "Components/InputComponent.h"
 #include "Engine/FLoaderOBJ.h"
 #include "Delegates/DelegateCombination.h"
 #include "EnemyCharacter.h"
 #include "Components/LuaScriptComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "GameFramework/PlayerController.h"
 
 APlayerCharacter::APlayerCharacter()
 {
-    BodyMesh = AddComponent<UStaticMeshComponent>("Player");
     BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Reference/Reference.obj"));
-    BodyMesh->SetupAttachment(RootComponent);
 
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
+}
+
+UObject* APlayerCharacter::Duplicate(UObject* InOuter)
+{
+    UObject* NewActor = Super::Duplicate(InOuter);
+    APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(NewActor);
+    PlayerCharacter->FollowCamera = GetComponentByFName<UCameraComponent>("PlayerCamera");
+
+    return NewActor;
 }
 
 void APlayerCharacter::BeginPlay()
@@ -44,6 +51,35 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     // Bind input actions and axes here  
     PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
+}
+
+void APlayerCharacter::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+    OutProperties.Add(TEXT("Health"), std::to_string(Health));
+    OutProperties.Add(TEXT("Speed"), std::to_string(Speed));
+    OutProperties.Add(TEXT("AttackDamage"), std::to_string(AttackDamage));
+}
+
+void APlayerCharacter::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+    const FString* TempStr = nullptr;
+    TempStr = InProperties.Find(TEXT("Health"));
+    if (TempStr)
+    {
+        Health = std::stof(GetData(*TempStr));
+    }
+    TempStr = InProperties.Find(TEXT("Speed"));
+    if (TempStr)
+    {
+        Speed = std::stof(GetData(*TempStr));
+    }
+    TempStr = InProperties.Find(TEXT("AttackDamage"));
+    if (TempStr)
+    {
+        AttackDamage = std::stof(GetData(*TempStr));
+    }
 }
 
 void APlayerCharacter::MoveForward(float Value)

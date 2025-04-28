@@ -1,6 +1,7 @@
 #include "PlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "PlayerInput.h"
+#include "Components/InputComponent.h"
 
 void APlayerController::BeginPlay()
 {

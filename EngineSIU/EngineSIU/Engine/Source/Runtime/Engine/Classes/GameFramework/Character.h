@@ -15,6 +15,7 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+    UObject* Duplicate(UObject* InOuter) override;
 
     virtual void PossessedBy(AController* NewController) override;
     virtual void UnPossessed() override;
@@ -24,9 +25,6 @@ public:
     virtual bool BindSelfLuaProperties() override; // LuaEnv에서 사용할 멤버 변수 등록 함수.
 
 protected:
-    UPROPERTY
-    (USceneComponent*, RootScene, = nullptr);
-
     UPROPERTY
     (UStaticMeshComponent*, BodyMesh, = nullptr);
 

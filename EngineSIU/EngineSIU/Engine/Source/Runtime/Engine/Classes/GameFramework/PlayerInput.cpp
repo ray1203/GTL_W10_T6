@@ -1,5 +1,6 @@
 #include "PlayerInput.h"
 #include "PlayerController.h"
+#include "Components/InputComponent.h"
 
 void UPlayerInput::InitializeDefaultMappings()
 {

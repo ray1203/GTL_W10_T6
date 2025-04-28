@@ -41,6 +41,29 @@ void APawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
+void APawn::GetProperties(TMap<FString, FString>& OutProperties) const
+{
+    Super::GetProperties(OutProperties);
+    OutProperties.Add(TEXT("MoveSpeed"), std::to_string(MoveSpeed));
+    OutProperties.Add(TEXT("PendingMovement"), PendingMovement.ToString());
+}
+
+void APawn::SetProperties(const TMap<FString, FString>& InProperties)
+{
+    Super::SetProperties(InProperties);
+    const FString* TempStr = nullptr;
+    TempStr = InProperties.Find(TEXT("MoveSpeed"));
+    if (TempStr)
+    {
+        MoveSpeed = std::stof(GetData(*TempStr));
+    }
+    TempStr = InProperties.Find(TEXT("PendingMovement"));
+    if (TempStr)
+    {
+        PendingMovement.InitFromString(*TempStr);
+    }
+}
+
 void APawn::PossessedBy(AController* NewController)
 {
     Controller = NewController;

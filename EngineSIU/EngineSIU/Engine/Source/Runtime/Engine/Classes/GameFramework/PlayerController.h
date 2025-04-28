@@ -15,6 +15,8 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
+    // TODO Check Duplicate
+
 public:
     ACharacter* GetCharacter() const { return Cast<ACharacter>(GetPawn()); }
     virtual void SetupInputComponent() override;
