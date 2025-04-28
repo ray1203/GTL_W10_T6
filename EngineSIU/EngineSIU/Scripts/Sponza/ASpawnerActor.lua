@@ -20,7 +20,7 @@ function ReturnTable:Tick(DeltaTime)
         local SpawnLoc = self.this.ActorLocation
 
 
-        local NewActor = self.this.SpawnActorLua("AEnemyCharacter", SpawnLoc)
+        local NewActor = self.this:SpawnActorLua("AEnemyCharacter", SpawnLoc)
 
         if NewActor ~= nil then
             print("Spawned AEnemyCharacter at:", SpawnLoc.X, SpawnLoc.Y, SpawnLoc.Z)

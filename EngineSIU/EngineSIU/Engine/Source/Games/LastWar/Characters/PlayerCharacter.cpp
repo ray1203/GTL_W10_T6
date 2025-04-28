@@ -11,7 +11,7 @@
 
 APlayerCharacter::APlayerCharacter()
 {
-    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Reference/Reference.obj"));
+    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
 
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
@@ -49,7 +49,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     // Bind input actions and axes here  
-    PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
+    //PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
 }
 
@@ -111,7 +111,7 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
 
         if (LuaScriptComponent)
         {
-            LuaScriptComponent->ActivateFunction("OnOverlap", Enemy, Enemy->GetDamage());
+            LuaScriptComponent->ActivateFunction("OnOverlap", OtherActor, Enemy->GetDamage());
         }
     }
 

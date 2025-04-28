@@ -13,12 +13,10 @@ end
 
 function ReturnTable:Tick(DeltaTime)
     self.SpawnTimer = self.SpawnTimer + DeltaTime
-
     if self.SpawnTimer >= self.SpawnInterval then
-        self.SpawnTimer = self.SpawnTimer - self.SpawnInterval -- Interval만큼 빼줌 (DeltaTime 클 때 대비)
+        self.SpawnTimer = self.SpawnTimer - self.SpawnInterval 
 
         local SpawnLoc = self.this.ActorLocation
-
         local NewActor = self.this:SpawnActorLua("AEnemyCharacter", SpawnLoc)
 
         if NewActor ~= nil then
