@@ -52138,7 +52138,7 @@ mtllib base.mtl
 
 o SomeMeshName
 
-usemtl Material_0
+usemtl Material_222
 f 1/1/1 184/2/2 185/3/3 186/4/4
 f 1/5/1 186/6/4 187/7/5 188/8/6
 f 1/1/1 188/9/6 189/10/7 184/2/2
