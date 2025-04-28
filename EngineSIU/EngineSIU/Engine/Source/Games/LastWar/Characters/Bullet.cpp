@@ -28,7 +28,7 @@ void ABullet::BeginPlay()
 {
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &ABullet::OnBeginOverlap);
-    InitBullet(2, 100);
+    InitBullet(2, 25);
 }
 
 void ABullet::InitBullet(float InBulletSpeed, float InBulletDamage)

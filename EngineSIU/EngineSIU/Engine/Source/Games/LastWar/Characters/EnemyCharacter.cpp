@@ -68,9 +68,12 @@ void AEnemyCharacter::OnBeginOverlap(AActor* OtherActor)
     {
         if (LuaScriptComponent)
         {
-            LastWarUI::Score += 1;
             LuaScriptComponent->ActivateFunction("OnOverlapBullet", Bullet);
         }
+    }
+    if (Health <= 0.0f)
+    {
+        LastWarUI::Score += 1;
     }
 }
 
