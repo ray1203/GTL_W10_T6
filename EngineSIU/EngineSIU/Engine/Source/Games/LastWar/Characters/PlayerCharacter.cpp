@@ -14,6 +14,8 @@
 #include "Engine/Engine.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "GameFramework/PlayerController.h"
+#include "Games/LastWar/UI/LastWarUI.h"
+#include "Audio/AudioManager.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -50,6 +52,12 @@ void APlayerCharacter::Tick(float DeltaTime)
     FVector CamLocation = GetActorLocation() + BackOffset + UpOffset;
     FollowCamera->SetLocation(CamLocation);
     FollowCamera->SetRotation(GetActorRotation());
+
+    if (!LastWarUI::bShowGameOver && Health <= 0)
+    {
+        EnableInput(Cast<APlayerController>(Controller));
+        Health = 100.0f;
+    }
 
 }
 
@@ -127,7 +135,7 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
     {  
         if (LuaScriptComponent)
         {
-            LuaScriptComponent->ActivateFunction("OnOverlapEnemy", Enemy, Enemy->GetAttackDamage());
+            LuaScriptComponent->ActivateFunction("OnOverlapEnemy", Enemy);
         }
     }
     else if (AWall* Wall = Cast<AWall>(OtherActor))
@@ -144,6 +152,8 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
             }
             LuaScriptComponent->ActivateFunction("OnOverlapWall", OtherActor, Wall->GetVarientValue());
         }
+
+        AudioManager::Get().PlayOneShot(EAudioType::Goofy);
     }
 
     if (Health <= 0.0f)

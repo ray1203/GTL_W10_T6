@@ -59,7 +59,7 @@ void AEnemyCharacter::RegisterLuaType(sol::state& Lua)
     DEFINE_LUA_TYPE_WITH_PARENT(AEnemyCharacter, sol::bases<AActor, APawn, ACharacter>(),
         "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
-        "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage)
+        "Damage", sol::property(&ThisClass::GetDamage, &ThisClass::SetDamage)
     );
     
 }
@@ -67,6 +67,7 @@ void AEnemyCharacter::RegisterLuaType(sol::state& Lua)
 bool AEnemyCharacter::BindSelfLuaProperties()
 {
     Super::BindSelfLuaProperties();
+
     sol::table& LuaTable = LuaScriptComponent->GetLuaSelfTable();
     if (!LuaTable.valid())
     {
@@ -74,7 +75,6 @@ bool AEnemyCharacter::BindSelfLuaProperties()
     }
 
     LuaTable["this"] = this;
-    LuaTable["Health"] = Health;
     return true;
 }
 
