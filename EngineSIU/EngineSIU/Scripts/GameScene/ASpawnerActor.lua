@@ -5,7 +5,7 @@ local FVector = EngineTypes.FVector
 ReturnTable.SpawnTimer = 0.0 -- 타이머
 ReturnTable.SpawnInterval = 5.0 -- 5초마다 스폰
 
-ReturnTable.WallSpawnProbability = 1
+ReturnTable.WallSpawnProbability = 0.5
 
 function ReturnTable:BeginPlay()
     print("BeginPlay SpawnerActor")

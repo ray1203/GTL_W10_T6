@@ -13,6 +13,7 @@
 #include "Games/LastWar/Characters/PlayerCharacter.h"
 #include "Games/LastWar/Characters/EnemyCharacter.h"
 #include "Games/LastWar/Characters/Wall.h"
+#include "Audio/AudioManager.h"
 
 namespace PrivateEditorSelection
 {
@@ -191,6 +192,7 @@ void UEditorEngine::StartPIE()
 
     // 3) 월드에 컨트롤러 등록
     ActiveWorld->AddPlayerController(PC);
+    AudioManager::Get().PlayBgm(EAudioType::MainTheme);
 
     PIEWorld->BeginPlay();
 }
@@ -199,6 +201,7 @@ void UEditorEngine::EndPIE()
 {
     if (PIEWorld)
     {
+        AudioManager::Get().StopBgm();
         //WorldList.Remove(*GetWorldContextFromWorld(PIEWorld.get()));
         WorldList.Remove(GetWorldContextFromWorld(PIEWorld));
         PIEWorld->Release();

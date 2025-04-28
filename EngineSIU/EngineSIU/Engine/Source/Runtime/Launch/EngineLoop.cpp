@@ -10,11 +10,10 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
 #include "World/World.h"
-
 #include "Renderer/TileLightCullingPass.h"
-
 #include "Engine/Lua/LuaScriptManager.h" 
 #include "UnrealEd/EditorConfigManager.h"
+#include "Games/LastWar/UI/LastWarUI.h"
 
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -53,6 +52,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
     LevelEditor = new SLevelEditor();
     LuaScriptManager = new FLuaScriptManager();
+    LastWarGameUI = new LastWarUI();
 
     UnrealEditor->Initialize();
     GraphicDevice.Initialize(AppWnd);
@@ -86,7 +86,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     PrimitiveDrawBatch.Initialize(&GraphicDevice);
     UIMgr->Initialize(AppWnd, GraphicDevice.Device, GraphicDevice.DeviceContext);
     ResourceManager.Initialize(&Renderer, &GraphicDevice);
-    
+
     uint32 ClientWidth = 0;
     uint32 ClientHeight = 0;
     GetClientSize(ClientWidth, ClientHeight);
@@ -95,6 +95,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     GEngine = FObjectFactory::ConstructObject<UEditorEngine>(nullptr);
     GEngine->Init();
 
+    LastWarGameUI->Initialize();
     UpdateUI();
 
     return 0;
@@ -170,6 +171,7 @@ void FEngineLoop::Tick()
         Render();
         UIMgr->BeginFrame();
         UnrealEditor->Render();
+        LastWarGameUI->Render();
 
         Console::GetInstance().Draw();
         EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
@@ -216,6 +218,7 @@ void FEngineLoop::Exit()
     ResourceManager.Release(&Renderer);
     Renderer.Release();
     GraphicDevice.Release();
+    LastWarGameUI->Release();
     
     GEngine->Release();
 

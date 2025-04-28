@@ -19,6 +19,7 @@ class FGraphicDevice;
 class SLevelEditor;
 class FDXDBufferManager;
 class FLuaScriptManager;
+class LastWarUI;
 
 class FEngineLoop
 {
@@ -67,6 +68,7 @@ private:
 
 private:
     FLuaScriptManager* LuaScriptManager = nullptr;
+    LastWarUI* LastWarGameUI = nullptr;
 
 public:
     SLevelEditor* GetLevelEditor() const { return LevelEditor; }

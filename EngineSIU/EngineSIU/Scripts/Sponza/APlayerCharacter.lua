@@ -1,5 +1,3 @@
-setmetatable(_ENV, { __index = EngineTypes })
-
 local ReturnTable = {}
 
 local FVector = EngineTypes.FVector
@@ -8,16 +6,11 @@ local FVector = EngineTypes.FVector
 function ReturnTable:BeginPlay()
 
     print("BeginPlay ", self.Name)
-    print(self.this)
-
+    self.this:SetCharacterMeshCount(1)
 end
 
 -- Tick: 매 프레임마다 호출
 function ReturnTable:Tick(DeltaTime)
-
-    local this = self.this
-
-    -- print(this)
 
 end
 
@@ -28,14 +21,17 @@ function ReturnTable:EndPlay(EndPlayReason)
 
 end
 
-function ReturnTable:OnOverlap(Other)
-    print("\nOverlap")
+function ReturnTable:OnOverlapEnemy(Other)
+    print("Other Damage", Other.Damage)
     Other:Destroy()
-    self.Health = self.Health - 10
-    print(Other.Health)
-    print("Location ", self.this.ActorLocation.X)
-    print("Health ", self.Health)
+    self.this.Health = self.this.Health - Other.Damage
+    print("Health ", self.this.Health)
+end
 
+function ReturnTable:OnOverlapWall(Other, VarientValue)
+    print("Wall", VarientValue)
+    Other:Destroy()
+    self.this:AddCharacterMeshCount(VarientValue)
 end
 
 return ReturnTable
