@@ -199,7 +199,8 @@ void APlayerCharacter::RegisterLuaType(sol::state& Lua)
         "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
         "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage),
-        "AddCharacterMeshCount", &ThisClass::AddCharacterMeshCount
+        "AddCharacterMeshCount", &ThisClass::AddCharacterMeshCount,
+        "SetCharacterMeshCount", &ThisClass::SetCharacterMeshCount
     )
 }
 

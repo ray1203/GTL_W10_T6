@@ -41,7 +41,7 @@ end
 function ReturnTable:OnOverlapEnemy(Other)
     print("Other Damage", Damage)
     Other:Destroy()
-    self.this.Health = self.this.Health - Other.Damage
+    self.this.Health = self.this.Health - Other.AttackDamage
     print("Health ", self.this.Health)
 end
 

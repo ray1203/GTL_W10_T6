@@ -77,7 +77,7 @@ void AEnemyCharacter::RegisterLuaType(sol::state& Lua)
     DEFINE_LUA_TYPE_WITH_PARENT(AEnemyCharacter, sol::bases<AActor, APawn, ACharacter>(),
         "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
-        "Damage", sol::property(&ThisClass::GetDamage, &ThisClass::SetDamage)
+        "AttackDamage", sol::property(&ThisClass::GetDamage, &ThisClass::SetDamage)
     );
     
 }
