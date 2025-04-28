@@ -37,7 +37,7 @@ void ACharacter::UnPossessed()
 
 void ACharacter::RegisterLuaType(sol::state& Lua)
 {
-    DEFINE_LUA_TYPE_WITH_PARENT(ACharacter, APawn);
+    DEFINE_LUA_TYPE_WITH_PARENT(ACharacter, sol::bases<AActor, APawn>());
 }
 
 bool ACharacter::BindSelfLuaProperties()

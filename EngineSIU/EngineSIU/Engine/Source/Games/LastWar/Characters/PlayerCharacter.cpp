@@ -74,13 +74,13 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
 
    if (LuaScriptComponent)  
    {  
-       LuaScriptComponent->ActivateFunction("OnOverlap", OtherActor);
+       LuaScriptComponent->ActivateFunction("OnOverlap", Cast<AEnemyCharacter>(OtherActor));
    }  
 }
 
 void APlayerCharacter::RegisterLuaType(sol::state& Lua)
 {
-    DEFINE_LUA_TYPE_WITH_PARENT(APlayerCharacter, ACharacter,
+    DEFINE_LUA_TYPE_WITH_PARENT(APlayerCharacter, sol::bases<AActor, APawn, ACharacter>(),
         "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
         "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage)
@@ -95,6 +95,8 @@ bool APlayerCharacter::BindSelfLuaProperties()
     {
         return false;
     }
+
+    LuaTable["this"] = this;
     LuaTable["Health"] = Health;
     return true;
 }
