@@ -68,7 +68,7 @@ void LuaTypes::FBindLua<FVector>::Bind(sol::table& Table)
 {
     Table.Lua_NewUserType(
         FVector,
-
+        sol::call_constructor,
         // Constructors
         sol::constructors<
         FVector(),
@@ -85,7 +85,10 @@ void LuaTypes::FBindLua<FVector>::Bind(sol::table& Table)
         sol::meta_function::equal_to, &FVector::operator==,
         sol::meta_function::addition, &FVector::operator+,
         sol::meta_function::subtraction, [](const FVector& A, const FVector& B) { return A - B; },
-        sol::meta_function::multiplication, [](const FVector& A, const FVector& B) { return A * B; },
+        sol::meta_function::multiplication, sol::overload(
+            sol::resolve<FVector(const FVector&) const>(&FVector::operator*),
+            sol::resolve<FVector(float) const>(&FVector::operator*)
+        ),
         sol::meta_function::division, [](const FVector& A, const FVector& B) { return A / B; },
 
         // Utility functions
