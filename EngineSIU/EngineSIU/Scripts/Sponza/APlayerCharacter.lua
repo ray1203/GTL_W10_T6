@@ -6,7 +6,6 @@ local FVector = EngineTypes.FVector
 function ReturnTable:BeginPlay()
 
     print("BeginPlay ", self.Name)
-    print(self.this)
 
 end
 
@@ -22,12 +21,13 @@ function ReturnTable:EndPlay(EndPlayReason)
 
 end
 
-function ReturnTable:OnOverlap(Other)
+function ReturnTable:OnOverlap(Other, Damage)
+    print("Other Damage", Damage)
     Other:Destroy()
-    self.Health = self.Health - 10
-    print(Other.Health)
-    print("Location ", self.this.ActorLocation.X)
-    print("Health ", self.Health)
+    self.this.Health = self.this.Health - Other.Damage
+    print("Health ", self.this.Health)
+
+
 end
 
 return ReturnTable

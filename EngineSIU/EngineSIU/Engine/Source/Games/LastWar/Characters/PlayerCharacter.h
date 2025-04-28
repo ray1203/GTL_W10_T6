@@ -3,6 +3,9 @@
 
 class UCameraComponent;
 class UInputComponent;
+
+DECLARE_MULTICAST_DELEGATE(FOnCharacterDeath);
+
 class APlayerCharacter : public ACharacter
 {
     DECLARE_CLASS(APlayerCharacter, ACharacter)
@@ -34,6 +37,11 @@ public:
     void SetHealth(float NewHealth) { Health = NewHealth; }
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
     void SetAttackDamage(float NewAttackDamage) { AttackDamage = NewAttackDamage; }
+
+    // Delegate
+    FOnCharacterDeath OnDeath;
+
+    FDelegateHandle OnPlayerDeathHandle;
 
 private:
     UPROPERTY

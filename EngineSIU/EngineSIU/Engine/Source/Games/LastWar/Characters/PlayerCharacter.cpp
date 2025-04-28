@@ -5,9 +5,9 @@
 #include "Engine/FLoaderOBJ.h"
 #include "Delegates/DelegateCombination.h"
 #include "EnemyCharacter.h"
-
 #include "Components/LuaScriptComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
+#include "GameFramework/PlayerController.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -35,6 +35,7 @@ void APlayerCharacter::Tick(float DeltaTime)
     FVector CamLocation = GetActorLocation() + BackOffset + UpOffset;
     FollowCamera->SetLocation(CamLocation);
     FollowCamera->SetRotation(GetActorRotation());
+
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -63,19 +64,26 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::HandleOverlap(AActor* OtherActor)  
 {  
-   if (Cast<AEnemyCharacter>(OtherActor))  
-   {  
-       if (IsActorBeingDestroyed())  
-       {  
-           return;  
-       }  
-       UE_LOG(LogLevel::Display, "Handle Overlap %s,  %s", GetData(OtherActor->GetName()), GetData(GetName()));  
-   }  
+    AEnemyCharacter* Enemy = Cast<AEnemyCharacter>(OtherActor);
+    if (Enemy)  
+    {  
+        if (IsActorBeingDestroyed())  
+        {  
+            return;  
+        }  
+        UE_LOG(LogLevel::Display, "Handle Overlap %s,  %s", GetData(OtherActor->GetName()), GetData(GetName()));  
 
-   if (LuaScriptComponent)  
-   {  
-       LuaScriptComponent->ActivateFunction("OnOverlap", OtherActor);
-   }  
+        if (LuaScriptComponent)
+        {
+            LuaScriptComponent->ActivateFunction("OnOverlap", Enemy, Enemy->GetDamage());
+        }
+    }
+
+    if (Health <= 0.0f)
+    {
+        OnDeath.Broadcast();
+        DisableInput(Cast<APlayerController>(Controller));
+    }
 }
 
 void APlayerCharacter::RegisterLuaType(sol::state& Lua)
@@ -95,7 +103,8 @@ bool APlayerCharacter::BindSelfLuaProperties()
     {
         return false;
     }
-    LuaTable["Health"] = Health;
+    LuaTable["this"] = this;
+
     return true;
 }
  

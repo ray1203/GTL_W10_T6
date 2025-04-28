@@ -2,6 +2,7 @@
 #include "Controller.h"
 #include "Components/InputComponent.h"
 #include "PlayerController.h"
+#include "Components/LuaScriptComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 
 void APawn::BeginPlay()
@@ -116,6 +117,13 @@ void APawn::RegisterLuaType(sol::state& Lua)
 bool APawn::BindSelfLuaProperties()
 {
     Super::BindSelfLuaProperties();
+
+    sol::table& LuaTable = LuaScriptComponent->GetLuaSelfTable();
+    if (!LuaTable.valid())
+    {
+        return false;
+    }
+    LuaTable["this"] = this;
 
     return true;
 }

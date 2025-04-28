@@ -2,6 +2,7 @@
 #include "Components/InputComponent.h"  
 #include "Controller.h"
 #include "Components/Shapes/CapsuleComponent.h"
+#include "Components/LuaScriptComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 
 ACharacter::ACharacter()  
@@ -43,6 +44,13 @@ void ACharacter::RegisterLuaType(sol::state& Lua)
 bool ACharacter::BindSelfLuaProperties()
 {
     Super::BindSelfLuaProperties();
+
+    sol::table& LuaTable = LuaScriptComponent->GetLuaSelfTable();
+    if (!LuaTable.valid())
+    {
+        return false;
+    }
+    LuaTable["this"] = this;
        
     return true;
 }
