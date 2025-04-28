@@ -779,7 +779,9 @@
     <Natvis Include="EngineSIU.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Games\LastWar\UI\LastWarUI.cpp" />
     <ClCompile Include="LightGridGenerator.cpp" />
+    <ClInclude Include="Engine\Source\Games\LastWar\UI\LastWarUI.h" />
     <ClInclude Include="LightGridGenerator.h" />
   </ItemGroup>
   <ItemGroup>

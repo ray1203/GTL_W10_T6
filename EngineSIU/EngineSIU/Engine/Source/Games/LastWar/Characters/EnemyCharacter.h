@@ -27,12 +27,12 @@ public:
     // === Getter ===
     float GetHealth() const { return Health; }
     float GetSpeed() const { return Speed; }
-    float GetAttackDamage() const { return Damage; }
+    float GetDamage() const { return Damage; }
 
     // === Setter ===
     void SetHealth(float NewHealth) { Health = NewHealth; }
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
-    void SetAttackDamage(float NewAttackDamage) { Damage = NewAttackDamage; }
+    void SetDamage(float NewDamage) { Damage = NewDamage; }
 
 private:
     UPROPERTY
@@ -42,6 +42,6 @@ private:
     (float, Speed, = 1.0f)
 
     UPROPERTY
-    (float, Damage, = 10.0f)
+    (float, Damage, = 50.0f)
 };
 

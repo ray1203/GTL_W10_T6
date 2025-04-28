@@ -6,7 +6,9 @@
 
 enum class EAudioType{
     Mario,
-    Goofy
+    Goofy,
+    MainTheme,
+    Shot,
 };
 
 class AudioManager

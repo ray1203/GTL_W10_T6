@@ -4,6 +4,7 @@
 #include "UObject/Class.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
+#include "Games/LastWar/UI/LastWarUI.h"
 
 ASpawnerActor::ASpawnerActor()
 {
@@ -31,6 +32,9 @@ UObject* ASpawnerActor::Duplicate(UObject* InOuter)
 
 AActor* ASpawnerActor::SpawnActorLua(const std::string& ClassName, const FVector& Location)
 {
+    if (LastWarUI::bShowGameOver)
+        return nullptr;
+
     UWorld* World = GetWorld();
     if (!World)
         return nullptr;
