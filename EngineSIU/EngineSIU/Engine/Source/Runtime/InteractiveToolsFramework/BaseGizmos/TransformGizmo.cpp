@@ -96,6 +96,12 @@ void ATransformGizmo::Tick(float DeltaTime)
     {
         return;
     }
+
+    AEditorPlayer* EditorPlayer = Engine->GetEditorPlayer();
+    if (!EditorPlayer)
+    {
+        return;
+    }
     
     USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
     AActor* SelectedActor = Engine->GetSelectedActor();
@@ -114,14 +120,14 @@ void ATransformGizmo::Tick(float DeltaTime)
     if (TargetComponent)
     {
         SetActorLocation(TargetComponent->GetWorldLocation());
-        if (Engine->GetEditorPlayer()->GetCoordMode() == ECoordMode::CDM_LOCAL)
+        if (EditorPlayer->GetCoordMode() == ECoordMode::CDM_LOCAL || EditorPlayer->GetControlMode() == EControlMode::CM_SCALE)
         {
             // TODO: 임시로 RootComponent의 정보로 사용
             SetActorRotation(TargetComponent->GetWorldRotation());
         }
-        else if (Engine->GetEditorPlayer()->GetCoordMode() == ECoordMode::CDM_WORLD)
+        else
         {
-            SetActorRotation(FVector(0.0f, 0.0f, 0.0f));
+            SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
         }
     }
 }

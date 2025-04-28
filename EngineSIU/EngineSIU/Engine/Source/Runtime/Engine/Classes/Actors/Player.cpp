@@ -276,27 +276,25 @@ void AEditorPlayer::PickedObjControl()
     FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
     if (Engine && Engine->GetSelectedActor() && ActiveViewport->GetPickedGizmoComponent())
     {
-        POINT currentMousePos;
-        GetCursorPos(&currentMousePos);
-        int32 deltaX = currentMousePos.x - m_LastMousePos.x;
-        int32 deltaY = currentMousePos.y - m_LastMousePos.y;
+        POINT CurrentMousePos;
+        GetCursorPos(&CurrentMousePos);
+        const float DeltaX = static_cast<float>(CurrentMousePos.x - m_LastMousePos.x);
+        const float DeltaY = static_cast<float>(CurrentMousePos.y - m_LastMousePos.y);
 
-        // USceneComponent* pObj = GetWorld()->GetPickingObj();
-        USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
-        AActor* SelectedActor = Engine->GetSelectedActor();
-
-        USceneComponent* TargetComponent = nullptr;
-
-        if (SelectedComponent != nullptr)
+        USceneComponent* TargetComponent = Engine->GetSelectedComponent();
+        if (!TargetComponent)
         {
-            TargetComponent = SelectedComponent;
-        }
-        else if (SelectedActor != nullptr)
-        {
-            TargetComponent = SelectedActor->GetRootComponent();
+            if (AActor* SelectedActor = Engine->GetSelectedActor())
+            {
+                TargetComponent = SelectedActor->GetRootComponent();
+            }
+            else
+            {
+                return;
+            }
         }
         
-        UGizmoBaseComponent* Gizmo = static_cast<UGizmoBaseComponent*>(ActiveViewport->GetPickedGizmoComponent());
+        UGizmoBaseComponent* Gizmo = Cast<UGizmoBaseComponent>(ActiveViewport->GetPickedGizmoComponent());
         switch (ControlMode)
         {
         case CM_TRANSLATION:
@@ -304,16 +302,16 @@ void AEditorPlayer::PickedObjControl()
             // SLevelEditor에 있음
             break;
         case CM_SCALE:
-            ControlScale(TargetComponent, Gizmo, deltaX, deltaY);
+            ControlScale(TargetComponent, Gizmo, DeltaX, DeltaY);
 
             break;
         case CM_ROTATION:
-            ControlRotation(TargetComponent, Gizmo, deltaX, deltaY);
+            ControlRotation(TargetComponent, Gizmo, DeltaX, DeltaY);
             break;
         default:
             break;
         }
-        m_LastMousePos = currentMousePos;
+        m_LastMousePos = CurrentMousePos;
     }
 }
 
@@ -328,37 +326,51 @@ void AEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseCompon
     FVector CameraRight = ViewTransform->GetRightVector();
     FVector CameraUp = ViewTransform->GetUpVector();
 
-    FQuat currentRotation = Component->GetWorldRotation().ToQuaternion();
+    FQuat CurrentRotation = Component->GetWorldRotation().ToQuaternion();
 
-    FQuat rotationDelta;
+    FQuat RotationDelta = FQuat();
 
     if (Gizmo->GetGizmoType() == UGizmoBaseComponent::CircleX)
     {
-        float rotationAmount = (CameraUp.Z >= 0 ? -1.0f : 1.0f) * DeltaY * 0.01f;
-        rotationAmount = rotationAmount + (CameraRight.X >= 0 ? 1.0f : -1.0f) * DeltaX * 0.01f;
+        float RotationAmount = (CameraUp.Z >= 0 ? -1.0f : 1.0f) * DeltaY * 0.01f;
+        RotationAmount = RotationAmount + (CameraRight.X >= 0 ? 1.0f : -1.0f) * DeltaX * 0.01f;
 
-        rotationDelta = FQuat(FVector(1.0f, 0.0f, 0.0f), rotationAmount); // ���� X �� ���� ȸ��
+        FVector Axis = FVector::ForwardVector;
+        if (CoordMode == CDM_LOCAL)
+        {
+            Axis = Component->GetForwardVector();
+        }
+
+        RotationDelta = FQuat(Axis, RotationAmount);
     }
     else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::CircleY)
     {
-        float rotationAmount = (CameraRight.X >= 0 ? 1.0f : -1.0f) * DeltaX * 0.01f;
-        rotationAmount = rotationAmount + (CameraUp.Z >= 0 ? 1.0f : -1.0f) * DeltaY * 0.01f;
+        float RotationAmount = (CameraRight.X >= 0 ? 1.0f : -1.0f) * DeltaX * 0.01f;
+        RotationAmount = RotationAmount + (CameraUp.Z >= 0 ? 1.0f : -1.0f) * DeltaY * 0.01f;
 
-        rotationDelta = FQuat(FVector(0.0f, 1.0f, 0.0f), rotationAmount); // ���� Y �� ���� ȸ��
+        FVector Axis = FVector::RightVector;
+        if (CoordMode == CDM_LOCAL)
+        {
+            Axis = Component->GetRightVector();
+        }
+
+        RotationDelta = FQuat(Axis, RotationAmount);
     }
     else if (Gizmo->GetGizmoType() == UGizmoBaseComponent::CircleZ)
     {
-        float rotationAmount = (CameraForward.X <= 0 ? -1.0f : 1.0f) * DeltaX * 0.01f;
-        rotationDelta = FQuat(FVector(0.0f, 0.0f, 1.0f), rotationAmount); // ���� Z �� ���� ȸ��
+        float RotationAmount = (CameraForward.X <= 0 ? -1.0f : 1.0f) * DeltaX * 0.01f;
+
+        FVector Axis = FVector::UpVector;
+        if (CoordMode == CDM_LOCAL)
+        {
+            Axis = Component->GetUpVector();
+        }
+
+        RotationDelta = FQuat(Axis, RotationAmount);
     }
-    if (CoordMode == CDM_LOCAL)
-    {
-        Component->SetRelativeRotation(currentRotation * rotationDelta);
-    }
-    else if (CoordMode == CDM_WORLD)
-    {
-        Component->SetRelativeRotation(rotationDelta * currentRotation);
-    }
+    
+    // 쿼터니언의 곱 순서는 delta * current 가 맞음.
+    Component->SetWorldRotation(RotationDelta * CurrentRotation); 
 }
 
 void AEditorPlayer::ControlScale(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)

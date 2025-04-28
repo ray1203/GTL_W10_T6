@@ -11,7 +11,7 @@ UObject* UStaticMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
 
-    NewComponent->staticMesh = staticMesh;
+    NewComponent->StaticMesh = StaticMesh;
     NewComponent->selectedSubMeshIndex = selectedSubMeshIndex;
 
     return NewComponent;
@@ -85,23 +85,23 @@ void UStaticMeshComponent::SetProperties(const TMap<FString, FString>& InPropert
 
 uint32 UStaticMeshComponent::GetNumMaterials() const
 {
-    if (staticMesh == nullptr) return 0;
+    if (StaticMesh == nullptr) return 0;
 
-    return staticMesh->GetMaterials().Num();
+    return StaticMesh->GetMaterials().Num();
 }
 
 UMaterial* UStaticMeshComponent::GetMaterial(uint32 ElementIndex) const
 {
-    if (staticMesh != nullptr)
+    if (StaticMesh != nullptr)
     {
         if (OverrideMaterials[ElementIndex] != nullptr)
         {
             return OverrideMaterials[ElementIndex];
         }
     
-        if (staticMesh->GetMaterials().IsValidIndex(ElementIndex))
+        if (StaticMesh->GetMaterials().IsValidIndex(ElementIndex))
         {
-            return staticMesh->GetMaterials()[ElementIndex]->Material;
+            return StaticMesh->GetMaterials()[ElementIndex]->Material;
         }
     }
     return nullptr;
@@ -109,17 +109,17 @@ UMaterial* UStaticMeshComponent::GetMaterial(uint32 ElementIndex) const
 
 uint32 UStaticMeshComponent::GetMaterialIndex(FName MaterialSlotName) const
 {
-    if (staticMesh == nullptr) return -1;
+    if (StaticMesh == nullptr) return -1;
 
-    return staticMesh->GetMaterialIndex(MaterialSlotName);
+    return StaticMesh->GetMaterialIndex(MaterialSlotName);
 }
 
 TArray<FName> UStaticMeshComponent::GetMaterialSlotNames() const
 {
     TArray<FName> MaterialNames;
-    if (staticMesh == nullptr) return MaterialNames;
+    if (StaticMesh == nullptr) return MaterialNames;
 
-    for (const FStaticMaterial* Material : staticMesh->GetMaterials())
+    for (const FStaticMaterial* Material : StaticMesh->GetMaterials())
     {
         MaterialNames.Emplace(Material->MaterialSlotName);
     }
@@ -129,8 +129,8 @@ TArray<FName> UStaticMeshComponent::GetMaterialSlotNames() const
 
 void UStaticMeshComponent::GetUsedMaterials(TArray<UMaterial*>& Out) const
 {
-    if (staticMesh == nullptr) return;
-    staticMesh->GetUsedMaterials(Out);
+    if (StaticMesh == nullptr) return;
+    StaticMesh->GetUsedMaterials(Out);
     for (int materialIndex = 0; materialIndex < GetNumMaterials(); materialIndex++)
     {
         if (OverrideMaterials[materialIndex] != nullptr)
@@ -140,51 +140,59 @@ void UStaticMeshComponent::GetUsedMaterials(TArray<UMaterial*>& Out) const
     }
 }
 
-int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
+int UStaticMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const
 {
-    if (!AABB.Intersect(rayOrigin, rayDirection, pfNearHitDistance)) return 0;
-    int nIntersections = 0;
-    if (staticMesh == nullptr) return 0;
+    if (!AABB.Intersect(InRayOrigin, InRayDirection, OutHitDistance))
+    {
+        return 0;
+    }
+    if (StaticMesh == nullptr)
+    {
+        return 0;
+    }
 
-    OBJ::FStaticMeshRenderData* renderData = staticMesh->GetRenderData();
+    OutHitDistance = FLT_MAX;
 
-    FStaticMeshVertex* vertices = renderData->Vertices.GetData();
-    int vCount = renderData->Vertices.Num();
-    UINT* indices = renderData->Indices.GetData();
-    int iCount = renderData->Indices.Num();
+    int IntersectionNum = 0;
 
-    if (!vertices) return 0;
-    BYTE* pbPositions = reinterpret_cast<BYTE*>(renderData->Vertices.GetData());
+    OBJ::FStaticMeshRenderData* RenderData = StaticMesh->GetRenderData();
+    const TArray<FStaticMeshVertex>& Vertices = RenderData->Vertices;
+    const int32 VertexNum = Vertices.Num();
+    if (VertexNum == 0)
+    {
+        return 0;
+    }
 
-    int nPrimitives = (!indices) ? (vCount / 3) : (iCount / 3);
-    float fNearHitDistance = FLT_MAX;
-    for (int i = 0; i < nPrimitives; i++) {
-        int idx0, idx1, idx2;
-        if (!indices) {
-            idx0 = i * 3;
-            idx1 = i * 3 + 1;
-            idx2 = i * 3 + 2;
-        }
-        else {
-            idx0 = indices[i * 3];
-            idx2 = indices[i * 3 + 1];
-            idx1 = indices[i * 3 + 2];
+    const TArray<UINT>& Indices = RenderData->Indices;
+    const int32 IndexNum = Indices.Num();
+    const bool bHasIndices = (IndexNum > 0);
+
+    int32 TriangleNum = bHasIndices ? (IndexNum / 3) : (VertexNum / 3);
+    for (int32 i = 0; i < TriangleNum; i++)
+    {
+        int32 Idx0 = i * 3;
+        int32 Idx1 = i * 3 + 1;
+        int32 Idx2 = i * 3 + 2;
+
+        if (bHasIndices)
+        {
+            Idx0 = Indices[Idx0];
+            Idx1 = Indices[Idx1];
+            Idx2 = Indices[Idx2];
         }
 
         // 각 삼각형의 버텍스 위치를 FVector로 불러옵니다.
-        uint32 stride = sizeof(FStaticMeshVertex);
-        FVector v0 = *reinterpret_cast<FVector*>(pbPositions + idx0 * stride);
-        FVector v1 = *reinterpret_cast<FVector*>(pbPositions + idx1 * stride);
-        FVector v2 = *reinterpret_cast<FVector*>(pbPositions + idx2 * stride);
+        FVector v0 = FVector(Vertices[Idx0].X, Vertices[Idx0].Y, Vertices[Idx0].Z);
+        FVector v1 = FVector(Vertices[Idx1].X, Vertices[Idx1].Y, Vertices[Idx1].Z);
+        FVector v2 = FVector(Vertices[Idx2].X, Vertices[Idx2].Y, Vertices[Idx2].Z);
 
-        float fHitDistance;
-        if (IntersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, fHitDistance)) {
-            if (fHitDistance < fNearHitDistance) {
-                pfNearHitDistance = fNearHitDistance = fHitDistance;
-            }
-            nIntersections++;
+        float HitDistance = FLT_MAX;
+        if (IntersectRayTriangle(InRayOrigin, InRayDirection, v0, v1, v2, HitDistance))
+        {
+            OutHitDistance = FMath::Min(HitDistance, OutHitDistance);
+            IntersectionNum++;
         }
 
     }
-    return nIntersections;
+    return IntersectionNum;
 }

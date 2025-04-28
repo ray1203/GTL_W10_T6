@@ -331,7 +331,59 @@ FMatrix FMatrix::GetRotationMatrix(const FQuat& InRotation)
     return Result;
 }
 
-FQuat FMatrix::ToQuat(const FMatrix& M) const
+FQuat FMatrix::ToQuat() const
 {
-    return FQuat(M);
+    return FQuat(*this);
+}
+
+FVector FMatrix::GetScaleVector(float Tolerance) const
+{
+    FVector Scale3D(1, 1, 1);
+
+    // For each row, find magnitude, and if its non-zero re-scale so its unit length.
+    for (int32 i = 0; i < 3; i++)
+    {
+        const float SquareSum = (M[i][0] * M[i][0]) + (M[i][1] * M[i][1]) + (M[i][2] * M[i][2]);
+        if (SquareSum > Tolerance)
+        {
+            Scale3D[i] = FMath::Sqrt(SquareSum);
+        }
+        else
+        {
+            Scale3D[i] = 0.f;
+        }
+    }
+
+    return Scale3D;
+}
+
+FVector FMatrix::GetTranslationVector() const
+{
+    return FVector(M[3][0], M[3][1], M[3][2]);
+}
+
+FMatrix FMatrix::GetMatrixWithoutScale(float Tolerance) const
+{
+    FMatrix Result = *this;
+    Result.RemoveScaling(Tolerance);
+    return Result;
+}
+
+void FMatrix::RemoveScaling(float Tolerance)
+{
+    const float SquareSum0 = (M[0][0] * M[0][0]) + (M[0][1] * M[0][1]) + (M[0][2] * M[0][2]);
+    const float SquareSum1 = (M[1][0] * M[1][0]) + (M[1][1] * M[1][1]) + (M[1][2] * M[1][2]);
+    const float SquareSum2 = (M[2][0] * M[2][0]) + (M[2][1] * M[2][1]) + (M[2][2] * M[2][2]);
+    const float Scale0 = (SquareSum0 - Tolerance) >= 0.f ? FMath::InvSqrt(SquareSum0) : 1.f;
+    const float Scale1 = (SquareSum1 - Tolerance) >= 0.f ? FMath::InvSqrt(SquareSum1) : 1.f;
+    const float Scale2 = (SquareSum2 - Tolerance) >= 0.f ? FMath::InvSqrt(SquareSum2) : 1.f;
+    M[0][0] *= Scale0;
+    M[0][1] *= Scale0;
+    M[0][2] *= Scale0;
+    M[1][0] *= Scale1;
+    M[1][1] *= Scale1;
+    M[1][2] *= Scale1;
+    M[2][0] *= Scale2;
+    M[2][1] *= Scale2;
+    M[2][2] *= Scale2;
 }

@@ -23,8 +23,6 @@ public:
 public:
     UGizmoBaseComponent() = default;
 
-    virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
-
     virtual void TickComponent(float DeltaTime) override;
 
 private:
@@ -35,5 +33,5 @@ public:
     
     void SetGizmoType(EGizmoType InGizmoType) { GizmoType = InGizmoType; }
 
-    float GizmoScale = 0.3f;
+    float GizmoScale = 0.2f;
 };

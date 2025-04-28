@@ -16,14 +16,10 @@ public:
     virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
     virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
     virtual void TickComponent(float DeltaTime) override;
-    virtual int CheckRayIntersection(
-        FVector& rayOrigin,
-        FVector& rayDirection,
-        float& pfNearHitDistance
-    ) override;
+    virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
 
-    virtual void SetTexture(const FWString& _fileName);
-    void SetUUIDParent(USceneComponent* _parent);
+    virtual void SetTexture(const FWString& InFilePath);
+    void SetUUIDParent(USceneComponent* InUUIDParent);
     FMatrix CreateBillboardMatrix() const;
     FString GetTexturePath() const { return TexturePath; }
 
@@ -34,7 +30,7 @@ public:
     bool bIsEditorBillboard = false;
 
 protected:
-    USceneComponent* m_parent = nullptr;
+    USceneComponent* UUIDParent = nullptr;
     FString TexturePath = TEXT("default");
 
     // NDC 픽킹을 위한 내부 함수 : quadVertices는 월드 공간 정점 배열

@@ -25,13 +25,13 @@ public:
     virtual TArray<FName> GetMaterialSlotNames() const override;
     virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
 
-    virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
+    virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
     
-    UStaticMesh* GetStaticMesh() const { return staticMesh; }
+    UStaticMesh* GetStaticMesh() const { return StaticMesh; }
     void SetStaticMesh(UStaticMesh* value)
     { 
-        staticMesh = value;
-        if (staticMesh == nullptr)
+        StaticMesh = value;
+        if (StaticMesh == nullptr)
         {
             OverrideMaterials.SetNum(0);
             AABB = FBoundingBox(FVector::ZeroVector, FVector::ZeroVector);
@@ -39,11 +39,11 @@ public:
         else
         {
             OverrideMaterials.SetNum(value->GetMaterials().Num());
-            AABB = FBoundingBox(staticMesh->GetRenderData()->BoundingBoxMin, staticMesh->GetRenderData()->BoundingBoxMax);
+            AABB = FBoundingBox(StaticMesh->GetRenderData()->BoundingBoxMin, StaticMesh->GetRenderData()->BoundingBoxMax);
         }
     }
 
 protected:
-    UStaticMesh* staticMesh = nullptr;
+    UStaticMesh* StaticMesh = nullptr;
     int selectedSubMeshIndex = -1;
 };
