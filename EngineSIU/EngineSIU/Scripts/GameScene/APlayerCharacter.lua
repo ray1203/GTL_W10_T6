@@ -17,7 +17,7 @@ function ReturnTable:Tick(DeltaTime)
     if self.SpawnTimer >= self.SpawnInterval then
         self.SpawnTimer = self.SpawnTimer - self.SpawnInterval 
         local SpawnLoc = self.this.ActorLocation
-        print("Failed to spawn Bullet")
+        --print("Failed to spawn Bullet")
         SpawnLoc.X = SpawnLoc.X + 2
         SpawnLoc.Z = SpawnLoc.Z + 0.7
         SpawnLoc.Y = SpawnLoc.Y - 0.2
@@ -34,7 +34,7 @@ end
 -- EndPlay: Actor가 파괴되거나 레벨이 전환될 때 호출
 function ReturnTable:EndPlay(EndPlayReason)
     -- print("[Lua] EndPlay called. Reason:", EndPlayReason)
-    print("EndPlay")
+    --print("EndPlay")
 
 end
 

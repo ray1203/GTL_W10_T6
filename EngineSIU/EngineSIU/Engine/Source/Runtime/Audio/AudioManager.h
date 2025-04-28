@@ -9,6 +9,7 @@ enum class EAudioType{
     Goofy,
     MainTheme,
     Shot,
+    ShotBox,
 };
 
 class AudioManager

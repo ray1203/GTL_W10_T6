@@ -1,5 +1,6 @@
 #include "Bullet.h"
 
+#include "Wall.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
 #include "Games/LastWar/Characters/EnemyCharacter.h"
@@ -43,6 +44,10 @@ void ABullet::OnBeginOverlap(AActor* OtherActor)
         return;
     }
     if (LuaScriptComponent && Cast<AEnemyCharacter>(OtherActor))
+    {
+        LuaScriptComponent->ActivateFunction("OnBeginOverlap", OtherActor);
+    }
+    else if (LuaScriptComponent && Cast<AWall>(OtherActor))
     {
         LuaScriptComponent->ActivateFunction("OnBeginOverlap", OtherActor);
     }
