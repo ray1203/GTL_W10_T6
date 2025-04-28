@@ -6,7 +6,7 @@ std::unordered_map<EAudioType, FString> AudioManager::AudioMap = {
     { EAudioType::Mario, "Contents/Audio/mario.mp3" },
     { EAudioType::Goofy, "Contents/Audio/goofy-ahh-car-horn.mp3"},
     { EAudioType::MainTheme, "Contents/Audio/LastWar_Main.mp3" },
-    { EAudioType::Shot, "Contents/Audio/shot.wav"}
+    { EAudioType::Shot, "Contents/Audio/shot.mp3"}
 };
 
 void AudioManager::Initialize()

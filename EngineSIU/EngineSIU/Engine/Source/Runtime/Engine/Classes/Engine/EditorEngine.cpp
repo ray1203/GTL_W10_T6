@@ -187,9 +187,6 @@ void UEditorEngine::StartPIE()
     ACharacter* PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
-    ACharacter* EnemyChracter = ActiveWorld->SpawnActor<AEnemyCharacter>();
-    // AWall* Wall = ActiveWorld->SpawnActor<AWall>();
-
     // 3) 월드에 컨트롤러 등록
     ActiveWorld->AddPlayerController(PC);
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);

@@ -10,7 +10,7 @@ function ReturnTable:BeginPlay()
 
     print("BeginPlay ", self.Name) -- Table에 등록해 준 Name 출력.
     self.this.Speed = 20
-    self.this.VarientValue = -5
+    self.this.VarientValue = math.random(-3, 3)
 
 end
 
