@@ -331,17 +331,13 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
                         else if (SelectedActor)
                         {
                             UE_LOG(LogLevel::Display, "Delete Component - %s", *SelectedActor->GetName());
-                            Engine->DeselectActor(SelectedActor);
-                            Engine->DeselectComponent(SelectedComponent);
-                            Engine->ActiveWorld->DestroyActor(SelectedActor);
+                            SelectedActor->Destroy();
                         }
                     }
                     else if (SelectedActor)
                     {
                         UE_LOG(LogLevel::Display, "Delete Component - %s", *SelectedActor->GetName());
-                        Engine->DeselectActor(SelectedActor);
-                        Engine->DeselectComponent(SelectedComponent);
-                        Engine->ActiveWorld->DestroyActor(SelectedActor);
+                        SelectedActor->Destroy();
                     }
                 }
                 break;

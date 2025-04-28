@@ -398,7 +398,7 @@ void FEditorRenderPass::PrepareRenderArr()
     // gizmo 제외하고 넣기
     for (const auto* Actor : TObjectRange<AActor>())
     {
-        if (Actor->GetWorld() != GEngine->ActiveWorld)
+        if (!Actor->IsActorBeingDestroyed() && Actor->GetWorld() != GEngine->ActiveWorld)
         {
             continue;
         }

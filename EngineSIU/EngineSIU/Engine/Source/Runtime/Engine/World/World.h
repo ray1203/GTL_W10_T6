@@ -14,6 +14,7 @@ class USceneComponent;
 
 class UWorld : public UObject
 {
+    friend class AActor;
     DECLARE_CLASS(UWorld, UObject)
 
 public:
@@ -46,9 +47,6 @@ public:
         requires std::derived_from<T, AActor>
     T* SpawnActor();
 
-    /** World에 존재하는 Actor를 제거합니다. */
-    bool DestroyActor(AActor* ThisActor);
-
     virtual UWorld* GetWorld() const override;
     ULevel* GetActiveLevel() const { return ActiveLevel; }
 
@@ -72,6 +70,9 @@ public:
         return nullptr;
     }
 
+private:
+    /** World에 존재하는 Actor를 제거합니다. */
+    bool DestroyActor(AActor* ThisActor);
     
 private:
     FString WorldName = "DefaultWorld";

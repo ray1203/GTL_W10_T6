@@ -16,7 +16,7 @@ void ULevel::Release()
     for (AActor* Actor : CopiedActors)
     {
         Actor->EndPlay(EEndPlayReason::WorldTransition);
-        OwningWorld->DestroyActor(Actor);
+        Actor->Destroy();
     }
     Actors.Empty();
 }

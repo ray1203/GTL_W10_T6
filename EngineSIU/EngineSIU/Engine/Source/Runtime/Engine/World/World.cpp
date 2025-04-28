@@ -94,8 +94,6 @@ void UWorld::Tick(float DeltaTime)
     }
 }
 
-
-
 void UWorld::Release()
 {
     if (ActiveLevel)
@@ -161,8 +159,6 @@ bool UWorld::DestroyActor(AActor* ThisActor)
 
     // 실제 Remove는 나중에
     PendingDestroyActors.Add(ThisActor);
-
-    GUObjectArray.MarkRemoveObject(ThisActor);
     return true;
 }
 
