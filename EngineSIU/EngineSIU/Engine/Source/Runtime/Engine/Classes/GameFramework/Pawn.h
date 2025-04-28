@@ -62,6 +62,6 @@ protected:
     FVector PendingMovement;
 
     UPROPERTY
-    (float, MoveSpeed, = 10.0f)
+    (float, MoveSpeed, = 6.0f)
 };
 

@@ -38,7 +38,16 @@ void LastWarUI::Render()
 
             // 1) Prepare strings
             char hpBuf[64];
-            snprintf(hpBuf, sizeof(hpBuf), "HP: %.0f", Player->GetHealth());
+            float Health;
+            if (Player->GetHealth() < 0.0f)
+            {
+                Health = 0.0f;
+            }
+            else
+            {
+                Health = Player->GetHealth();
+            }
+            snprintf(hpBuf, sizeof(hpBuf), "HP: %.0f", Health);
 
             char scoreBuf[64];
             snprintf(scoreBuf, sizeof(scoreBuf), "Score: %d", Score);
@@ -142,4 +151,5 @@ void LastWarUI::RestartGame()
 {
     bShowGameOver = false;
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);
+    LastWarUI::Score = 0;
 }

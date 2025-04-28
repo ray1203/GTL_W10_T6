@@ -6,13 +6,25 @@
             "ActorLabel": "OBJ_POINTLIGHT_2160",
             "Components": [
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
+                    "ComponentClass": "UPointLightComponent",
+                    "ComponentID": "PointLightComponent_0",
                     "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
+                        "AABB_Max": "X=1.000 Y=1.000 Z=0.100",
+                        "AABB_Min": "X=-1.000 Y=-1.000 Z=-0.100",
+                        "AttachParentID": "UBillboardComponent_0",
+                        "Attenuation": "20.000000",
+                        "ComponentClass": "UPointLightComponent",
+                        "ComponentName": "PointLightComponent_0",
                         "ComponentOwner": "APointLight_2160",
                         "ComponentOwnerClass": "APointLight",
+                        "Intensity": "5000.000000",
+                        "LightColor": "R=1.000 G=1.000 B=1.000 A=1.000",
+                        "Position": "X=74.761 Y=-17.589 Z=7.839",
+                        "Radius": "200.000000",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "Type": "1",
                         "bAutoActive": "true",
                         "bIsActive": "true"
                     }
@@ -40,25 +52,13 @@
                     }
                 },
                 {
-                    "ComponentClass": "UPointLightComponent",
-                    "ComponentID": "PointLightComponent_0",
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
                     "Properties": {
-                        "AABB_Max": "X=1.000 Y=1.000 Z=0.100",
-                        "AABB_Min": "X=-1.000 Y=-1.000 Z=-0.100",
-                        "AttachParentID": "UBillboardComponent_0",
-                        "Attenuation": "20.000000",
-                        "ComponentClass": "UPointLightComponent",
-                        "ComponentName": "PointLightComponent_0",
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
                         "ComponentOwner": "APointLight_2160",
                         "ComponentOwnerClass": "APointLight",
-                        "Intensity": "5000.000000",
-                        "LightColor": "R=1.000 G=1.000 B=1.000 A=1.000",
-                        "Position": "X=74.761 Y=-17.589 Z=7.839",
-                        "Radius": "200.000000",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "Type": "1",
                         "bAutoActive": "true",
                         "bIsActive": "true"
                     }
@@ -146,28 +146,6 @@
             "ActorLabel": "APointLight2168",
             "Components": [
                 {
-                    "ComponentClass": "UBillboardComponent",
-                    "ComponentID": "UBillboardComponent_0",
-                    "Properties": {
-                        "AABB_max": "X=0.000 Y=0.000 Z=0.000",
-                        "AABB_min": "X=0.000 Y=0.000 Z=0.000",
-                        "AttachParentID": "nullptr",
-                        "BufferKey": "Assets/Editor/Icon/PointLight_64x.png",
-                        "ComponentClass": "UBillboardComponent",
-                        "ComponentName": "UBillboardComponent_0",
-                        "ComponentOwner": "APointLight_2168",
-                        "ComponentOwnerClass": "APointLight",
-                        "FinalIndexU": "0.000000",
-                        "FinalIndexV": "0.000000",
-                        "RelativeLocation": "X=25.619 Y=-17.589 Z=7.839",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "m_Type": "UBillboardComponent"
-                    }
-                },
-                {
                     "ComponentClass": "UPointLightComponent",
                     "ComponentID": "PointLightComponent_0",
                     "Properties": {
@@ -189,6 +167,28 @@
                         "Type": "1",
                         "bAutoActive": "true",
                         "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "UBillboardComponent",
+                    "ComponentID": "UBillboardComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=0.000 Y=0.000 Z=0.000",
+                        "AABB_min": "X=0.000 Y=0.000 Z=0.000",
+                        "AttachParentID": "nullptr",
+                        "BufferKey": "Assets/Editor/Icon/PointLight_64x.png",
+                        "ComponentClass": "UBillboardComponent",
+                        "ComponentName": "UBillboardComponent_0",
+                        "ComponentOwner": "APointLight_2168",
+                        "ComponentOwnerClass": "APointLight",
+                        "FinalIndexU": "0.000000",
+                        "FinalIndexV": "0.000000",
+                        "RelativeLocation": "X=25.619 Y=-17.589 Z=7.839",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": "UBillboardComponent"
                     }
                 },
                 {
@@ -470,18 +470,6 @@
             "ActorLabel": "APointLight2194",
             "Components": [
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
-                        "ComponentOwner": "APointLight_2194",
-                        "ComponentOwnerClass": "APointLight",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "UPointLightComponent",
                     "ComponentID": "PointLightComponent_0",
                     "Properties": {
@@ -525,6 +513,18 @@
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": "UBillboardComponent"
+                    }
+                },
+                {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "APointLight_2194",
+                        "ComponentOwnerClass": "APointLight",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
                     }
                 }
             ],
@@ -610,6 +610,18 @@
             "ActorLabel": "APointLight2204",
             "Components": [
                 {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "APointLight_2204",
+                        "ComponentOwnerClass": "APointLight",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
                     "ComponentClass": "UPointLightComponent",
                     "ComponentID": "PointLightComponent_0",
                     "Properties": {
@@ -653,18 +665,6 @@
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": "UBillboardComponent"
-                    }
-                },
-                {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
-                        "ComponentOwner": "APointLight_2204",
-                        "ComponentOwnerClass": "APointLight",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
                     }
                 }
             ],
@@ -750,6 +750,18 @@
             "ActorLabel": "APointLight2214",
             "Components": [
                 {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "APointLight_2214",
+                        "ComponentOwnerClass": "APointLight",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
                     "ComponentClass": "UPointLightComponent",
                     "ComponentID": "PointLightComponent_0",
                     "Properties": {
@@ -793,18 +805,6 @@
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": "UBillboardComponent"
-                    }
-                },
-                {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
-                        "ComponentOwner": "APointLight_2214",
-                        "ComponentOwnerClass": "APointLight",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
                     }
                 }
             ],
@@ -890,18 +890,6 @@
             "ActorLabel": "APointLight2224",
             "Components": [
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
-                        "ComponentOwner": "APointLight_2224",
-                        "ComponentOwnerClass": "APointLight",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "UPointLightComponent",
                     "ComponentID": "PointLightComponent_0",
                     "Properties": {
@@ -945,6 +933,18 @@
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": "UBillboardComponent"
+                    }
+                },
+                {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "APointLight_2224",
+                        "ComponentOwnerClass": "APointLight",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
                     }
                 }
             ],
@@ -1213,18 +1213,6 @@
             "ActorLabel": "OBJ_FOG_477",
             "Components": [
                 {
-                    "ComponentClass": "ULuaScriptComponent",
-                    "ComponentID": "LuaComponent_0",
-                    "Properties": {
-                        "ComponentClass": "ULuaScriptComponent",
-                        "ComponentName": "LuaComponent_0",
-                        "ComponentOwner": "AHeightFogActor_477",
-                        "ComponentOwnerClass": "AHeightFogActor",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
                     "ComponentClass": "UHeightFogComponent",
                     "ComponentID": "UHeightFogComponent_0",
                     "Properties": {
@@ -1247,6 +1235,18 @@
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "AHeightFogActor_477",
+                        "ComponentOwnerClass": "AHeightFogActor",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
                     }
                 }
             ],
