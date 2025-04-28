@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Editor\UnrealEd\EditorConfigManager.cpp" />
+    <ClCompile Include="Engine\Source\Games\LastWar\Characters\Bullet.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\PlayerCharacter.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Core\Spawner.cpp" />
@@ -418,6 +419,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Games\LastWar\Characters\Bullet.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\PlayerCharacter.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Core\Spawner.h" />

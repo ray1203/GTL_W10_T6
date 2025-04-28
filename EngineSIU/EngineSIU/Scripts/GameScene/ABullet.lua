@@ -1,4 +1,4 @@
-dsetmetatable(_ENV, { __index = EngineTypes })
+setmetatable(_ENV, { __index = EngineTypes })
 
 local ReturnTable = {}
 
@@ -13,6 +13,7 @@ end
 function ReturnTable:Tick(DeltaTime)
     
     local this = self.this
+
     local NewLoc = this.ActorLocation 
     this.ActorLocation = NewLoc + FVector(10.0, 0.0, 0.0) * DeltaTime 
 
@@ -23,8 +24,7 @@ function ReturnTable:EndPlay(EndPlayReason)
     print("EndPlay")
 
 end
-
-function ReturnTable:OnBeginOverlap(OwnerActor, OtherActor)
+function ReturnTable:OnBeginOverlap(OtherActor)
     print("BeginOverlap Bullet", OtherActor)
 
 

@@ -8,7 +8,7 @@ ReturnTable.LifeTimer = 0.0 -- 수명 타이머 추가
 function ReturnTable:BeginPlay()
     print("BeginPlay ", self.Name)
     self.this.Speed = 20
-    self.this.Damage = 100
+    self.this.AttackDamage = 100
     self.LifeTimer = 0.0
 end
 

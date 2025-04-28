@@ -804,6 +804,9 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\ViewportClient.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Audio\AudioManager.cpp" />
+    <ClCompile Include="Engine\Source\Games\LastWar\Core\Spawner.cpp" />
+    <ClCompile Include="Engine\Source\Games\LastWar\Characters\Wall.cpp" />
+    <ClCompile Include="Engine\Source\Games\LastWar\Characters\Bullet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1024,6 +1027,22 @@
     <ClInclude Include="Engine\Source\Runtime\Launch\ShowFlag.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.h" />
     <ClInclude Include="Engine\Source\Runtime\Audio\AudioManager.h" />
+    <ClInclude Include="Engine\Source\Games\LastWar\Core\Spawner.h" />
+    <ClInclude Include="Engine\Source\Games\LastWar\Characters\Wall.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod.hpp" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_codec.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_common.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_dsp.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_dsp_effects.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_errors.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_output.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_studio.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_studio.hpp" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_studio_common.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fsbank.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fsbank_errors.h" />
+    <ClInclude Include="Engine\Source\Games\LastWar\Characters\Bullet.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
@@ -1059,6 +1078,18 @@
     <None Include="Shaders\TileLightCullingComputeShader.hlsl" />
     <None Include="Shaders\VertexBillBoardShader.hlsl" />
     <None Include="Shaders\ComputeDefine.hlsl" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmod.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodL.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodstudio.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodstudioL.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x64\fmod.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x64\fmodL.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x64\fmodstudio.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x64\fmodstudioL.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x86\fmod.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x86\fmodL.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x86\fmodstudio.dll" />
+    <None Include="Engine\Source\ThirdParty\FMOD\bin\x86\fmodstudioL.dll" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\EditorShaderConstants.hlsli" />
@@ -1076,5 +1107,27 @@
     <FxCompile Include="Shaders\DepthCubeMapVS.hlsl" />
     <FxCompile Include="Shaders\PointLightCubemapGS.hlsl" />
     <FxCompile Include="Shaders\CascadedShadowMap.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmod.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodL.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudio.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudioL.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudioL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudio_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmod_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudioL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudio_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmod_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudioL_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudio_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmod_vc.lib" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmod.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodL.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudio.a" />
+    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudioL.a" />
   </ItemGroup>
 </Project>

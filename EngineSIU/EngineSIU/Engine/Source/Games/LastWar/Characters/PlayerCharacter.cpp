@@ -4,6 +4,7 @@
 #include "Engine/FLoaderOBJ.h"
 #include "Delegates/DelegateCombination.h"
 #include "EnemyCharacter.h"
+#include "World/World.h"
 #include "Components/LuaScriptComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
@@ -130,9 +131,38 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
     }
 }
 
+// PlayerCharacter.cpp
+AActor* APlayerCharacter::SpawnActorLua(const std::string& ClassName, const FVector& Location)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+        return nullptr;
+
+    UClass* SpawnClass = UClass::FindClass(ClassName.c_str());
+    if (!SpawnClass)
+    {
+        UE_LOG(LogLevel::Error, TEXT("SpawnActorLua: Cannot find class '%s'"), ClassName);
+        return nullptr;
+    }
+
+    AActor* NewActor = World->SpawnActor(SpawnClass);
+    if (!NewActor)
+    {
+        UE_LOG(LogLevel::Error, TEXT("SpawnActorLua: SpawnActor returned null for '%s'"), ClassName);
+        return nullptr;
+    }
+
+    NewActor->SetActorLocation(Location);
+
+    return NewActor;
+}
+
+
 void APlayerCharacter::RegisterLuaType(sol::state& Lua)
 {
     DEFINE_LUA_TYPE_WITH_PARENT(APlayerCharacter, sol::bases<AActor, APawn, ACharacter>(),
+        "SpawnActorLua", &ThisClass::SpawnActorLua,
+        "ActorLocation", sol::property(&ThisClass::GetActorLocation, &ThisClass::SetActorLocation),
         "Health", sol::property(&ThisClass::GetHealth, &ThisClass::SetHealth),
         "Speed", sol::property(&ThisClass::GetSpeed, &ThisClass::SetSpeed),
         "AttackDamage", sol::property(&ThisClass::GetAttackDamage, &ThisClass::SetAttackDamage)

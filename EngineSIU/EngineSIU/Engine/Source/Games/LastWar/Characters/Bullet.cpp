@@ -2,6 +2,18 @@
 
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
+#include "Games/LastWar/Characters/EnemyCharacter.h"
+#include "Components/Shapes/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/FLoaderOBJ.h"
+ABullet::ABullet()
+{
+    CollisionCapsule = AddComponent<UCapsuleComponent>("CollisionCapsule");
+    RootComponent = CollisionCapsule;
+    BodyMesh = AddComponent<UStaticMeshComponent>("BodyMesh");
+    BodyMesh->SetupAttachment(RootComponent);
+    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
+}
 
 UObject* ABullet::Duplicate(UObject* InOuter)
 {
@@ -13,8 +25,8 @@ UObject* ABullet::Duplicate(UObject* InOuter)
 void ABullet::BeginPlay()
 {
     Super::BeginPlay();
-
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &ABullet::OnBeginOverlap);
+    InitBullet(2, 100);
 }
 
 void ABullet::InitBullet(float InBulletSpeed, float InBulletDamage)
@@ -29,7 +41,7 @@ void ABullet::OnBeginOverlap(AActor* OtherActor)
     {
         return;
     }
-    if (LuaScriptComponent)
+    if (LuaScriptComponent && Cast<AEnemyCharacter>(OtherActor))
     {
         LuaScriptComponent->ActivateFunction("OnBeginOverlap", OtherActor);
     }

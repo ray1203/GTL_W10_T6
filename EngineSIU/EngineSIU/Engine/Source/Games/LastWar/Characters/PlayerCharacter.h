@@ -52,6 +52,10 @@ public:
 
     FDelegateHandle OnPlayerDeathHandle;
 
+protected:
+    AActor* SpawnActorLua(const std::string& ClassName, const FVector& Location);
+
+
 private:
     UPROPERTY
     (UCameraComponent*, FollowCamera, = nullptr);

@@ -2,13 +2,14 @@
 
 #include "GameFramework/Actor.h"
 
+class UStaticMeshComponent;
+class UCapsuleComponent;
 class ABullet : public AActor
 {
     DECLARE_CLASS(ABullet, AActor)
 
 public:
-    ABullet() = default;
-
+    ABullet();
     virtual UObject* Duplicate(UObject* InOuter) override;
     virtual void BeginPlay() override;
 
@@ -31,5 +32,13 @@ public:
 private:
     float BulletSpeed = 0.0f;
     float BulletDamage = 0.0f;
+
+protected:
+
+    UPROPERTY
+    (UStaticMeshComponent*, BodyMesh, = nullptr);
+
+    UPROPERTY
+    (UCapsuleComponent*, CollisionCapsule, = nullptr);
 };
 
