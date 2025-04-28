@@ -92,9 +92,17 @@ void APlayerCharacter::MoveForward(float Value)
 
 void APlayerCharacter::MoveRight(float Value)
 {
-    if (Value != 0.0f)
+    if (Controller && Value != 0.0f)
     {
-        AddMovementInput(GetActorRightVector(), Value);
+        AddMovementInput(FVector::RightVector, Value);
+
+        FVector Location = GetActorLocation();
+        if (Location.Y > 14.0f)
+            Location.Y = 14.0f;
+        else if (Location.Y < -16.0f)
+            Location.Y = -16.0f;
+
+        SetActorLocation(Location);
     }
 }
 
