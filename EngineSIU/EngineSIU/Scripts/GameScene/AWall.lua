@@ -30,8 +30,21 @@ function ReturnTable:EndPlay(EndPlayReason)
     -- print("[Lua] EndPlay called. Reason:", EndPlayReason) -- EndPlayReason Type 등록된 이후 사용 가능.
     print("EndPlay")
 
+    function ReturnTable:OnOverlap(Other, Damage)
+    
+        --print("Other Damage", Damage)
+        self.this.VarientValue = self.this.VarientValue + 1;
+        --Other:Destroy()
+        --self.this.Health = self.this.Health - Other.Damage
+        --print("Health ", self.this.Health)
+    
+    
+    end
+
 end
 
-
-
 return ReturnTable
+
+
+
+

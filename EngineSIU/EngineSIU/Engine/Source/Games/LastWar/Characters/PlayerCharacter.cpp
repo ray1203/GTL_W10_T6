@@ -152,7 +152,7 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
             LuaScriptComponent->ActivateFunction("OnOverlapWall", OtherActor, Wall->GetVarientValue());
         }
 
-        AudioManager::Get().PlayOneShot(EAudioType::Goofy);
+        AudioManager::Get().PlayOneShot(EAudioType::Shot);
     }
 
     if (Health <= 0.0f)

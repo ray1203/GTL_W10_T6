@@ -63,6 +63,7 @@ void AWall::SetProperties(const TMap<FString, FString>& InProperties)
     }
 }
 
+
 void AWall::RegisterLuaType(sol::state& Lua)
 {
     DEFINE_LUA_TYPE_WITH_PARENT(AWall, sol::bases<AStaticMeshActor, AActor>(),
