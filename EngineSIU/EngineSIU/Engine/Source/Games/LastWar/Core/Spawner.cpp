@@ -30,7 +30,6 @@ UObject* ASpawnerActor::Duplicate(UObject* InOuter)
 }
 
 AActor* ASpawnerActor::SpawnActorLua(const std::string& ClassName, const FVector& Location)
-
 {
     UWorld* World = GetWorld();
     if (!World)

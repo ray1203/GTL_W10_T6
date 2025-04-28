@@ -72,6 +72,7 @@ void UPrimitiveComponent::UpdateOverlaps()
         if (Other->GetWorld() != Owner->GetWorld()) continue;
         if (Other == this || !Cast<UShapeComponent>(Other)) continue;
         if (Owner == Other->GetOwner()) continue;
+        if (!Other->GetOverlapCheck()) continue;
 
         if (CheckOverlap(Other))
         {

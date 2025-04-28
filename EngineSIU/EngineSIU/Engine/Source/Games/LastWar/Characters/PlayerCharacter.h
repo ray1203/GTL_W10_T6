@@ -1,4 +1,5 @@
 #pragma once
+#include "Components/Shapes/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 
 class UCameraComponent;
@@ -46,7 +47,11 @@ public:
     void SetHealth(float NewHealth) { Health = NewHealth; }
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
     void SetAttackDamage(float NewAttackDamage) { AttackDamage = NewAttackDamage; }
+    void AddCharacterMeshCount(int32 InCount);
 
+
+    void SetCharacterMeshCount(int32 InCount);
+    
     // Delegate
     FOnCharacterDeath OnDeath;
 
@@ -58,8 +63,17 @@ protected:
 
 private:
     UPROPERTY
-    (UCameraComponent*, FollowCamera, = nullptr);
+    (TArray<UStaticMeshComponent*>, StaticMeshComponents);
 
+    UPROPERTY
+    (TArray<UCapsuleComponent*>, CapsuleComponents);
+    
+    UPROPERTY
+    (UCameraComponent*, FollowCamera, = nullptr);
+    
+    UPROPERTY
+    (int32, CharacterMeshCount, = 0)
+    
     UPROPERTY
     (float, Health, = 100.0f)
 

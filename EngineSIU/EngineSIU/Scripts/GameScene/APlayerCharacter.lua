@@ -7,6 +7,7 @@ ReturnTable.SpawnInterval = 0.8
 function ReturnTable:BeginPlay()
 
     print("BeginPlay ", self.Name)
+    self.this:SetCharacterMeshCount(1)
     self.SpawnTimer = 0.0
 end
 
@@ -34,13 +35,17 @@ function ReturnTable:EndPlay(EndPlayReason)
 
 end
 
-function ReturnTable:OnOverlap(Other, Damage)
+function ReturnTable:OnOverlapEnemy(Other, Damage)
     print("Other Damage", Damage)
     Other:Destroy()
     self.this.Health = self.this.Health - Damage
     print("Health ", self.this.Health)
+end
 
-
+function ReturnTable:OnOverlapWall(Other, VarientValue)
+    print("Wall", VarientValue)
+    Other:Destroy()
+    self.this:AddCharacterMeshCount(VarientValue)
 end
 
 return ReturnTable
