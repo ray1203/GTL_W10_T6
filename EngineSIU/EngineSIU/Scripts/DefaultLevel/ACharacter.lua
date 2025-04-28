@@ -1,4 +1,4 @@
--- EngineTypes를 전역으로 설정.
+
 setmetatable(_ENV, { __index = EngineTypes })
 
 -- Template은 AActor라는 가정 하에 작동.
@@ -21,9 +21,7 @@ function ReturnTable:Tick(DeltaTime)
     -- sol::property로 등록된 변수는 변수 사용으로 getter, setter 등록이 되어 .(dot) 으로 접근가능하고
     -- 바로 등록된 경우에는 PropertyName() 과 같이 함수 형태로 호출되어야 함.
     local this = self.this
-
-    local NewLoc = this.ActorLocation -- 현재 Actor Location 변수로 저장
-    this.ActorLocation = NewLoc + FVector(1.0, 0.0, 0.0) * DeltaTime -- X 방향으로 이동하도록 선언.
+    -- this.ActorLocation = this.ActorLocation + FVector(1.0, 0.0, 0.0) * DeltaTime -- X 방향으로 이동하도록 선언.
 
 end
 

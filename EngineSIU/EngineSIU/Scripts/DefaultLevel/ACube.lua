@@ -1,6 +1,6 @@
-local ReturnTable = {}
+setmetatable(_ENV, { __index = EngineTypes })
 
-local FVector = EngineTypes.FVector
+local ReturnTable = {}
 
 -- BeginPlay: Actor가 처음 활성화될 때 호출
 function ReturnTable:BeginPlay()
@@ -17,6 +17,7 @@ function ReturnTable:Tick(DeltaTime)
     local NewLoc = this.ActorLocation
     NewLoc.X = NewLoc.X + 1.0 * DeltaTime
     this.ActorLocation = NewLoc
+    this.ActorLocation = this.ActorLocation + FVector(0.0, 1.0, 0.0) * DeltaTime
 
 end
 
