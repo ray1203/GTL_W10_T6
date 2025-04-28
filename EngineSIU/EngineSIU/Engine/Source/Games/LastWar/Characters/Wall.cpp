@@ -1,4 +1,8 @@
 #include "Wall.h"
+
+#include "Bullet.h"
+#include "PlayerCharacter.h"
+#include "Audio/AudioManager.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/FLoaderOBJ.h"
 #include "Components/LuaScriptComponent.h"
@@ -39,6 +43,7 @@ UObject* AWall::Duplicate(UObject* InOuter)
 void AWall::BeginPlay()
 {
     Super::BeginPlay();
+    OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &AWall::HandleOverlap);
 }
 
 void AWall::Tick(float DeltaTime)
@@ -63,6 +68,25 @@ void AWall::SetProperties(const TMap<FString, FString>& InProperties)
     }
 }
 
+void AWall::HandleOverlap(AActor* OtherActor)
+{
+    if (IsActorBeingDestroyed())  
+    {  
+        return;  
+    }
+
+    UE_LOG(LogLevel::Display, "Handle Overlap %s,  %s", GetData(OtherActor->GetName()), GetData(GetName()));
+
+    if (ABullet* Bullet = Cast<ABullet>(OtherActor))
+    {
+        if (LuaScriptComponent)
+        {
+            LuaScriptComponent->ActivateFunction("OnOverlapBullet", OtherActor);
+        }
+
+        AudioManager::Get().PlayOneShot(EAudioType::ShotBox);
+    }
+}
 
 void AWall::RegisterLuaType(sol::state& Lua)
 {

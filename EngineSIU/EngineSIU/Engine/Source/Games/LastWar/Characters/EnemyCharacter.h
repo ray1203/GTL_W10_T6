@@ -18,7 +18,8 @@ public:
 
     /** 저장된 Properties 맵에서 액터의 상태를 복원합니다. */
     void SetProperties(const TMap<FString, FString>& InProperties) override;
-    
+    void OnBeginOverlap(AActor* OtherActor);
+
     // === Lua 관련 ===
     virtual void RegisterLuaType(sol::state& Lua) override; // Lua에 클래스 등록해주는 함수.
     virtual bool BindSelfLuaProperties() override; // LuaEnv에서 사용할 멤버 변수 등록 함수.

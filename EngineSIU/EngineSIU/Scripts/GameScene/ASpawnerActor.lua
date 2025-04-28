@@ -61,7 +61,7 @@ function ReturnTable:Tick(DeltaTime)
 end
 
 function ReturnTable:EndPlay(EndPlayReason)
-    print("EndPlay SpawnerActor")
+   -- print("EndPlay SpawnerActor")
 end
 
 return ReturnTable

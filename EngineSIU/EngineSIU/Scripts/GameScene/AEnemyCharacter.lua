@@ -6,7 +6,7 @@ ReturnTable.LifeTimer = 0.0 -- 수명 타이머 추가
 
 -- BeginPlay: Actor가 처음 활성화될 때 호출
 function ReturnTable:BeginPlay()
-    print("BeginPlay ", self.Name)
+    --print("BeginPlay ", self.Name)
     self.this.Speed = 20
     self.this.AttackDamage = 50
     self.LifeTimer = 0.0
@@ -27,7 +27,17 @@ end
 
 -- EndPlay: Actor가 파괴되거나 레벨이 전환될 때 호출
 function ReturnTable:EndPlay(EndPlayReason)
-    print("EndPlay")
+    --print("EndPlay")
+end
+
+function ReturnTable:OnOverlapBullet(Other)
+    print("Other Damage", Other.BulletDamage)
+    Other:Destroy()
+    self.this.Health = self.this.Health - Other.BulletDamage
+    print("Health ", self.this.Health)
+    if self.this.Health <= 0 then
+        self.this:Destroy()
+    end
 end
 
 return ReturnTable

@@ -1,4 +1,6 @@
 #include "EnemyCharacter.h"
+
+#include "Bullet.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/FLoaderOBJ.h"
 #include "Components/LuaScriptComponent.h"
@@ -18,6 +20,7 @@ AEnemyCharacter::AEnemyCharacter()
 void AEnemyCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &AEnemyCharacter::OnBeginOverlap);
 }
 
 void AEnemyCharacter::Tick(float DeltaTime)
@@ -51,6 +54,21 @@ void AEnemyCharacter::SetProperties(const TMap<FString, FString>& InProperties)
     if (TempStr)
     {
         Damage = std::stof(GetData(*TempStr));
+    }
+}
+
+void AEnemyCharacter::OnBeginOverlap(AActor* OtherActor)
+{
+    if (OtherActor == this)
+    {
+        return;
+    }
+    if (ABullet* Bullet = Cast<ABullet>(OtherActor))
+    {
+        if (LuaScriptComponent)
+        {
+            LuaScriptComponent->ActivateFunction("OnOverlapBullet", Bullet);
+        }
     }
 }
 
