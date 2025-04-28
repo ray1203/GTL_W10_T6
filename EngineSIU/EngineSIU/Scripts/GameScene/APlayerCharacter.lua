@@ -18,6 +18,9 @@ function ReturnTable:Tick(DeltaTime)
         self.SpawnTimer = self.SpawnTimer - self.SpawnInterval 
         local SpawnLoc = self.this.ActorLocation
         print("Failed to spawn Bullet")
+        SpawnLoc.X = SpawnLoc.X + 2
+        SpawnLoc.Z = SpawnLoc.Z + 0.7
+        SpawnLoc.Y = SpawnLoc.Y - 0.2
         local NewActor = self.this:SpawnActorLua("ABullet", SpawnLoc)
 
         if NewActor ~= nil then
