@@ -803,6 +803,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\OverlapInfo.h" />
     <ClCompile Include="Engine\Source\Runtime\Engine\ViewportClient.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Audio\AudioManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1022,6 +1023,7 @@
     <ClInclude Include="Engine\Source\Runtime\Core\Math\ShapeInfo.h" />
     <ClInclude Include="Engine\Source\Runtime\Launch\ShowFlag.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.h" />
+    <ClInclude Include="Engine\Source\Runtime\Audio\AudioManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

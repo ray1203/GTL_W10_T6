@@ -2,6 +2,7 @@
 #include "ImGuiManager.h"
 #include "UnrealClient.h"
 #include "WindowsPlatformTime.h"
+#include "Audio/AudioManager.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "Engine/EditorEngine.h"
 #include "LevelEditor/SLevelEditor.h"
@@ -55,6 +56,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
 
     UnrealEditor->Initialize();
     GraphicDevice.Initialize(AppWnd);
+    AudioManager::Get().Initialize();
 
     if (!GPUTimingManager.Initialize(GraphicDevice.Device, GraphicDevice.DeviceContext))
     {
@@ -162,6 +164,7 @@ void FEngineLoop::Tick()
 
         const float DeltaTime = static_cast<float>(ElapsedTime / 1000.f);
 
+        AudioManager::Get().Tick();
         GEngine->Tick(DeltaTime);
         LevelEditor->Tick(DeltaTime);
         Render();
@@ -207,6 +210,7 @@ void FEngineLoop::GetClientSize(uint32& OutWidth, uint32& OutHeight) const
 
 void FEngineLoop::Exit()
 {
+    AudioManager::Get().Release();
     LevelEditor->Release();
     UIMgr->Shutdown();
     ResourceManager.Release(&Renderer);
