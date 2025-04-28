@@ -20,7 +20,6 @@
 APlayerCharacter::APlayerCharacter()
 {
     BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
-    CollisionCapsule->SetOverlapCheck(false);
 
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
@@ -218,43 +217,33 @@ bool APlayerCharacter::BindSelfLuaProperties()
 void APlayerCharacter::AddCharacterMeshCount(int32 InCount)
 {
     CharacterMeshCount += InCount;
-    CharacterMeshCount = FMath::Max(0, CharacterMeshCount);
+    CharacterMeshCount = FMath::Max(1, CharacterMeshCount);
     SetCharacterMeshCount(CharacterMeshCount);
 }
 
 void APlayerCharacter::SetCharacterMeshCount(int32 InCount)
 {
     CharacterMeshCount = InCount;
-    CharacterMeshCount = FMath::Max(0, CharacterMeshCount);
+    CharacterMeshCount = FMath::Max(1, CharacterMeshCount);
     
     while (StaticMeshComponents.Num() < CharacterMeshCount)
     {
-        UCapsuleComponent* CapsuleComponent = AddComponent<UCapsuleComponent>();
-        CapsuleComponents.Add(CapsuleComponent);
-        CapsuleComponent->SetupAttachment(RootComponent);
-        
         UStaticMeshComponent* StaticMeshComponent = AddComponent<UStaticMeshComponent>();
         StaticMeshComponents.Add(StaticMeshComponent);
         StaticMeshComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
-        StaticMeshComponent->SetupAttachment(CapsuleComponent);
+        StaticMeshComponent->SetupAttachment(RootComponent);
     }
 
     while (StaticMeshComponents.Num() > CharacterMeshCount)
     {
-        UCapsuleComponent* CapsuleComponent = CapsuleComponents[CapsuleComponents.Num() - 1];
         UStaticMeshComponent* StaticMeshComponent = StaticMeshComponents[StaticMeshComponents.Num() - 1];
 
-        CapsuleComponents.RemoveAt(CapsuleComponents.Num() - 1);
         StaticMeshComponents.RemoveAt(StaticMeshComponents.Num() - 1);
         
 
         if (UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine))
         {
-            if (EditorEngine->GetSelectedComponent() == CapsuleComponent)
-            {
-                EditorEngine->DeselectComponent(CapsuleComponent);
-            }
-            else if (EditorEngine->GetSelectedComponent() == StaticMeshComponent)
+            if (EditorEngine->GetSelectedComponent() == StaticMeshComponent)
             {
                 EditorEngine->DeselectComponent(StaticMeshComponent);
             }
@@ -262,17 +251,20 @@ void APlayerCharacter::SetCharacterMeshCount(int32 InCount)
         
         // 순서 조심
         StaticMeshComponent->DestroyComponent();
-        CapsuleComponent->DestroyComponent();
     }
 
 
-    for (int i = 0; i < CapsuleComponents.Num(); i++)
+    constexpr float weight = .4f;
+    for (int i = 0; i < StaticMeshComponents.Num(); i++)
     {
-        constexpr float weight = .4f;
         float distance = FMath::Sqrt(static_cast<float>(i)) * weight;
         float cos = FMath::Cos(i * 100.f) * distance;
         float sin = FMath::Sin(i * 100.f) * distance;
-        CapsuleComponents[i]->SetRelativeLocation(FVector(cos, sin, CapsuleComponents[i]->GetRelativeLocation().Z));
-    }    
+        StaticMeshComponents[i]->SetRelativeLocation(FVector(cos, sin, StaticMeshComponents[i]->GetRelativeLocation().Z));
+    }
+
+    float Distance = 1 + FMath::Sqrt(static_cast<float>(StaticMeshComponents.Num())) * weight;
+    CollisionCapsule->SetHalfHeight(Distance);
+    CollisionCapsule->SetRadius(Distance);
 }
  

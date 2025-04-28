@@ -64,9 +64,6 @@ protected:
 private:
     UPROPERTY
     (TArray<UStaticMeshComponent*>, StaticMeshComponents);
-
-    UPROPERTY
-    (TArray<UCapsuleComponent*>, CapsuleComponents);
     
     UPROPERTY
     (UCameraComponent*, FollowCamera, = nullptr);
