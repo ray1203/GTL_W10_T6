@@ -170,6 +170,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\EditorConfigManager.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\Bullet.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.cpp" />
@@ -317,6 +318,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\ShapeComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Lua\LuaScriptManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\Lua\LuaTypes\LuaUserTypes.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Camera\PlayerCameraManager.cpp" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmod.dll" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodL.dll" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodstudio.dll" />
@@ -419,6 +421,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\Bullet.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\PlayerCharacter.h" />
@@ -756,6 +759,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\ShapeComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Lua\LuaScriptManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Lua\LuaTypes\LuaUserTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Camera\PlayerCameraManager.h" />
     <None Include="Shaders\EditorShaderConstants.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
