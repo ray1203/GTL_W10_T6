@@ -128,3 +128,12 @@ void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
     SetCameraCachePOV(NewInfo);
     SetCameraCacheTime(CurrentGameTime);
 }
+
+void APlayerCameraManager::StartCameraFade(float FromAlpha, float ToAlpha, float Duration, const FLinearColor& Color)
+{
+    FadeAlpha = FVector2D(FromAlpha, ToAlpha);
+    FadeTime = Duration;
+    FadeTimeRemaining = Duration;
+    FadeColor = Color;
+    FadeAmount = FromAlpha;
+}

@@ -8,6 +8,7 @@
 #include "Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
+#include "Camera/PlayerCameraManager.h"
 
 UWorld* UWorld::CreateWorld(UObject* InOuter, const EWorldType InWorldType, const FString& InWorldName)
 {
@@ -36,16 +37,19 @@ UObject* UWorld::Duplicate(UObject* InOuter)
 void UWorld::BeginPlay()
 {
     for (AActor* Actor : ActiveLevel->Actors)
+    {
+        if (Actor->GetWorld() == this)
         {
-            if (Actor->GetWorld() == this)
+            Actor->BeginPlay();
+            if (PendingBeginPlayActors.Contains(Actor))
             {
-                Actor->BeginPlay();
-                if (PendingBeginPlayActors.Contains(Actor))
-                {
-                    PendingBeginPlayActors.Remove(Actor);
-                }
+                PendingBeginPlayActors.Remove(Actor);
             }
         }
+    }
+
+    if (WorldType == EWorldType::PIE)
+        PlayerControllers[0]->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
 }
 
 void UWorld::Tick(float DeltaTime)
@@ -59,11 +63,13 @@ void UWorld::Tick(float DeltaTime)
 
     if (WorldType != EWorldType::Editor)
     {
-        for (AActor* Actor : PendingBeginPlayActors)
+        TArray<AActor*> PendingActors = PendingBeginPlayActors;
+        for (AActor* Actor : PendingActors)
         {
             Actor->BeginPlay();
+            if (PendingBeginPlayActors.Contains(Actor))
+                PendingBeginPlayActors.Remove(Actor);
         }
-        PendingBeginPlayActors.Empty();
     }
     TArray<AActor*> ActorsCopy = GetActiveLevel()->Actors;
 

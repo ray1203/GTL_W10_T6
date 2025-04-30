@@ -26,6 +26,7 @@ public:
 
     bool Equals(const FViewTarget& Other) const;
 
+
 };
 
 /**
@@ -58,6 +59,7 @@ public:
 
     virtual void RegisterLuaType(sol::state& Lua) override;
     virtual bool BindSelfLuaProperties() override;
+    void StartCameraFade(float FromAlpha, float ToAlpha, float Duration, const FLinearColor& Color);
 
     virtual void UpdateCamera(float DeltaTime);
 
@@ -117,7 +119,6 @@ private:
 
 public:
     void FillCameraCache(const FMinimalViewInfo& NewInfo);
-
 
 };
 
