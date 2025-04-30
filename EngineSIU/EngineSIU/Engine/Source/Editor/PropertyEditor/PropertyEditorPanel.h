@@ -71,5 +71,5 @@ private:
     FObjMaterialInfo tempMaterialInfo;
     bool IsCreateMaterial;
 
-    const FString TemplateFilePath = FString("Contents/Template/LuaTemplate.lua");
+    const FString TemplateFilePath = FString("Scripts/LuaTemplate.lua");
 };
