@@ -203,3 +203,48 @@ FMatrix JungleMath::CreateRotationMatrix(FVector rotation)
     }
     return result;
 }
+
+FVector JungleMath::VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
+{
+    // If no interp speed, jump to target value
+    if (InterpSpeed <= 0.f)
+    {
+        return Target;
+    }
+
+    // Distance to reach
+    const FVector Dist = Target - Current;
+
+    // If distance is too small, just set the desired location
+    if (Dist.SizeSquared() < SMALL_NUMBER)
+    {
+        return Target;
+    }
+
+    // Delta Move, Clamp so we do not over shoot.
+    const FVector	DeltaMove = Dist * FMath::Clamp<float>(DeltaTime * InterpSpeed, 0.f, 1.f);
+
+    return Current + DeltaMove;
+}
+
+// 일정 속도 보간 (FMath::VInterpToConstantTo 유사)
+FVector JungleMath::VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
+{
+    const FVector Delta = Target - Current;
+    const float DeltaM = Delta.Length();
+    const float MaxStep = InterpSpeed * DeltaTime;
+
+    if (DeltaM > MaxStep)
+    {
+        if (MaxStep > 0.f)
+        {
+            const FVector DeltaN = Delta / DeltaM;
+            return Current + DeltaN * MaxStep;
+        }
+        else
+        {
+            return Current;
+        }
+    }
+
+    return Target;

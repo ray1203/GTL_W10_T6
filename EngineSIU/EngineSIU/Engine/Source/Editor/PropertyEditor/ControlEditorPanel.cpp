@@ -27,6 +27,7 @@
 #include "Actors/AmbientLightActor.h"
 
 #include "Games/LastWar/Core/Spawner.h"
+#include "ImGUI/imgui.h"
 
 void ControlEditorPanel::Render()
 {

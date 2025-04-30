@@ -83,8 +83,8 @@ void FViewportClient::UpdateViewMatrix()
         if (PlayerCamera)
         {
             View = JungleMath::CreateViewMatrix(
-                PlayerCamera->GetLocation(),
-                PlayerCamera->GetLocation() + PlayerCamera->GetForwardVector(),
+                PlayerCamera->GetWorldLocation(),
+                PlayerCamera->GetWorldLocation() + PlayerCamera->GetForwardVector(),
                 PlayerCamera->GetUpVector()
             );
         }

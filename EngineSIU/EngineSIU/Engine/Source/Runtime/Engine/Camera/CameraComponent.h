@@ -4,6 +4,12 @@
 #define MIN_ORTHOZOOM (1.0)  // 2D ortho viewport zoom >= MIN_ORTHOZOOM
 #define MAX_ORTHOZOOM (1e25)
 
+enum class CameraProjectionMode : uint8
+{
+    Perspective,
+    Orthographic,
+};
+
 class UCameraComponent : public USceneComponent
 {
     DECLARE_CLASS(UCameraComponent, USceneComponent)
@@ -11,15 +17,7 @@ class UCameraComponent : public USceneComponent
 public:
     UCameraComponent() = default; 
 
-    void SetLocation(const FVector& Position){ ViewLocation = Position; }
-    void SetRotation(const FVector& Rotation){ ViewRotation = Rotation; }
-    void SetLookAt(const FVector& InLookAt) { LookAt = InLookAt; }
-    void SetOrthoZoom(float InOrthoZoom) { assert(InOrthoZoom >= MIN_ORTHOZOOM && InOrthoZoom <= MAX_ORTHOZOOM); OrthoZoom = InOrthoZoom; }
-    const FVector& GetLocation() const { return ViewLocation; }
-    const FVector& GetRotation() const { return ViewRotation; }
-    const FVector& GetLookAt() const { return LookAt; }
-    float GetOrthoZoom() const { return OrthoZoom; }
-
+    // 카메라의 위치와 회전 설정
     float GetFOV() const { return ViewFOV; }
     float GetAspectRatio() const { return AspectRatio; }
     float GetNearClip() const { return NearClip; }
@@ -29,36 +27,20 @@ public:
     void SetNearClip(float InNearClip) { NearClip = InNearClip; }
     void SetFarClip(float InFarClip) { FarClip = InFarClip; }
 
-    FMatrix& GetViewMatrix() { return View; }
-    FMatrix& GetProjectionMatrix() { return Projection; }
-    void UpdateViewMatrix();
-    void UpdateProjectionMatrix();
-    void UpdateOrthoCameraLoc();
+    float GetOrthoZoom() const { return OrthoZoom; }
+    void SetOrthoZoom(float InOrthoZoom) { assert(InOrthoZoom >= MIN_ORTHOZOOM && InOrthoZoom <= MAX_ORTHOZOOM); OrthoZoom = InOrthoZoom; }
 
-    FVector GetForwardVector() const;
-    FVector GetRightVector() const;
-    FVector GetUpVector() const;
-
-    bool IsOrthographic() const;
-    bool IsPerspective() const;
+    // 카메라의 프로젝션 모드 설정
+    void SetProjectionMode(CameraProjectionMode InProjectionMode){ ProjectionMode = InProjectionMode; }
+    CameraProjectionMode GetProjectionMode() const { return ProjectionMode; }
 
 private:
-    FVector ViewLocation;
-    FVector ViewRotation;
-    FVector DesiredLocation;
-    FVector LookAt;
-    FVector StartLocation;
-
-    float OrthoZoom;
-    float OrthoSize = 10.0f;
-    FVector Pivot = FVector(0.0f, 0.0f, 0.0f);
-
     // 카메라 정보 
     float ViewFOV = 90.0f;
     float AspectRatio;
     float NearClip = 0.1f;
     float FarClip = 1000.0f;
+    float OrthoZoom;
 
-    FMatrix View;
-    FMatrix Projection;
+    CameraProjectionMode ProjectionMode = CameraProjectionMode::Perspective;
 };

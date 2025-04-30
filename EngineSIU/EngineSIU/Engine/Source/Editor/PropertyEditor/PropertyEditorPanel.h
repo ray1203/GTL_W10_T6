@@ -3,7 +3,6 @@
 #include "Components/ActorComponent.h"
 #include "Components/Shapes/ShapeComponent.h"
 #include "UnrealEd/EditorPanel.h"
-#include "Math/Rotator.h"
 
 class ULightComponentBase;
 class AEditorPlayer;
@@ -19,22 +18,7 @@ class UStaticMeshComponent;
 
 // 헬퍼 함수 예시
 template<typename Getter, typename Setter>
-void DrawColorProperty(const char* Label, Getter Get, Setter Set)
-{
-    ImGui::PushItemWidth(200.0f);
-    const FLinearColor CurrentColor = Get();
-    float Col[4] = { CurrentColor.R, CurrentColor.G, CurrentColor.B, CurrentColor.A };
-
-    if (ImGui::ColorEdit4(Label, Col,
-        ImGuiColorEditFlags_DisplayRGB |
-        ImGuiColorEditFlags_NoSidePreview |
-        ImGuiColorEditFlags_NoInputs |
-        ImGuiColorEditFlags_Float))
-    {
-        Set(FLinearColor(Col[0], Col[1], Col[2], Col[3]));
-    }
-    ImGui::PopItemWidth();
-}
+void DrawColorProperty(const char* Label, Getter Get, Setter Set);
 
 
 class PropertyEditorPanel : public UEditorPanel
