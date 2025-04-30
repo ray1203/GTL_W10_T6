@@ -7,6 +7,7 @@
 #include "UnrealEd/SceneManager.h"
 #include "Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerController.h"
 
 UWorld* UWorld::CreateWorld(UObject* InOuter, const EWorldType InWorldType, const FString& InWorldName)
 {
@@ -117,6 +118,20 @@ AActor* UWorld::SpawnActor(UClass* InClass, FName InActorName)
     }
 
     UE_LOG(LogLevel::Error, TEXT("SpawnActor failed: Class '%s' is not derived from AActor."), *InClass->GetName());
+    return nullptr;
+}
+
+void UWorld::AddPlayerController(APlayerController* InPlayerController)
+{
+    PlayerControllers.Add(InPlayerController);
+}
+
+APlayerController* UWorld::GetFirstPlayerController()
+{
+    if (PlayerControllers.Num() > 0)
+    {
+        return PlayerControllers[0];
+    }
     return nullptr;
 }
 

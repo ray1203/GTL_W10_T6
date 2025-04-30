@@ -7,6 +7,7 @@
 #include "EngineLoop.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
+#include "GameFramework/PlayerController.h"
 #include "Engine/Engine.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "Math/JungleMath.h"

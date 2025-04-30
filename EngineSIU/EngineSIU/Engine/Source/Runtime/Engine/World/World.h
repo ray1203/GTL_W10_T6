@@ -56,19 +56,9 @@ public:
 
     EWorldType WorldType = EWorldType::None;
 
-    void AddPlayerController(APlayerController* InPlayerController)
-    {
-        PlayerControllers.Add(InPlayerController);
-    }
+    void AddPlayerController(APlayerController* InPlayerController);
 
-    APlayerController* GetFirstPlayerController()
-    {
-        if (PlayerControllers.Num() > 0)
-        {
-            return PlayerControllers[0];
-        }
-        return nullptr;
-    }
+    APlayerController* GetFirstPlayerController();
 
 private:
     /** World에 존재하는 Actor를 제거합니다. */
