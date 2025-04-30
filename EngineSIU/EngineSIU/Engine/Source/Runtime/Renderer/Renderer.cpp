@@ -17,6 +17,7 @@
 #include "SlateRenderPass.h"
 #include "EditorRenderPass.h"
 #include "DepthPrePass.h"
+#include "FadeRenderpass.h"
 #include "TileLightCullingPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
@@ -69,6 +70,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     CompositingPass = new FCompositingPass();
     PostProcessCompositingPass = new FPostProcessCompositingPass();
     SlateRenderPass = new FSlateRenderPass();
+    FadeRenderPass = new FFadeRenderPass();
 
     if (false == ShadowManager->Initialize(Graphics, BufferManager))
     {
@@ -93,6 +95,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
 
     CompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
     PostProcessCompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
+    FadeRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     
     SlateRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
 }
@@ -165,6 +168,10 @@ void FRenderer::CreateConstantBuffers()
     UINT LightInfoBufferSize = sizeof(FLightInfoBuffer);
     BufferManager->CreateBufferGeneric<FLightInfoBuffer>("FLightInfoBuffer", nullptr, LightInfoBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT FadeConstantBufferSize = sizeof(FFadeConstants);
+    BufferManager->CreateBufferGeneric<FFadeConstants>("FFadeConstants", nullptr, FadeConstantBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+
+
 
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
@@ -234,6 +241,7 @@ void FRenderer::PrepareRenderPass() const
     EditorRenderPass->PrepareRenderArr();
     TileLightCullingPass->PrepareRenderArr();
     DepthPrePass->PrepareRenderArr();
+    FadeRenderPass->PrepareRenderArr();
 }
 
 void FRenderer::ClearRenderArr() const
@@ -245,6 +253,7 @@ void FRenderer::ClearRenderArr() const
     GizmoRenderPass->ClearRenderArr();
     UpdateLightBufferPass->ClearRenderArr();
     FogRenderPass->ClearRenderArr();
+    FadeRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
     TileLightCullingPass->ClearRenderArr();
@@ -390,7 +399,7 @@ void FRenderer::Render(const std::shared_ptr<FViewportClient>& Viewport)
     // Compositing: 위에서 렌더한 결과들을 하나로 합쳐서 뷰포트의 최종 이미지를 만드는 작업
     {
         QUICK_SCOPE_CYCLE_COUNTER(CompositingPass_CPU)
-        QUICK_GPU_SCOPE_CYCLE_COUNTER(CompositingPass_GPU, *GPUTimingManager)
+        QUICK_GPU_SCOPE_CYCLE_COUNTER(CompositingPass_GPU, *GPUTimingManager);
         CompositingPass->Render(Viewport);
     }
 
@@ -453,6 +462,8 @@ void FRenderer::RenderPostProcess(const std::shared_ptr<FViewportClient>& Viewpo
          * 여기에서는 씬 렌더가 적용된 뎁스 스텐실 뷰를 SRV로 전달하고, 뎁스 스텐실 뷰를 아래에서 다시 써야함.
          */
     }
+
+    FadeRenderPass->Render(Viewport);
 
     // TODO: 포스트 프로세스 별로 각자의 렌더 타겟 뷰에 렌더하기
 

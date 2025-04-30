@@ -781,6 +781,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Renderer\FadeRenderpass.h" />
     <ClInclude Include="Font\IconDefs.h" />
     <ClInclude Include="Font\RawFonts.h" />
   </ItemGroup>
@@ -795,6 +796,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Games\LastWar\UI\LastWarUI.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\FadeRenderpass.cpp" />
     <ClCompile Include="LightGridGenerator.cpp" />
     <ClInclude Include="Engine\Source\Games\LastWar\UI\LastWarUI.h" />
     <ClInclude Include="LightGridGenerator.h" />
@@ -830,6 +832,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\FadeEffect.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\PointLightCubemapGS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>

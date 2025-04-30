@@ -44,6 +44,7 @@ class FDepthPrePass;
 class FTileLightCullingPass;
 class FGPUTimingManager;
 
+class FFadeRenderPass;
 class FRenderer
 {
 public:
@@ -111,6 +112,7 @@ public:
     FCompositingPass* CompositingPass = nullptr;
     FPostProcessCompositingPass* PostProcessCompositingPass = nullptr;
     
+    FFadeRenderPass* FadeRenderPass = nullptr;
     FSlateRenderPass* SlateRenderPass = nullptr;
 };
 

@@ -36,7 +36,8 @@ UObject* UWorld::Duplicate(UObject* InOuter)
 
 void UWorld::BeginPlay()
 {
-    for (AActor* Actor : ActiveLevel->Actors)
+    TArray<AActor*> Actors = ActiveLevel->Actors;
+    for (AActor* Actor : Actors)
     {
         if (Actor->GetWorld() == this)
         {
@@ -48,8 +49,7 @@ void UWorld::BeginPlay()
         }
     }
 
-    if (WorldType == EWorldType::PIE)
-        PlayerControllers[0]->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
+   
 }
 
 void UWorld::Tick(float DeltaTime)
@@ -70,6 +70,7 @@ void UWorld::Tick(float DeltaTime)
             if (PendingBeginPlayActors.Contains(Actor))
                 PendingBeginPlayActors.Remove(Actor);
         }
+        GetFirstPlayerController()->UpdateCameraManager(DeltaTime);
     }
     TArray<AActor*> ActorsCopy = GetActiveLevel()->Actors;
 

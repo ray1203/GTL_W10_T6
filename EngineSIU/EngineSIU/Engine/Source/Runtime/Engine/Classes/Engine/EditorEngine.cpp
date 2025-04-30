@@ -193,8 +193,12 @@ void UEditorEngine::StartPIE()
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);
 
     //PIEWorld->BeginPlay();
+    PIEWorld->BeginPlay();
+    GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.Target = PlayerCharacter;
+    GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 10.0f, FLinearColor::Red, false, true);
 
     
+
     // 나중에 제거하기
 }
 
@@ -213,6 +217,8 @@ void UEditorEngine::EndPIE()
         
         DeselectActor(GetSelectedActor());
         DeselectComponent(GetSelectedComponent());
+        
+
     }
     // 다시 EditorWorld로 돌아옴.
     ActiveWorld = EditorWorld;
