@@ -235,34 +235,36 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
     }
     ImGui::PopFont();
 
+    std::shared_ptr<FEditorViewportClient> ViewportClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+
     if (ImGui::BeginPopup("SliderControl"))
     {
         ImGui::Text("Grid Scale");
-        GridScale = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetGridSize();
+        float GridScale = ViewportClient->GetGridSize();
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##Grid Scale", &GridScale, 0.1f, 1.0f, 20.0f, "%.1f"))
         {
-            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->SetGridSize(GridScale);
+            ViewportClient->SetGridSize(GridScale);
         }
 
         ImGui::Separator();
 
         ImGui::Text("Camera FOV");
-        float FOV = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetFieldOfView();
+        float FOV = ViewportClient->GetFieldOfView();
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##Fov", &FOV, 0.1f, 30.0f, 120.0f, "%.1f"))
         {
-            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->SetFieldOfView(FOV);
+            ViewportClient->SetFieldOfView(FOV);
         }
 
         ImGui::Spacing();
 
         ImGui::Text("Camera Speed");
-        CameraSpeed = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraSpeedScalar();
+        float CameraSpeed = ViewportClient->GetCameraSpeedScalar();
         ImGui::SetNextItemWidth(120.0f);
         if (ImGui::DragFloat("##CamSpeed", &CameraSpeed, 0.1f, 0.198f, 192.0f, "%.1f"))
         {
-            GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->SetCameraSpeed(CameraSpeed);
+            ViewportClient->SetCameraSpeed(CameraSpeed);
         }
 
         ImGui::EndPopup();
@@ -545,7 +547,7 @@ void ControlEditorPanel::CreatePIEButton(const ImVec2 ButtonSize, ImFont* IconFo
 void ControlEditorPanel::CreateSRTButton(ImVec2 ButtonSize)
 {
     const UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-    AEditorPlayer* Player = Engine->GetEditorPlayer();
+    UEditorPlayer* Player = Engine->GetEditorPlayer();
 
     constexpr ImVec4 ActiveColor = ImVec4(0.00f, 0.00f, 0.85f, 1.0f);
 

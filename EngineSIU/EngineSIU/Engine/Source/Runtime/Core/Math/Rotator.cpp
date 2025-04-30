@@ -1,5 +1,6 @@
 #include "Rotator.h"
 
+#include "JungleMath.h"
 #include "Vector.h"
 #include "Quat.h"
 #include "Matrix.h"
@@ -208,4 +209,25 @@ float FRotator::NormalizeAxis(float Angle)
     }
 
     return Angle;
+}
+
+FVector FRotator::GetForwardVector() const
+{
+    FVector Forward = FVector::ForwardVector;
+    Forward = JungleMath::FVectorRotate(Forward, *this);
+    return Forward;
+}
+
+FVector FRotator::GetRightVector() const
+{
+    FVector Right = FVector::RightVector;
+    Right = JungleMath::FVectorRotate(Right, *this);
+    return Right;
+}
+
+FVector FRotator::GetUpVector() const
+{
+    FVector Up = FVector::UpVector;
+    Up = JungleMath::FVectorRotate(Up, *this);
+    return Up;
 }

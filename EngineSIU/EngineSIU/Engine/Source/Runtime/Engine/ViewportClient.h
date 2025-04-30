@@ -140,7 +140,6 @@ public:
 
     FViewportCamera& GetPerspectiveCamera() { return PerspectiveCamera; }
     FViewportCamera& GetOrthogonalCamera() { return OrthogonalCamera; }
-
     FVector GetCameraLocation() const;
 
 public:

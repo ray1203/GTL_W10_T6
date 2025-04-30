@@ -104,10 +104,10 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
 void FEngineLoop::Render() const
 {
     GraphicDevice.Prepare();
-    
+
+    std::shared_ptr<FEditorViewportClient> ActiveViewportCache = GetLevelEditor()->GetActiveViewportClient();
     if (LevelEditor->IsMultiViewport())
     {
-        std::shared_ptr<FEditorViewportClient> ActiveViewportCache = GetLevelEditor()->GetActiveViewportClient();
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetActiveViewportClient(i);
@@ -123,9 +123,9 @@ void FEngineLoop::Render() const
     }
     else
     {
-        Renderer.Render(LevelEditor->GetActiveViewportClient());
+        Renderer.Render(ActiveViewportCache);
         
-        Renderer.RenderViewport(LevelEditor->GetActiveViewportClient());
+        Renderer.RenderViewport(ActiveViewportCache);
     }
     
 }
@@ -298,11 +298,12 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
                 uint32 ClientWidth = 0;
                 uint32 ClientHeight = 0;
                 GEngineLoop.GetClientSize(ClientWidth, ClientHeight);
-            
+
+                std::shared_ptr<FEditorViewportClient> ViewportClient = LevelEditor->GetActiveViewportClient();
                 LevelEditor->ResizeEditor(ClientWidth, ClientHeight);
                 FEngineLoop::Renderer.TileLightCullingPass->ResizeViewBuffers(
-                  static_cast<uint32>(LevelEditor->GetActiveViewportClient()->GetD3DViewport().Width),
-                    static_cast<uint32>(LevelEditor->GetActiveViewportClient()->GetD3DViewport().Height)
+                  static_cast<uint32>(ViewportClient->GetD3DViewport().Width),
+                    static_cast<uint32>(ViewportClient->GetD3DViewport().Height)
                 );
             }
         }

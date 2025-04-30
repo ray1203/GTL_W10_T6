@@ -1,8 +1,5 @@
 #pragma once
-#include <sstream>
 #include "Define.h"
-#include "Container/Map.h"
-#include "Engine/EditorEngine.h"
 #include "World/World.h"
 
 class SSplitterH;

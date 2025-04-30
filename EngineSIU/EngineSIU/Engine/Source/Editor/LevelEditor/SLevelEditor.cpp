@@ -1,16 +1,17 @@
 #include "SLevelEditor.h"
+
 #include <fstream>
-#include <ostream>
-#include <sstream>
 #include "EngineLoop.h"
 #include "UnrealClient.h"
 #include "WindowsCursor.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
+#include "Engine/EditorEngine.h"
 #include "ImGUI/imgui.h"
 #include "Slate/Widgets/Layout/SSplitter.h"
 #include "SlateCore/Widgets/SWindow.h"
 #include "UnrealEd/EditorConfigManager.h"
 #include "UnrealEd/EditorViewportClient.h"
+#include "UObject/ObjectTypes.h"
 
 
 extern FEngineLoop GEngineLoop;
@@ -83,6 +84,11 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
 
     Handler->OnMouseDownDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        {
+            return;
+        }
+        
         if (ImGui::GetIO().WantCaptureMouse) return;
 
         switch (InMouseEvent.GetEffectingButton())  // NOLINT(clang-diagnostic-switch-enum)
@@ -235,6 +241,11 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
 
     Handler->OnRawMouseInputDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        {
+            return;
+        }
+        
         // Mouse Move 이벤트 일때만 실행
         if (
             InMouseEvent.GetInputEvent() == IE_Axis
@@ -269,7 +280,7 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
                             return;
                         }
                     }
-
+                    
                     const FViewportCamera* ViewTransform = ActiveViewportClient->GetViewportType() == LVT_Perspective
                                                             ? &ActiveViewportClient->GetPerspectiveCamera()
                                                             : &ActiveViewportClient->GetOrthogonalCamera();

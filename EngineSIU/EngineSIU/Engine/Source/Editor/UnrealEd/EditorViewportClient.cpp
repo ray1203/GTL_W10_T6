@@ -11,6 +11,8 @@
 
 #include "UObject/ObjectFactory.h"
 #include "BaseGizmos/TransformGizmo.h"
+#include "Engine/EditorEngine.h"
+#include "Engine/Engine.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "SlateCore/Input/Events.h"
 
@@ -238,7 +240,7 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
         }
         else
         {
-            AEditorPlayer* EdPlayer = CastChecked<UEditorEngine>(GEngine)->GetEditorPlayer();
+            UEditorPlayer* EdPlayer = CastChecked<UEditorEngine>(GEngine)->GetEditorPlayer();
             switch (InKeyEvent.GetCharacter())
             {
             case 'W':
@@ -344,7 +346,7 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
             }
             case VK_SPACE:
             {
-                EdEngine->GetEditorPlayer()->AddControlMode();
+                EdEngine->GetEditorPlayer()->SetControlMode();
                 break;
             }
             default:
