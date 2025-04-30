@@ -17,6 +17,7 @@
 #include "SlateRenderPass.h"
 #include "EditorRenderPass.h"
 #include "DepthPrePass.h"
+#include "FadeRenderpass.h"
 #include "TileLightCullingPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
@@ -69,6 +70,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     CompositingPass = new FCompositingPass();
     PostProcessCompositingPass = new FPostProcessCompositingPass();
     SlateRenderPass = new FSlateRenderPass();
+    FadeRenderPass = new FFadeRenderPass();
 
     if (false == ShadowManager->Initialize(Graphics, BufferManager))
     {
@@ -93,6 +95,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
 
     CompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
     PostProcessCompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
+    FadeRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     
     SlateRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
 }
@@ -234,6 +237,7 @@ void FRenderer::PrepareRenderPass() const
     EditorRenderPass->PrepareRenderArr();
     TileLightCullingPass->PrepareRenderArr();
     DepthPrePass->PrepareRenderArr();
+    FadeRenderPass->PrepareRenderArr();
 }
 
 void FRenderer::ClearRenderArr() const
@@ -245,6 +249,7 @@ void FRenderer::ClearRenderArr() const
     GizmoRenderPass->ClearRenderArr();
     UpdateLightBufferPass->ClearRenderArr();
     FogRenderPass->ClearRenderArr();
+    FadeRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
     TileLightCullingPass->ClearRenderArr();
@@ -390,7 +395,8 @@ void FRenderer::Render(const std::shared_ptr<FViewportClient>& Viewport)
     // Compositing: 위에서 렌더한 결과들을 하나로 합쳐서 뷰포트의 최종 이미지를 만드는 작업
     {
         QUICK_SCOPE_CYCLE_COUNTER(CompositingPass_CPU)
-        QUICK_GPU_SCOPE_CYCLE_COUNTER(CompositingPass_GPU, *GPUTimingManager)
+        QUICK_GPU_SCOPE_CYCLE_COUNTER(CompositingPass_GPU, *GPUTimingManager);
+        FadeRenderPass->Render(Viewport);
         CompositingPass->Render(Viewport);
     }
 

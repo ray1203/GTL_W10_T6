@@ -36,7 +36,8 @@ UObject* UWorld::Duplicate(UObject* InOuter)
 
 void UWorld::BeginPlay()
 {
-    for (AActor* Actor : ActiveLevel->Actors)
+    TArray<AActor*> Actors = ActiveLevel->Actors;
+    for (AActor* Actor : Actors)
     {
         if (Actor->GetWorld() == this)
         {
@@ -70,6 +71,7 @@ void UWorld::Tick(float DeltaTime)
             if (PendingBeginPlayActors.Contains(Actor))
                 PendingBeginPlayActors.Remove(Actor);
         }
+        GetFirstPlayerController()->UpdateCameraManager(DeltaTime);
     }
     TArray<AActor*> ActorsCopy = GetActiveLevel()->Actors;
 

@@ -69,6 +69,20 @@ void APlayerCameraManager::UpdateCamera(float DeltaTime)
     // 카메라 업데이트 로직을 여기에 추가합니다.
     // 예를 들어, 카메라의 위치나 회전을 업데이트할 수 있습니다.
     // 이 함수는 매 프레임마다 호출됩니다.
+	if (FadeTimeRemaining > 0.f)
+	{
+		FadeTimeRemaining -= DeltaTime;
+		const float TimeRatio = FMath::Clamp(1.f - (FadeTimeRemaining / FadeTime), 0.f, 1.f);
+		FadeAmount = FMath::Lerp(FadeAlpha.X, FadeAlpha.Y, TimeRatio);
+	}
+	else
+	{
+		FadeAmount = FadeAlpha.Y;
+		if (FMath::IsNearlyZero(FadeAmount))
+		{
+			FadeColor = FLinearColor::Red;
+		}
+	}
 
 
 }

@@ -458,3 +458,10 @@ struct FFogConstants
     float padding1;
     float padding2;
 };
+
+struct FFadeConstants
+{
+    FLinearColor FadeColor = FLinearColor(0,0,0,0);
+    float FadeAlpha = 1.0f;
+    FVector padding1;
+};
