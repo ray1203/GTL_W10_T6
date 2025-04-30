@@ -11,6 +11,7 @@
 #include "Components/Light/SpotLightComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Components/Light/AmbientLightComponent.h"
+#include "ImGUI/imgui.h"
 #include "Stats/ProfilerStatsManager.h"
 #include "Stats/GPUTimingManager.h"
 
@@ -230,6 +231,8 @@ void Console::Draw() {
         return;
     }
 
+    static ImGuiTextFilter Filter; // 필터링을 위한 ImGuiTextFilter
+    
     // 창 크기 및 위치 계산
     const ImVec2 DisplaySize = ImGui::GetIO().DisplaySize;
 

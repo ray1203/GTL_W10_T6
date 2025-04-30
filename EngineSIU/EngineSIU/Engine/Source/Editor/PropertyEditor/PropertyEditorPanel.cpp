@@ -1,5 +1,7 @@
 #include "PropertyEditorPanel.h"
 
+#include "ImGUI/Bezier.h"
+
 #include <filesystem>
 #include <shellapi.h>
 
@@ -29,6 +31,7 @@
 #include "Components/Shapes/BoxComponent.h"
 #include "Components/Shapes/CapsuleComponent.h"
 #include "Components/Shapes/SphereComponent.h"
+#include "ImGUI/Curve.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -63,6 +66,23 @@ void PropertyEditorPanel::Render()
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
 
+    static float v[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
+    if (ImGui::Bezier("Label", v))
+    {
+        float y = ImGui::BezierValue( 0.5f, v ); // x delta in [0..1] range
+        UE_LOG(LogLevel::Display, "%f", y);
+    }
+    
+    
+    ImVec2 foo[10];
+    
+    foo[0].x = -1; // init data so editor knows to take it from here
+    
+    if (ImGui::Curve("Das editor", ImVec2(600, 200), 10, foo))
+    {
+        // curve changed
+    }
+    
     AEditorPlayer* Player = Engine->GetEditorPlayer();
     AActor* SelectedActor = Engine->GetSelectedActor();
     USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
@@ -1145,6 +1165,24 @@ void PropertyEditorPanel::OnResize(HWND hWnd)
     GetClientRect(hWnd, &ClientRect);
     Width = ClientRect.right - ClientRect.left;
     Height = ClientRect.bottom - ClientRect.top;
+}
+
+template<typename Getter, typename Setter>
+void DrawColorProperty(const char* Label, Getter Get, Setter Set)
+{
+    ImGui::PushItemWidth(200.0f);
+    const FLinearColor CurrentColor = Get();
+    float Col[4] = { CurrentColor.R, CurrentColor.G, CurrentColor.B, CurrentColor.A };
+
+    if (ImGui::ColorEdit4(Label, Col,
+        ImGuiColorEditFlags_DisplayRGB |
+        ImGuiColorEditFlags_NoSidePreview |
+        ImGuiColorEditFlags_NoInputs |
+        ImGuiColorEditFlags_Float))
+    {
+        Set(FLinearColor(Col[0], Col[1], Col[2], Col[3]));
+    }
+    ImGui::PopItemWidth();
 }
 
 template<typename T>

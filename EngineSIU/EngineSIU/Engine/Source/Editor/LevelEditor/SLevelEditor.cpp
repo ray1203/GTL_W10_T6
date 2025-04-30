@@ -6,6 +6,7 @@
 #include "UnrealClient.h"
 #include "WindowsCursor.h"
 #include "BaseGizmos/GizmoBaseComponent.h"
+#include "ImGUI/imgui.h"
 #include "Slate/Widgets/Layout/SSplitter.h"
 #include "SlateCore/Widgets/SWindow.h"
 #include "UnrealEd/EditorConfigManager.h"

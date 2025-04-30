@@ -3,6 +3,9 @@
 #include "UnrealEd/EditorPanel.h"
 #include "LightGridGenerator.h"
 
+struct ImFont;
+struct ImVec2;
+
 class ControlEditorPanel : public UEditorPanel
 {
 public:

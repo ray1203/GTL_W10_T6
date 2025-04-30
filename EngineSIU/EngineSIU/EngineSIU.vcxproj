@@ -623,6 +623,8 @@
     <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fmod_studio_common.h" />
     <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fsbank.h" />
     <ClInclude Include="Engine\Source\ThirdParty\FMOD\include\fsbank_errors.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\Bezier.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\Curve.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imconfig.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imgui.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imgui_impl_dx11.h" />
