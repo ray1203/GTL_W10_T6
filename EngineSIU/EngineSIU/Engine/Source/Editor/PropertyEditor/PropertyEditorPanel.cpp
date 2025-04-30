@@ -65,23 +65,38 @@ void PropertyEditorPanel::Render()
 
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
+    
 
+    // 초기값
     static float v[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
     if (ImGui::Bezier("Label", v))
     {
         float y = ImGui::BezierValue( 0.5f, v ); // x delta in [0..1] range
-        UE_LOG(LogLevel::Display, "%f", y);
+        UE_LOG(LogLevel::Display, "Value: %.3f", y);
     }
+
+    // 조절 가능 Value
+    // ------
+    const static int PointCount = 10;
+    ImVec2 Min = ImVec2(0, 0);
+    ImVec2 Max = ImVec2(1, 1);
+    // ------
     
+    static ImVec2 foo[PointCount] = {
+        Min,
+        Max,
+        ImVec2(-10000, 1),
+    };
     
-    ImVec2 foo[10];
-    
-    foo[0].x = -1; // init data so editor knows to take it from here
-    
-    if (ImGui::Curve("Das editor", ImVec2(600, 200), 10, foo))
+    static int selectedIndex = -1;
+    if (ImGui::Curve("Das editor", ImVec2(200, 200), PointCount, foo, &selectedIndex, Min, Max))
     {
         // curve changed
+        float Value = ImGui::CurveValue(0.5, PointCount, foo); // x delta in [0..1] range
+        float SmoothValue = ImGui::CurveValueSmooth(0.5, PointCount, foo); // x delta in [0..1] range
+        UE_LOG(LogLevel::Display, "Value: %.3f, Smooth Value: %.3f", Value, SmoothValue);
     }
+    
     
     UEditorPlayer* Player = Engine->GetEditorPlayer();
     AActor* SelectedActor = Engine->GetSelectedActor();
