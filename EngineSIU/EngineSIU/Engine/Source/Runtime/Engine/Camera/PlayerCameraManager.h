@@ -148,8 +148,11 @@ public:
     struct FViewTargetTransitionParams BlendParams;
 
 public:
+    virtual void SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams());
+
     virtual void ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV);
 
+    virtual void InitializeFor(class APlayerController* PC);
     
 protected:
     TArray<UCameraModifier*> ModifierList;
@@ -182,7 +185,7 @@ private:
 public:
     void FillCameraCache(const FMinimalViewInfo& NewInfo);
 
-    virtual void AssignViewTarget(AActor* NewTarget, FViewTarget& VT/*, struct FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams()*/);
+    virtual void AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams());
 
 public:
     virtual void StartCameraFade(float FromAlpha, float ToAlpha, float Duration, FLinearColor Color, bool bShouldFadeAudio = false, bool bHoldWhenFinished = false);

@@ -242,21 +242,67 @@ void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
     }
     else
     {
-        OutVT.POV = OrigPOV;
-
-        FVector Loc = OutVT.Target->GetActorLocation();
-        FRotator Rotator = OutVT.Target->GetActorRotation();
-
-        if (OutVT.Target == PCOwner)
+        if (UCameraComponent* CamComp = OutVT.Target->GetComponentByClass<UCameraComponent>())
         {
-            Loc = PCOwner->GetPawn()->GetActorLocation();
+            OutVT.POV.Location = CamComp->GetRelativeLocation();
+            OutVT.POV.Rotation = CamComp->GetRelativeRotation();
+            OutVT.POV.FOV = CamComp->GetFieldOfView();
         }
-
-        PCOwner->GetControlRotation();
-        // 여기 뭔가 더 추가되어야 함.
-        // 아니면 그냥 CameraComponent를 무조건 가지고 있다고 가정하고 짜도 될 듯.
     }
 
+    ApplyCameraModifiers(DeltaTime, OutVT.POV);
+
+}
+
+void APlayerCameraManager::SetViewTarget(AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
+{
+    if (NewViewTarget == nullptr)
+    {
+        return;
+    }
+
+    ViewTarget.CheckViewTarget(PCOwner);
+    if (PendingViewTarget.Target)
+    {
+        PendingViewTarget.CheckViewTarget(PCOwner);
+    }
+
+    // If we're already transitioning to this new target, don't interrupt.
+    if (PendingViewTarget.Target != NULL && NewViewTarget == PendingViewTarget.Target)
+    {
+        return;
+    }
+
+    if ((NewViewTarget != ViewTarget.Target) /*|| (PendingViewTarget.Target && BlendParams.bLockOutgoing)*/)
+    {
+        // if a transition time is specified, then set pending view target accordingly
+        if (TransitionParams.BlendTime > 0)
+        {
+            // band-aid fix so that EndViewTarget() gets called properly in this case
+            if (PendingViewTarget.Target == NULL)
+            {
+                PendingViewTarget.Target = ViewTarget.Target;
+            }
+
+            // use last frame's POV
+            ViewTarget.POV = GetLastFrameCameraCacheView();
+            BlendTimeToGo = TransitionParams.BlendTime;
+
+            AssignViewTarget(NewViewTarget, PendingViewTarget, TransitionParams);
+            PendingViewTarget.CheckViewTarget(PCOwner);
+
+        }
+        else
+        {
+            // otherwise, assign new viewtarget instantly
+            AssignViewTarget(NewViewTarget, ViewTarget);
+            ViewTarget.CheckViewTarget(PCOwner);
+            // remove old pending ViewTarget so we don't still try to switch to it
+            PendingViewTarget.Target = NULL;
+        }
+    }
+
+    BlendParams = TransitionParams;
 }
 
 void APlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV)
@@ -268,6 +314,24 @@ void APlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInf
             Modifier->ModifyCamera(DeltaTime, InOutPOV);
         }
     }
+}
+
+void APlayerCameraManager::InitializeFor(APlayerController* PC)
+{
+    FMinimalViewInfo DefaultFOVCache = GetCameraCacheView();
+    DefaultFOVCache.FOV = DefaultFOV;
+    SetCameraCachePOV(DefaultFOVCache);
+
+    PCOwner = PC;
+
+    SetViewTarget(PC);
+
+    // set the level default scale
+    //SetDesiredColorScale(GetWorldSettings()->DefaultColorScale, 5.f);
+
+    // Force camera update so it doesn't sit at (0,0,0) for a full tick.
+    // This can have side effects with streaming.
+    UpdateCamera(0.f);
 }
 
 void APlayerCameraManager::SetCameraCachePOV(const FMinimalViewInfo& InPOV)
@@ -315,7 +379,7 @@ void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
     SetCameraCacheTime(CurrentGameTime);
 }
 
-void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT)
+void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams InTransitionParams)
 {
     if (!NewTarget)
     {
@@ -332,6 +396,7 @@ void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT)
 
     VT.POV.AspectRatio = DefaultAspectRatio;
     VT.POV.FOV = DefaultFOV;
+    BlendParams = InTransitionParams;
 
     if (OldViewTarget)
     {
