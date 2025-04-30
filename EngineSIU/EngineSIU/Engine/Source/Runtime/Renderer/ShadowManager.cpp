@@ -9,6 +9,8 @@
 #include "Engine/Engine.h"
 #include "World/World.h"
 
+#include "GameFramework/PlayerController.h"
+
 // --- 생성자 및 소멸자 ---
 
 FShadowManager::FShadowManager()

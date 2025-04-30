@@ -1,5 +1,6 @@
 #include "PlayerCameraManager.h"
 
+#include "World/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
 
@@ -48,6 +49,7 @@ UObject* APlayerCameraManager::Duplicate(UObject* InOuter)
 void APlayerCameraManager::RegisterLuaType(sol::state& Lua)
 {
     DEFINE_LUA_TYPE_WITH_PARENT(APlayerCameraManager, sol::bases<AActor>());
+
 }
 
 bool APlayerCameraManager::BindSelfLuaProperties()
@@ -60,30 +62,57 @@ bool APlayerCameraManager::BindSelfLuaProperties()
     return true;
 }
 
-void APlayerCameraManager::StartCameraFade(float FromAlpha, float ToAlpha, float Duration, const FLinearColor& Color)
-{
-    FadeAlpha = FVector2D(FromAlpha, ToAlpha);
-    FadeTime = Duration;
-    FadeTimeRemaining = Duration;
-    FadeColor = Color;
-    FadeAmount = FromAlpha;
-}
-
 void APlayerCameraManager::UpdateCamera(float DeltaTime)
 {
-    if (FadeTimeRemaining > 0.f)
-    {
-        FadeTimeRemaining -= DeltaTime;
-        const float TimeRatio = FMath::Clamp(1.f - (FadeTimeRemaining / FadeTime), 0.f, 1.f);
-        FadeAmount = FMath::Lerp(FadeAlpha.X, FadeAlpha.Y, TimeRatio);
-    }
-    else
-    {
-        FadeAmount = FadeAlpha.Y;
-        if (FMath::IsNearlyZero(FadeAmount))
-        {
-            FadeColor = FLinearColor::Black;
-        }
-    }
+    // 카메라 업데이트 로직을 여기에 추가합니다.
+    // 예를 들어, 카메라의 위치나 회전을 업데이트할 수 있습니다.
+    // 이 함수는 매 프레임마다 호출됩니다.
+
+
+
 }
 
+void APlayerCameraManager::SetCameraCachePOV(const FMinimalViewInfo& InPOV)
+{
+    CameraCachePrivate.POV = InPOV;
+}
+
+void APlayerCameraManager::SetLastFrameCameraCachePOV(const FMinimalViewInfo& InPOV)
+{
+    LastFrameCameraCachePrivate.POV = InPOV;
+}
+
+const FMinimalViewInfo& APlayerCameraManager::GetCameraCacheView() const
+{
+    return CameraCachePrivate.POV;
+}
+
+const FMinimalViewInfo& APlayerCameraManager::GetLastFrameCameraCacheView() const
+{
+    return LastFrameCameraCachePrivate.POV;
+}
+
+FMinimalViewInfo APlayerCameraManager::GetCameraCachePOV() const
+{
+    return GetCameraCacheView();
+}
+
+FMinimalViewInfo APlayerCameraManager::GetLastFrameCameraCachePOV() const
+{
+    return GetLastFrameCameraCacheView();
+}
+
+void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
+{
+    // Backup last frame results.
+    const float CurrentCacheTime = GetCameraCacheTime();
+    const float CurrentGameTime = GetWorld()->TimeSeconds;
+    if (CurrentCacheTime != CurrentGameTime)
+    {
+        SetLastFrameCameraCachePOV(GetCameraCacheView());
+        SetLastFrameCameraCacheTime(CurrentCacheTime);
+    }
+
+    SetCameraCachePOV(NewInfo);
+    SetCameraCacheTime(CurrentGameTime);
+}

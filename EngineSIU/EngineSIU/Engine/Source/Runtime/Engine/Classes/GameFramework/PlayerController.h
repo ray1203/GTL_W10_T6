@@ -16,6 +16,8 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
+    virtual void UpdateCameraManager(float DeltaTime);
+
     // TODO Check Duplicate
 
 public:

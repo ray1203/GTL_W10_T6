@@ -30,6 +30,7 @@
 #include "UnrealClient.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFrameWork/Actor.h"
 #include "Math/JungleMath.h"
 

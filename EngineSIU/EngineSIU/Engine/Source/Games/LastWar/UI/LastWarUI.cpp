@@ -7,6 +7,8 @@
 #include "Audio/AudioManager.h"
 #include "ImGUI/imgui.h"
 
+#include "GameFramework/PlayerController.h"
+
 bool LastWarUI::bShowGameOver = false;
 int LastWarUI::Score = 0;
 

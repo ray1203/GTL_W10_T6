@@ -5,12 +5,12 @@
 #include "UObject/ObjectMacros.h"
 #include "WorldType.h"
 #include "Level.h"
-#include "GameFramework/PlayerController.h"
 
 class FObjectFactory;
 class AActor;
 class UObject;
 class USceneComponent;
+class APlayerController;
 
 class UWorld : public UObject
 {
@@ -56,19 +56,9 @@ public:
 
     EWorldType WorldType = EWorldType::None;
 
-    void AddPlayerController(APlayerController* InPlayerController)
-    {
-        PlayerControllers.Add(InPlayerController);
-    }
+    void AddPlayerController(APlayerController* InPlayerController);
 
-    APlayerController* GetFirstPlayerController()
-    {
-        if (PlayerControllers.Num() > 0)
-        {
-            return PlayerControllers[0];
-        }
-        return nullptr;
-    }
+    APlayerController* GetFirstPlayerController();
 
 private:
     /** World에 존재하는 Actor를 제거합니다. */
@@ -85,6 +75,10 @@ private:
     TArray<AActor*> PendingDestroyActors;
 
     TArray<APlayerController*> PlayerControllers;
+
+public:
+
+    float TimeSeconds;
 };
 
 
