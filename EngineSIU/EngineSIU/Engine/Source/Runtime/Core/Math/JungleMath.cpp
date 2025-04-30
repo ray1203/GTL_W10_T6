@@ -206,24 +206,45 @@ FMatrix JungleMath::CreateRotationMatrix(FVector rotation)
 
 FVector JungleMath::VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
 {
-    if (InterpSpeed <= 0.0f) return Target;
-    FVector Delta = Target - Current;
-    float Dist = Delta.Length();
-    if (Dist < 1e-6f) return Target;
-    float Step = 1.f - std::exp(-InterpSpeed * DeltaTime);
-    return Current + Delta * Step;
+    // If no interp speed, jump to target value
+    if (InterpSpeed <= 0.f)
+    {
+        return Target;
+    }
+
+    // Distance to reach
+    const FVector Dist = Target - Current;
+
+    // If distance is too small, just set the desired location
+    if (Dist.SizeSquared() < SMALL_NUMBER)
+    {
+        return Target;
+    }
+
+    // Delta Move, Clamp so we do not over shoot.
+    const FVector	DeltaMove = Dist * FMath::Clamp<float>(DeltaTime * InterpSpeed, 0.f, 1.f);
+
+    return Current + DeltaMove;
 }
 
 // 일정 속도 보간 (FMath::VInterpToConstantTo 유사)
 FVector JungleMath::VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
 {
-    FVector Delta = Target - Current;
-    float Dist = Delta.Length();
-    if (Dist < 1e-6f || InterpSpeed <= 0.0f) return Target;
-    float MaxStep = InterpSpeed * DeltaTime;
-    if (Dist <= MaxStep) {
-        return Target;
+    const FVector Delta = Target - Current;
+    const float DeltaM = Delta.Length();
+    const float MaxStep = InterpSpeed * DeltaTime;
+
+    if (DeltaM > MaxStep)
+    {
+        if (MaxStep > 0.f)
+        {
+            const FVector DeltaN = Delta / DeltaM;
+            return Current + DeltaN * MaxStep;
+        }
+        else
+        {
+            return Current;
+        }
     }
-    FVector Dir = Delta * (1.0f / Dist);
-    return Current + Dir * MaxStep;
-}
+
+    return Target;
