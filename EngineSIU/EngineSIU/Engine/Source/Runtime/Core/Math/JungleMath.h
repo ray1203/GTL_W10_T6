@@ -24,4 +24,7 @@ public:
     static FMatrix CreateRotationMatrix(FVector rotation);
     static FQuat EulerToQuaternion(const FVector& eulerDegrees);
     static FVector QuaternionToEuler(const FQuat& quat);
+
+    static FVector VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed);
+    static FVector VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed);
 };

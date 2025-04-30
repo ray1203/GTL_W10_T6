@@ -203,3 +203,27 @@ FMatrix JungleMath::CreateRotationMatrix(FVector rotation)
     }
     return result;
 }
+
+FVector JungleMath::VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
+{
+    if (InterpSpeed <= 0.0f) return Target;
+    FVector Delta = Target - Current;
+    float Dist = Delta.Length();
+    if (Dist < 1e-6f) return Target;
+    float Step = 1.f - std::exp(-InterpSpeed * DeltaTime);
+    return Current + Delta * Step;
+}
+
+// 일정 속도 보간 (FMath::VInterpToConstantTo 유사)
+FVector JungleMath::VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
+{
+    FVector Delta = Target - Current;
+    float Dist = Delta.Length();
+    if (Dist < 1e-6f || InterpSpeed <= 0.0f) return Target;
+    float MaxStep = InterpSpeed * DeltaTime;
+    if (Dist <= MaxStep) {
+        return Target;
+    }
+    FVector Dir = Delta * (1.0f / Dist);
+    return Current + Dir * MaxStep;
+}

@@ -218,7 +218,7 @@ struct FMath
         const RetType Dist = Target - Current;
 
         // If distance is too small, just set the desired location
-        if (FMath::Square(Dist) < UE_SMALL_NUMBER)
+        if (FMath::Square(Dist) < SMALL_NUMBER)
         {
             return static_cast<RetType>(Target);
         }
@@ -243,7 +243,7 @@ struct FMath
         const RetType Dist = Target - Current;
 
         // If distance is too small, just set the desired location
-        if (FMath::Square(Dist) < UE_SMALL_NUMBER)
+        if (FMath::Square(Dist) < SMALL_NUMBER)
         {
             return static_cast<RetType>(Target);
         }
@@ -253,7 +253,21 @@ struct FMath
 
         return Current + DeltaMove;
     }
+    /** Interpolate between A and B, applying an ease in function.  Exp controls the degree of the curve. */
+    template< class T >
+    [[nodiscard]] static FORCEINLINE T InterpEaseIn(const T& A, const T& B, float Alpha, float Exp)
+    {
+        float const ModifiedAlpha = Pow(Alpha, Exp);
+        return Lerp<T>(A, B, ModifiedAlpha);
+    }
 
+    /** Interpolate between A and B, applying an ease out function.  Exp controls the degree of the curve. */
+    template< class T >
+    [[nodiscard]] static FORCEINLINE T InterpEaseOut(const T& A, const T& B, float Alpha, float Exp)
+    {
+        float const ModifiedAlpha = 1.f - Pow(1.f - Alpha, Exp);
+        return Lerp<T>(A, B, ModifiedAlpha);
+    }
     /** Interpolate between A and B, applying an ease in/out function.  Exp controls the degree of the curve. */
     template< class T >
     [[nodiscard]] static FORCEINLINE T InterpEaseInOut(const T& A, const T& B, float Alpha, float Exp)
@@ -288,29 +302,5 @@ struct FMath
     [[nodiscard]] static constexpr FORCEINLINE T LerpStable(const T& A, const T& B, float Alpha)
     {
         return (T)((A * (1.0f - Alpha)) + (B * Alpha));
-    }
-
-    inline FVector VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
-    {
-        if (InterpSpeed <= 0.0f) return Target;
-        FVector Delta = Target - Current;
-        float Dist = Delta.Length();
-        if (Dist < 1e-6f) return Target;
-        float Step = 1.f - std::exp(-InterpSpeed * DeltaTime);
-        return Current + Delta * Step;
-    }
-
-    // 일정 속도 보간 (FMath::VInterpToConstantTo 유사)
-    inline FVector VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed)
-    {
-        FVector Delta = Target - Current;
-        float Dist = Delta.Length();
-        if (Dist < 1e-6f || InterpSpeed <= 0.0f) return Target;
-        float MaxStep = InterpSpeed * DeltaTime;
-        if (Dist <= MaxStep) {
-            return Target;
-        }
-        FVector Dir = Delta * (1.0f / Dist);
-        return Current + Dir * MaxStep;
     }
 };
