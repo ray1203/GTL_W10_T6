@@ -25,6 +25,7 @@ APlayerCharacter::APlayerCharacter()
 
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
+    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
 }
 
 UObject* APlayerCharacter::Duplicate(UObject* InOuter)
@@ -46,19 +47,6 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
-    auto Location = FollowCamera->GetWorldLocation();
-
-    if (APlayerController* PC = Cast<APlayerController>(Controller))
-    {
-        UCameraShakeModifier* ShakeModifier = FObjectFactory::ConstructObject<UCameraShakeModifier>(this);
-        ShakeModifier->SetDuration(0.5f);
-        ShakeModifier->SetBlendInTime(0.1f);
-        ShakeModifier->SetBlendOutTime(0.1f);
-        ShakeModifier->SetScale(1.0f);
-
-        PC->PlayerCameraManager->AddModifier(ShakeModifier);
-    }
 
     if (!LastWarUI::bShowGameOver && Health <= 0)
     {
@@ -147,18 +135,8 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
             LuaScriptComponent->ActivateFunction("OnOverlapEnemy", Enemy);
         }
 
-        if (APlayerController* PC = Cast<APlayerController>(Controller))
-        {
-            UCameraShakeModifier* ShakeModifier = FObjectFactory::ConstructObject<UCameraShakeModifier>(this);
-            ShakeModifier->SetDuration(0.5f);
-            ShakeModifier->SetBlendInTime(0.1f);
-            ShakeModifier->SetBlendOutTime(0.1f);
-            ShakeModifier->SetScale(1.0f);
-            ShakeModifier->SetInCurve(std::make_shared<EaseInInterp>());
-
-            PC->PlayerCameraManager->AddModifier(ShakeModifier);
-        }
-        
+        AddShakeModifier(0.5f, 0.1f, 0.1f, 1.0f);
+ 
         AudioManager::Get().PlayOneShot(EAudioType::Shot);
     }
     else if (AWall* Wall = Cast<AWall>(OtherActor))
@@ -210,6 +188,20 @@ AActor* APlayerCharacter::SpawnActorLua(const std::string& ClassName, const FVec
     NewActor->SetActorLocation(Location);
 
     return NewActor;
+}
+
+void APlayerCharacter::AddShakeModifier(float Duration, float AlphaInTime, float AlphaOutTime, float Scale)
+{
+    if (APlayerController* PC = Cast<APlayerController>(Controller))
+    {
+        UCameraShakeModifier* ShakeModifier = FObjectFactory::ConstructObject<UCameraShakeModifier>(this);
+        ShakeModifier->Duration = 0.5f;
+        ShakeModifier->AlphaInTime = 0.1f;
+        ShakeModifier->AlphaOutTime = 0.2f;
+        ShakeModifier->Scale = 1.0f;
+
+        PC->PlayerCameraManager->AddModifier(ShakeModifier);
+    }
 }
 
 

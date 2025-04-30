@@ -195,7 +195,7 @@ void UEditorEngine::StartPIE()
     //PIEWorld->BeginPlay();
     PIEWorld->BeginPlay();
     GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.Target = PlayerCharacter;
-    GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 10.0f, FLinearColor::Red, false, true);
+    //GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 10.0f, FLinearColor::Red, false, true);
 
     
 

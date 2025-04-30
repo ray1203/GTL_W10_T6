@@ -61,6 +61,7 @@ public:
 protected:
     AActor* SpawnActorLua(const std::string& ClassName, const FVector& Location);
 
+    void AddShakeModifier(float Duration, float AlphaInTime, float AlphaOutTime, float Scale);
 
 private:
     UPROPERTY
