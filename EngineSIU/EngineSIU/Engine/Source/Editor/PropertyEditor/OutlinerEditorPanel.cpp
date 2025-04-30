@@ -4,6 +4,8 @@
 #include "Engine/EditorEngine.h"
 #include <functional>
 
+#include "ImGUI/imgui.h"
+
 void OutlinerEditorPanel::Render()
 {
     /* Pre Setup */
