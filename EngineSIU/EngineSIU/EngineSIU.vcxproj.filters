@@ -810,6 +810,7 @@
     <ClCompile Include="Engine\Source\Games\LastWar\UI\LastWarUI.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\PlayerCameraManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1049,6 +1050,7 @@
     <ClInclude Include="Engine\Source\Games\LastWar\UI\LastWarUI.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\PlayerCameraManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
