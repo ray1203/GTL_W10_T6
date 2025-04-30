@@ -10,6 +10,7 @@
 
 #include "World/World.h"
 #include "Actors/Player.h"
+#include "Camera/CameraComponent.h"
 
 #include "Engine/EditorEngine.h"
 #include "Engine/FLoaderOBJ.h"
@@ -33,6 +34,7 @@
 #include "Components/Shapes/BoxComponent.h"
 #include "Components/Shapes/CapsuleComponent.h"
 #include "Components/Shapes/SphereComponent.h"
+#include "Engine/CurveManager.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -66,10 +68,6 @@ void PropertyEditorPanel::Render()
 
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
-
-
-    RenderForCurve();
-
     
     UEditorPlayer* Player = Engine->GetEditorPlayer();
     AActor* SelectedActor = Engine->GetSelectedActor();
@@ -151,6 +149,11 @@ void PropertyEditorPanel::Render()
     if (USpringArmComponent* SpringArmComponent = GetTargetComponent<USpringArmComponent>(SelectedActor, SelectedComponent))
     {
         RenderForSpringArmComponent(SpringArmComponent);
+    }
+
+    if (UCameraComponent* CameraComponent = GetTargetComponent<UCameraComponent>(SelectedActor, SelectedComponent))
+    {
+        RenderForCameraComponent(CameraComponent);
     }
 
     ImGui::End();
@@ -1163,7 +1166,7 @@ void PropertyEditorPanel::RenderForSpringArmComponent(USpringArmComponent* Sprin
 {
     ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
     
-    if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::TreeNodeEx("Spring Arm - Camera", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
     {
         float TargetArmLength = SpringArmComp->GetTargetArmLength();
         
@@ -1266,7 +1269,7 @@ void PropertyEditorPanel::RenderForSpringArmComponent(USpringArmComponent* Sprin
     ImGui::PopStyleColor();
 }
 
-void PropertyEditorPanel::RenderForCurve() const
+void PropertyEditorPanel::RenderForCurve(FString& CurvePath) const
 {
     // 초기값
     static float v[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
@@ -1278,7 +1281,7 @@ void PropertyEditorPanel::RenderForCurve() const
     
     // 조절 가능 Value
     // ------
-    const static uint32 PointCount = 20;
+    const static uint32 PointCount = 100;
     const ImVec2 Min = ImVec2(0, 0);
     const ImVec2 Max = ImVec2(1, 1);
     // ------
@@ -1295,18 +1298,18 @@ void PropertyEditorPanel::RenderForCurve() const
     if (ImGui::Curve("Das editor", ImVec2(200, 200), PointCount, Curves, &selectedIndex, Min, Max))
     {
         // curve changed
-        float Value = ImGui::CurveValue(0.5, PointCount, Curves); // x delta in [0..1] range
+        float Value = CurveManager::CurveValue(0.5, PointCount, Curves); // x delta in [0..1] range
         float SmoothValue = ImGui::CurveValueSmooth(0.5, PointCount, Curves); // x delta in [0..1] range
         UE_LOG(LogLevel::Display, "Value: %.3f, Smooth Value: %.3f", Value, SmoothValue);
     }
     
-    static char CurveFileName[256];
+    char CurveFileName[256];
+    strcpy_s(CurveFileName, std::filesystem::path(GetData(CurvePath)).stem().string().c_str());
     
     ImGui::InputText("Curve Name", CurveFileName, IM_ARRAYSIZE(CurveFileName));
 
 
     std::filesystem::path CurveFilePath = GetData("Contents/Curves/" + FString(CurveFileName) + ".csv");
-
     bool isOpen;
     if (std::filesystem::exists(CurveFilePath))
     {
@@ -1332,7 +1335,7 @@ void PropertyEditorPanel::RenderForCurve() const
             std::ofstream file(CurveFilePath);
             if (file.is_open())
             {
-                if (bIsExist)
+                if (!bIsExist)
                 {
                     UAssetManager::Get().LoadObjFiles();
                 }
@@ -1375,11 +1378,11 @@ void PropertyEditorPanel::RenderForCurve() const
 
             if (bIsExist)
             {
-                LoadCurve(CurveFilePath, PointCount, Curves);
+                CurveManager::LoadCurve(CurveFilePath, PointCount, Curves);
             }
             else
             {
-                ResetCurve(Curves, Min, Max, End, PointCount);
+                CurveManager::ResetCurve(Curves, Min, Max, End, PointCount);
             }
         }
         catch (const std::filesystem::filesystem_error& e)
@@ -1408,7 +1411,7 @@ void PropertyEditorPanel::RenderForCurve() const
         if (ImGui::Selectable(TEXT("Empty"), false))
         {
             strcpy_s(CurveFileName, "");
-            ResetCurve(Curves, Min, Max, End, PointCount);
+            CurveManager::ResetCurve(Curves, Min, Max, End, PointCount);
         }        
             
         for (const auto& Asset : Assets)
@@ -1421,92 +1424,94 @@ void PropertyEditorPanel::RenderForCurve() const
                     if (std::filesystem::exists(std::filesystem::path(GetData(filepath))))
                     {
                         strcpy_s(CurveFileName, GetData(FString(std::filesystem::path(GetData(Asset.Value.AssetName.ToString())).stem())));
-                        std::filesystem::path filePath = GetData("Contents/Curves/" + FString(CurveFileName) + ".csv");
-                        LoadCurve(filePath, PointCount, Curves);
+                        CurveFilePath = GetData("Contents/Curves/" + FString(CurveFileName) + ".csv");
+                        CurveManager::LoadCurve(CurveFilePath, PointCount, Curves);
                     }
                 }
             }
         }
         ImGui::EndCombo();
     }
+
+    CurvePath = FString(CurveFilePath);
 }
 
-void PropertyEditorPanel::LoadCurve(std::filesystem::path FilePath, uint32 PointCount, ImVec2* Curves) const
+void PropertyEditorPanel::RenderForCameraComponent(UCameraComponent* CameraComponent) const
 {
-    try
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+    
+    if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
     {
-        std::ifstream File(FilePath);
-        if (File.is_open())
+        float AspectRatio = CameraComponent->GetAspectRatio();
+        ImGui::Text("AspectRatio");
+        ImGui::SameLine();
+        if (ImGui::DragFloat("##AspectRatio", &AspectRatio, 0.1f, 0, 0, "%.1f")) {
+            CameraComponent->SetAspectRatio(AspectRatio);
+        }
+        
+        if (CameraComponent->GetProjectionMode() == ECameraProjectionMode::Perspective)
         {
-            // file 파싱
-                    
-            // file << "Time,Value,\n";
-            // file << key.x << "," << key.y << ",\n";
-            std::string line;
-            std::getline(File, line); // "Time,Value,"
-            uint32 index = 0;
-            while (std::getline(File, line)) {
-                if (index >= PointCount) {
-                    std::cout << "Reached max array size. Breaking.\n";
-                    break;
-                }
+            float FOV = CameraComponent->GetFieldOfView();
+            ImGui::Text("Field Of View");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##Field Of View", &FOV, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetFieldOfView(FOV);
+            }
+            float NearClip = CameraComponent->GetNearClip();
+            ImGui::Text("NearClip");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##NearClip", &NearClip, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetNearClip(NearClip);
+            }
 
-                std::stringstream ss(line);
-                std::string timeStr, valueStr;
-
-                if (!std::getline(ss, timeStr, ',') || !std::getline(ss, valueStr, ',')) {
-                    std::cout << "Line ended prematurely. Breaking.\n";
-                    break;
-                }
-
-                try {
-                    float time = std::stof(timeStr);
-                    float value = std::stof(valueStr);
-                    Curves[index] = ImVec2(time, value);
-                    index++;
-                } catch (...) {
-                    std::cerr << "Invalid float format in line: " << line << std::endl;
-                    break;
-                }
-            } 
-            
-            File.close();
+            float FarClip = CameraComponent->GetFarClip();
+            ImGui::Text("FarClip");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##FarClip", &FarClip, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetFarClip(FarClip);
+            }
         }
         else
         {
-            // TODO: Error Check
+            float OrthoZoom = CameraComponent->GetOrthoZoom();
+            ImGui::Text("OrthoZoom");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##OrthoZoom", &OrthoZoom, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetOrthoZoom(OrthoZoom);
+            }
 
-            MessageBoxA(nullptr, "Failed to Load Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
+            float OrthoWidth = CameraComponent->GetOrthoWidth();
+            ImGui::Text("OrthoWidth");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##OrthoWidth", &OrthoWidth, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetOrthoWidth(OrthoWidth);
+            }
+        
+            float OrthoNearClipPlane = CameraComponent->GetOrthoNearClipPlane();
+            ImGui::Text("OrthoNearClipPlane");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##OrthoNearClipPlane", &OrthoNearClipPlane, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetOrthoNearClipPlane(OrthoNearClipPlane);
+            }
+
+            float OrthoFarClipPlane = CameraComponent->GetOrthoFarClipPlane();
+            ImGui::Text("OrthoFarClipPlane");
+            ImGui::SameLine();
+            if (ImGui::DragFloat("##OrthoNearClipPlane", &OrthoFarClipPlane, 0.1f, 0, 0, "%.1f")) {
+                CameraComponent->SetOrthoFarClipPlane(OrthoFarClipPlane);
+            }
         }
-    }
-    catch (const std::filesystem::filesystem_error& e)
-    {
-        // TODO: Error Check
-        MessageBoxA(nullptr, "Failed to Load Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
-    }
-}
 
-void PropertyEditorPanel::ResetCurve(ImVec2* Curves, ImVec2 Min, ImVec2 Max, ImVec2 End, uint32 MaxPoint) const
-{
-    for (uint32 i = 0; i < MaxPoint; i++)
-    {
-        Curves[i] = ImVec2(0, 0);
+        FString Path = CameraComponent->GetCurvePath();
+        RenderForCurve(Path);
+        if (CameraComponent->GetCurvePath() != Path)
+        {
+            CameraComponent->SetCurvePath(Path);
+        }
+        
+        ImGui::TreePop();
     }
-                
-    if (MaxPoint > 1)
-    {
-        Curves[0] = Min;
-    }
-
-    if (MaxPoint > 2)
-    {
-        Curves[1] = Max;
-    }
-
-    if (MaxPoint > 3)
-    {
-        Curves[2] = End;
-    }
+    ImGui::PopStyleColor();
 }
 
 void PropertyEditorPanel::OnResize(HWND hWnd)

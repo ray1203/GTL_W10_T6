@@ -472,27 +472,6 @@ float CurveValueSmooth(float p, int maxpoints, const ImVec2* points)
     return output[0];
 }
 
-float CurveValue(float p, int maxpoints, const ImVec2* points)
-{
-    if (maxpoints < 2 || points == 0)
-        return 0;
-    if (p < 0)
-        return points[0].y;
-
-    int left = 0;
-    while (left < maxpoints && points[left].x < p && points[left].x != -1)
-        left++;
-    if (left)
-        left--;
-
-    if (left == maxpoints - 1)
-        return points[maxpoints - 1].y;
-
-    float d = (p - points[left].x) / (points[left + 1].x - points[left].x);
-
-    return points[left].y + (points[left + 1].y - points[left].y) * d;
-}
-
 static inline float ImRemap(float v, float a, float b, float c, float d)
 {
     return (c + (d - c) * (v - a) / (b - a));

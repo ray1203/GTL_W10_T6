@@ -1,8 +1,15 @@
 #include "CameraComponent.h"
-#include "Math/JungleMath.h"
-
+#include "ImGUI/imgui.h"
+#include "Engine/CurveManager.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
+
+float UCameraComponent::GetCameraCurveValue(float t)
+{
+    ImVec2 Curves[100];
+    CurveManager::LoadCurve(std::filesystem::path(GetData(CurvePath)), 100, Curves);
+    return CurveManager::CurveValue(t, 100, Curves);
+}
 
 void UCameraComponent::GetCameraView(float DeltaTime, FMinimalViewInfo& DesiredView)
 {

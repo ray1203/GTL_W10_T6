@@ -7,6 +7,7 @@
 #include "Components/Shapes/ShapeComponent.h"
 #include "UnrealEd/EditorPanel.h"
 
+class UCameraComponent;
 struct ImVec2;
 class ULightComponentBase;
 class UEditorPlayer;
@@ -61,10 +62,9 @@ private:
 
     void RenderForSpringArmComponent(USpringArmComponent* SpringArmComp) const;
 
-    void RenderForCurve() const;
+    void RenderForCurve(FString& CurvePath) const;
 
-    void LoadCurve(std::filesystem::path FilePath, uint32 PointCount, ImVec2* Curves) const;
-    void ResetCurve(ImVec2* Curves, ImVec2 Min, ImVec2 Max, ImVec2 End, uint32 MaxPoint) const;
+    void RenderForCameraComponent(UCameraComponent* CameraComponent) const;
     
     template<typename T>
         requires std::derived_from<T, UActorComponent>
