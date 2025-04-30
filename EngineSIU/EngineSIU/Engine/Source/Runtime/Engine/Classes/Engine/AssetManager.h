@@ -8,6 +8,7 @@ enum class EAssetType : uint8
     SkeletalMesh,
     Texture2D,
     Material,
+    Curve,
 };
 
 struct FAssetInfo
@@ -45,6 +46,6 @@ public:
 
     const TMap<FName, FAssetInfo>& GetAssetRegistry();
 
-private:
+public:
     void LoadObjFiles();
 };

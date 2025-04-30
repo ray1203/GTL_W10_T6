@@ -1,10 +1,13 @@
 #pragma once
 
+#include <filesystem>
+
 #include "Components/ActorComponent.h"
 #include "Components/SpringArmComponent.h"
 #include "Components/Shapes/ShapeComponent.h"
 #include "UnrealEd/EditorPanel.h"
 
+struct ImVec2;
 class ULightComponentBase;
 class UEditorPlayer;
 class USceneComponent;
@@ -58,6 +61,11 @@ private:
 
     void RenderForSpringArmComponent(USpringArmComponent* SpringArmComp) const;
 
+    void RenderForCurve() const;
+
+    void LoadCurve(std::filesystem::path FilePath, uint32 PointCount, ImVec2* Curves) const;
+    void ResetCurve(ImVec2* Curves, ImVec2 Min, ImVec2 Max, ImVec2 End, uint32 MaxPoint) const;
+    
     template<typename T>
         requires std::derived_from<T, UActorComponent>
     T* GetTargetComponent(AActor* SelectedActor, USceneComponent* SelectedComponent);
