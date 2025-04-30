@@ -217,7 +217,6 @@ void APlayerCameraManager::UpdateCamera(float DeltaTime)
         }
     }
 
-
     FillCameraCache(NewPOV);
 }
 
@@ -256,14 +255,36 @@ void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
     {
         if (UCameraComponent* CamComp = OutVT.Target->GetComponentByClass<UCameraComponent>())
         {
-            OutVT.POV.Location = CamComp->GetRelativeLocation();
-            OutVT.POV.Rotation = CamComp->GetRelativeRotation();
+            OutVT.POV.Location = CamComp->GetWorldLocation();
+            OutVT.POV.Rotation = CamComp->GetWorldRotation();
             OutVT.POV.FOV = CamComp->GetFieldOfView();
         }
     }
 
     ApplyCameraModifiers(DeltaTime, OutVT.POV);
 
+    TArray<UCameraModifier*> RemoveModifierList;
+    for (UCameraModifier* Modifier : ModifierList)
+    {
+        if (Modifier && Modifier->IsDisabled())
+        {
+            RemoveModifierList.Add(Modifier);
+        }
+    }
+    for (UCameraModifier* Modifier : RemoveModifierList)
+    {
+        RemoveCameraModifier(Modifier);
+    }
+}
+
+bool APlayerCameraManager::RemoveCameraModifier(UCameraModifier* ModifierToRemove)
+{
+    if (ModifierToRemove)
+    {
+        ModifierList.Remove(ModifierToRemove);
+        return true;
+    }
+    return false;
 }
 
 void APlayerCameraManager::SetViewTarget(AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
@@ -336,7 +357,7 @@ void APlayerCameraManager::InitializeFor(APlayerController* PC)
 
     PCOwner = PC;
 
-    SetViewTarget(PC);
+    SetViewTarget(PCOwner);
 
     // set the level default scale
     //SetDesiredColorScale(GetWorldSettings()->DefaultColorScale, 5.f);

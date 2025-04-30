@@ -119,6 +119,9 @@ public:
     virtual void UpdateViewTarget(FViewTarget& OutVT, float DeltaTime);
 
 private:
+    virtual bool RemoveCameraModifier(UCameraModifier* ModifierToRemove);
+
+private:
     class APlayerController* PCOwner;
     
     class USceneComponent* TransformComponent;

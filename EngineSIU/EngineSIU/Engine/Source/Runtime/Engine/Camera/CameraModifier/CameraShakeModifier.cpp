@@ -21,46 +21,42 @@ UCameraShakeModifier::UCameraShakeModifier()
     PhaseYaw = FMath::FRandRange(0.f, 2 * PI);
     PhaseRoll = FMath::FRandRange(0.f, 2 * PI);
 
-    // 초기 시간은 0
-    ElapsedTime = 0.f;
 }
 
 bool UCameraShakeModifier::ModifyCamera(float DeltaTime, FMinimalViewInfo& InOutPOV)
 {
-    if (!bHasCapturedBase)
+    Super::ModifyCamera(DeltaTime, InOutPOV);
+
+    ElapsedTime += DeltaTime;
+    if (ElapsedTime >= Duration)
     {
-        OriginalLocation = InOutPOV.Location;
-        OriginalRotation = InOutPOV.Rotation;
-        bHasCapturedBase = true;
+        DisableModifier(true);
+        return false;
     }
 
-    ElapsedTime = FMath::Min(ElapsedTime + DeltaTime, Duration);
-    if (ElapsedTime >= Duration)
-        return false;  // Modifier 제거
+    // 1) 경과 시간 누적
 
-    // 0~1 정규화
-    float inT = FMath::Clamp(ElapsedTime / BlendInTime, 0.f, 1.f);
-    float outT = FMath::Clamp((Duration - ElapsedTime) / BlendOutTime, 0.f, 1.f);
-    float blendAlpha = InCurve ? InCurve->Evaluate(inT) : inT;
-    blendAlpha *= OutCurve ? OutCurve->Evaluate(outT) : outT;
-    blendAlpha *= Scale;
+    if (Alpha <= 0.f)
+        return false;  // 비활성화
 
-    auto calc = [&](const Oscillator& O, float phase)
+    // 4) 시간 누적 → 오프셋 계산
+    auto CalcOffset = [&](const Oscillator& O, float Phase)->float
         {
-            return O.Amplitude * blendAlpha
-                * FMath::Sin(phase + ElapsedTime * O.Frequency);
+            return O.Amplitude * Alpha * Scale
+                * FMath::Sin(Phase + ElapsedTime * O.Frequency);
         };
 
-    InOutPOV.Location = OriginalLocation + FVector(calc(LocX, PhaseX),
-        calc(LocY, PhaseY),
-        calc(LocZ, PhaseZ));
-
-    InOutPOV.Rotation = OriginalRotation + FRotator(
-        calc(RotPitch, PhasePitch),
-        calc(RotYaw, PhaseYaw),
-        calc(RotRoll, PhaseRoll)
+    // 5) ViewTarget.POV 에 적용
+    InOutPOV.Location += FVector(
+        CalcOffset(LocX, PhaseX),
+        CalcOffset(LocY, PhaseY),
+        CalcOffset(LocZ, PhaseZ)
+    );
+    InOutPOV.Rotation += FRotator(
+        CalcOffset(RotPitch, PhasePitch),
+        CalcOffset(RotYaw, PhaseYaw),
+        CalcOffset(RotRoll, PhaseRoll)
     );
 
     return true;
-
 }
