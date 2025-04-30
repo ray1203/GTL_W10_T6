@@ -37,9 +37,14 @@ void FFadeRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDe
 
 void FFadeRenderPass::PrepareRenderArr()
 {
-    if (GEngine->ActiveWorld&&GEngine->ActiveWorld->WorldType == EWorldType::PIE) {
+    if (GEngine->ActiveWorld&&GEngine->ActiveWorld->WorldType != EWorldType::Editor) {
             FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeAmount;
             FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeColor;
+    }
+    else
+    {
+        FadeAlpha = 0;
+        FadeColor = FLinearColor(0, 0, 0, 0);
     }
 }
 
