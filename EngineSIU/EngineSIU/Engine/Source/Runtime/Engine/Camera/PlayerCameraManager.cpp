@@ -242,20 +242,15 @@ void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
     }
     else
     {
-        OutVT.POV = OrigPOV;
-
-        FVector Loc = OutVT.Target->GetActorLocation();
-        FRotator Rotator = OutVT.Target->GetActorRotation();
-
-        if (OutVT.Target == PCOwner)
+        if (UCameraComponent* CamComp = OutVT.Target->GetComponentByClass<UCameraComponent>())
         {
-            Loc = PCOwner->GetPawn()->GetActorLocation();
+            OutVT.POV.Location = CamComp->GetRelativeLocation();
+            OutVT.POV.Rotation = CamComp->GetRelativeRotation();
+            OutVT.POV.FOV = CamComp->GetFieldOfView();
         }
-
-        PCOwner->GetControlRotation();
-        // 여기 뭔가 더 추가되어야 함.
-        // 아니면 그냥 CameraComponent를 무조건 가지고 있다고 가정하고 짜도 될 듯.
     }
+
+    ApplyCameraModifiers(DeltaTime, OutVT.POV);
 
 }
 
