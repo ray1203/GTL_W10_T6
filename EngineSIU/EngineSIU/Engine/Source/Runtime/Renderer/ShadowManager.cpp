@@ -1,9 +1,13 @@
 #include "ShadowManager.h"
 
 #include "ViewportClient.h"
+#include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Math/JungleMath.h"
 #include "D3D11RHI/DXDBufferManager.h"
+#include "Engine/Engine.h"
+#include "World/World.h"
 
 // --- 생성자 및 소멸자 ---
 
@@ -542,16 +546,48 @@ void FShadowManager::ReleaseDirectionalShadowResources()
 }
 
 void FShadowManager::UpdateCascadeMatrices(const std::shared_ptr<FViewportClient>& Viewport, UDirectionalLightComponent* DirectionalLight)
-{    
-    FMatrix InvViewProj = FMatrix::Inverse(Viewport->GetViewMatrix()*Viewport->GetProjectionMatrix());
-
+{
     CascadesViewProjMatrices.Empty();
     CascadesInvProjMatrices.Empty();
-	const FMatrix CamView = Viewport->GetViewMatrix();
-    float NearClip = Viewport->GetNearClip();
-    float FarClip = Viewport->GetFarClip();
-	const float FOV = Viewport->GetFieldOfView();          // Degrees
-	const float AspectRatio = Viewport->GetAspectRatio();
+
+    FMatrix CamView;
+    float NearClip;
+    float FarClip;
+    float FOV;
+    float AspectRatio;
+    
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+    {
+        CamView = Viewport->GetViewMatrix();
+        NearClip = Viewport->GetNearClip();
+        FarClip = Viewport->GetFarClip();
+        FOV = Viewport->GetFieldOfView();          // Degrees
+        AspectRatio = Viewport->GetAspectRatio();
+    }
+    else if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    {
+        auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV;
+
+        CamView = JungleMath::CreateViewMatrix(
+            CameraPOV.Location,
+            CameraPOV.Location + CameraPOV.Rotation.GetForwardVector(),
+            CameraPOV.Rotation.GetUpVector()
+        );
+        
+        if (CameraPOV.ProjectionMode == CameraProjectionMode::Perspective)
+        {
+            NearClip = CameraPOV.PerspectiveNearClipPlane;
+            FarClip = CameraPOV.PerspectiveFarClipPlane;
+        }
+        else if (CameraPOV.ProjectionMode == CameraProjectionMode::Orthographic)
+        {
+            NearClip = CameraPOV.OrthoNearClipPlane;
+            FarClip = CameraPOV.OrthoFarClipPlane;
+        }
+    
+        FOV = CameraPOV.FOV;          // Degrees
+        AspectRatio = CameraPOV.AspectRatio;
+    }
 
 	float halfHFOV = FMath::DegreesToRadians(FOV) * 0.5f;
 	float tanHFOV = FMath::Tan(halfHFOV);

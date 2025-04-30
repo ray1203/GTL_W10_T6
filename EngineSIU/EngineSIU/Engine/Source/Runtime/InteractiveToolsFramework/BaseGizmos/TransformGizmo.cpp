@@ -97,7 +97,7 @@ void ATransformGizmo::Tick(float DeltaTime)
         return;
     }
 
-    AEditorPlayer* EditorPlayer = Engine->GetEditorPlayer();
+    UEditorPlayer* EditorPlayer = Engine->GetEditorPlayer();
     if (!EditorPlayer)
     {
         return;

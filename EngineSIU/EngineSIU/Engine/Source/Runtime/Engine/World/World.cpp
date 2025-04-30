@@ -1,18 +1,10 @@
 #include "World.h"
 
-#include "Actors/Cube.h"
 #include "Actors/Player.h"
-#include "BaseGizmos/TransformGizmo.h"
-#include "Camera/CameraComponent.h"
-#include "Classes/Components/StaticMeshComponent.h"
-#include "Components/SkySphereComponent.h"
 #include "Engine/FLoaderOBJ.h"
-#include "Actors/HeightFogActor.h"
 #include "Engine/EditorEngine.h"
 #include "Engine/Engine.h"
 #include "UnrealEd/SceneManager.h"
-#include "Actors/PointLightActor.h"
-#include "Actors/SpotLightActor.h"
 #include "Components/PrimitiveComponent.h"
 #include "GameFramework/Actor.h"
 

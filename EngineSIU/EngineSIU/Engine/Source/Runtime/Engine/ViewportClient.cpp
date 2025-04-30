@@ -77,21 +77,6 @@ bool FViewportClient::IsPerspective() const
 
 void FViewportClient::UpdateViewMatrix()
 {
-    if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
-    {
-        UCameraComponent* PlayerCamera = GEngine->ActiveWorld->GetFirstPlayerController()->GetCharacter()->GetComponentByClass<UCameraComponent>();
-        if (PlayerCamera)
-        {
-            View = JungleMath::CreateViewMatrix(
-                PlayerCamera->GetWorldLocation(),
-                PlayerCamera->GetWorldLocation() + PlayerCamera->GetForwardVector(),
-                PlayerCamera->GetUpVector()
-            );
-        }
-
-        return;
-    }
-
     if (IsPerspective())
     {
         View = JungleMath::CreateViewMatrix(PerspectiveCamera.GetLocation(),

@@ -3,10 +3,14 @@
 #include "Define.h"
 #include "World/World.h"
 #include "Actors/Player.h"
-#include "LevelEditor/SLevelEditor.h"
 #include "Math/MathUtility.h"
-#include "UnrealEd/EditorViewportClient.h"
 #include "EngineLoop.h"
+#include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Engine/Engine.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "Math/JungleMath.h"
+#include "UnrealEd/EditorViewportClient.h"
 
 UBillboardComponent::UBillboardComponent()
 {
@@ -95,8 +99,25 @@ void UBillboardComponent::SetUUIDParent(USceneComponent* InUUIDParent)
 
 FMatrix UBillboardComponent::CreateBillboardMatrix() const
 {
+    FMatrix CameraView;
+
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+    {
+        std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+        CameraView = ActiveViewport->GetViewMatrix();
+    }
+    else if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    {
+        auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV;
+        
+        CameraView = JungleMath::CreateViewMatrix(
+            CameraPOV.Location,
+            CameraPOV.Location + CameraPOV.Rotation.GetForwardVector(),
+            CameraPOV.Rotation.GetUpVector()
+        );
+    }
+    
     // 카메라 뷰 행렬을 가져와서 위치 정보를 제거한 후 전치하여 LookAt 행렬 생성
-    FMatrix CameraView = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
     CameraView.M[0][3] = CameraView.M[1][3] = CameraView.M[2][3] = 0.0f;
     CameraView.M[3][0] = CameraView.M[3][1] = CameraView.M[3][2] = 0.0f;
     CameraView.M[3][3] = 1.0f;
@@ -137,11 +158,51 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
     float ndcX = (2.0f * mousePos.x / viewport.Width) - 1.0f;
     float ndcY = -((2.0f * mousePos.y / viewport.Height) - 1.0f);
 
-    std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
-    // MVP 행렬 계산
     FMatrix M = CreateBillboardMatrix();
-    FMatrix V = ActiveViewport->GetViewMatrix();
-    FMatrix P = ActiveViewport->GetProjectionMatrix();
+    FMatrix V;
+    FMatrix P;
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+    {
+        std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+        // MVP 행렬 계산
+        V = ActiveViewport->GetViewMatrix();
+        P = ActiveViewport->GetProjectionMatrix();
+    }
+    else if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+    {
+        auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV;
+
+        V = JungleMath::CreateViewMatrix(
+            CameraPOV.Location,
+            CameraPOV.Location + CameraPOV.Rotation.GetForwardVector(),
+            CameraPOV.Rotation.GetUpVector()
+        );
+
+        if (CameraPOV.ProjectionMode == CameraProjectionMode::Perspective)
+        {
+            P = JungleMath::CreateProjectionMatrix(
+                FMath::DegreesToRadians(CameraPOV.FOV),
+                CameraPOV.AspectRatio,
+                CameraPOV.PerspectiveNearClipPlane,
+                CameraPOV.PerspectiveFarClipPlane
+            );
+        }
+        else if (CameraPOV.ProjectionMode == CameraProjectionMode::Orthographic)
+        {
+            // 오쏘그래픽 너비는 줌 값과 가로세로 비율에 따라 결정됩니다.
+            const float OrthoWidth = CameraPOV.OthoroWidth;
+            const float OrthoHeight = CameraPOV.OthoroWidth / CameraPOV.AspectRatio;
+
+            // 오쏘그래픽 투영 행렬 생성 (nearPlane, farPlane 은 기존 값 사용)
+            P = JungleMath::CreateOrthoProjectionMatrix(
+                OrthoWidth,
+                OrthoHeight,
+                CameraPOV.OrthoNearClipPlane,
+                CameraPOV.OrthoFarClipPlane
+            );
+        }
+    }
+    
     FMatrix MVP = M * V * P;
 
     // quadVertices를 MVP로 변환하여 NDC 공간에서의 최소/최대값 구하기
@@ -169,7 +230,17 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
     if (ndcX >= minX && ndcX <= maxX && ndcY >= minY && ndcY <= maxY)
     {
         const FVector WorldLocation = GetWorldLocation();
-        const FVector CameraLocation = ActiveViewport->GetCameraLocation();
+        FVector CameraLocation;
+        if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+        {
+            std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+            CameraLocation = ActiveViewport->GetCameraLocation();
+        }
+        else if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
+        {
+            auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV;
+            CameraLocation = CameraPOV.Location;
+        }
         hitDistance = (WorldLocation - CameraLocation).Length();
         return true;
     }

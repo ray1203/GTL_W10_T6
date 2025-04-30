@@ -68,4 +68,8 @@ struct FRotator
     bool InitFromString(const FString& InSourceString);
 
     static float NormalizeAxis(float Angle);
+
+    FVector GetForwardVector() const;
+    FVector GetRightVector() const;
+    FVector GetUpVector() const;
 };

@@ -27,16 +27,6 @@ const D3D_SHADER_MACRO defines[] =
 };
 
 
-struct FConstantBuffersStaticMesh
-{
-    ID3D11Buffer* Camera00;
-    ID3D11Buffer* Light01;
-    ID3D11Buffer* Actor03;
-    ID3D11Buffer* Texture05;
-    ID3D11Buffer* Mesh06;
-};
-
-
 struct FMaterialConstants2 {
     FVector DiffuseColor = { 0,0,0 };
     float TransparencyScalar = 0;

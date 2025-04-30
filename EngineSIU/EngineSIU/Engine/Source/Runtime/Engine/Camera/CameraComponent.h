@@ -1,14 +1,9 @@
 #pragma once
+#include "CameraTypes.h"
 #include "Components/SceneComponent.h"
 
 #define MIN_ORTHOZOOM (1.0)  // 2D ortho viewport zoom >= MIN_ORTHOZOOM
 #define MAX_ORTHOZOOM (1e25)
-
-enum class CameraProjectionMode : uint8
-{
-    Perspective,
-    Orthographic,
-};
 
 class UCameraComponent : public USceneComponent
 {
@@ -18,7 +13,7 @@ public:
     UCameraComponent() = default; 
 
     // 카메라의 위치와 회전 설정
-    float GetFOV() const { return ViewFOV; }
+    float GetFieldOfView() const { return ViewFOV; }
     float GetAspectRatio() const { return AspectRatio; }
     float GetNearClip() const { return NearClip; }
     float GetFarClip() const { return FarClip; }

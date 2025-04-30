@@ -1,81 +1,92 @@
 #include "Player.h"
 
 #include "ShowFlag.h"
-#include "UnrealClient.h"
-#include "World/World.h"
-#include "BaseGizmos/GizmoArrowComponent.h"
-#include "BaseGizmos/GizmoCircleComponent.h"
+#include "BaseGizmos/GizmoBaseComponent.h"
 #include "BaseGizmos/TransformGizmo.h"
-#include "Camera/CameraComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/Light/LightComponent.h"
-#include "LevelEditor/SLevelEditor.h"
-#include "Math/JungleMath.h"
-#include "UnrealEd/EditorViewportClient.h"
-#include "UObject/UObjectIterator.h"
 #include "Engine/EditorEngine.h"
-#include "Player.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "Math/Quat.h"
+#include "UnrealEd/EditorViewportClient.h"
+#include "UObject/Casts.h"
+#include "UObject/Object.h"
+#include "UObject/UObjectIterator.h"
 
 #include "ImGUI/imgui.h"
 
 
-void AEditorPlayer::Tick(float DeltaTime)
+void UEditorPlayer::Initialize()
 {
-    Super::Tick(DeltaTime);
-    Input();
+    FSlateAppMessageHandler* Handler = GEngineLoop.GetAppMessageHandler();
+    Handler->OnMouseDownDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
+    {
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        {
+            return;
+        }
+        
+        if (ImGui::GetIO().WantCaptureMouse) return;
+
+        if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
+        {
+            return;
+        }
+        
+        POINT mousePos;
+        GetCursorPos(&mousePos);
+        GetCursorPos(&m_LastMousePos);
+        ScreenToClient(GEngineLoop.AppWnd, &mousePos);
+
+        FVector pickPosition;
+
+        std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+        ScreenToViewSpace(mousePos.x, mousePos.y, ActiveViewport, pickPosition);
+        bool Result = PickGizmo(pickPosition, ActiveViewport.get());
+        if (Result == false)
+        {
+            PickActor(pickPosition, ActiveViewport);
+        }
+    });
+
+    Handler->OnMouseMoveDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
+    {
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        {
+            return;
+        }
+        
+        if (ImGui::GetIO().WantCaptureMouse)
+        {
+            return;
+        }
+        
+        if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
+        {
+            return;
+        }
+        
+        PickedObjControl();
+    });
+
+    Handler->OnMouseUpDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
+    {
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        {
+            return;
+        }
+        
+        if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
+        {
+            return;
+        }
+        
+        std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
+        ActiveViewport->SetPickedGizmoComponent(nullptr);
+    });
 }
 
-void AEditorPlayer::Input()
-{
-    ImGuiIO& io = ImGui::GetIO();
-    if (io.WantCaptureMouse) return;
-    if (io.WantCaptureKeyboard) return;
-
-    if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
-    {
-        if (!bLeftMouseDown)
-        {   
-            bLeftMouseDown = true;
-
-            POINT mousePos;
-            GetCursorPos(&mousePos);
-            GetCursorPos(&m_LastMousePos);
-            ScreenToClient(GEngineLoop.AppWnd, &mousePos);
-
-            /*
-            uint32 UUID = FEngineLoop::GraphicDevice.GetPixelUUID(mousePos);
-            // TArray<UObject*> objectArr = GetWorld()->GetObjectArr();
-            for ( const USceneComponent* obj : TObjectRange<USceneComponent>())
-            {
-                if (obj->GetUUID() != UUID) continue;
-
-                UE_LOG(LogLevel::Display, *obj->GetName());
-            }
-            */
-
-            FVector pickPosition;
-
-            std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
-            ScreenToViewSpace(mousePos.x, mousePos.y, ActiveViewport, pickPosition);
-            bool res = PickGizmo(pickPosition, ActiveViewport.get());
-            if (!res) PickActor(pickPosition, ActiveViewport);
-        }
-        else
-        {
-            PickedObjControl();
-        }
-    }
-    else
-    {
-        if (bLeftMouseDown)
-        {
-            bLeftMouseDown = false;
-            std::shared_ptr<FEditorViewportClient> ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
-            ActiveViewport->SetPickedGizmoComponent(nullptr);
-        }
-    }
-}
-
-void AEditorPlayer::ProcessGizmoIntersection(UStaticMeshComponent* Component, const FVector& PickPosition, FEditorViewportClient* InActiveViewport, bool& bIsPickedGizmo)
+void UEditorPlayer::ProcessGizmoIntersection(UStaticMeshComponent* Component, const FVector& PickPosition, FEditorViewportClient* InActiveViewport, bool& bIsPickedGizmo)
 {
     int maxIntersect = 0;
     float minDistance = FLT_MAX;
@@ -102,7 +113,7 @@ void AEditorPlayer::ProcessGizmoIntersection(UStaticMeshComponent* Component, co
     }
 }
 
-bool AEditorPlayer::PickGizmo(FVector& pickPosition, FEditorViewportClient* InActiveViewport)
+bool UEditorPlayer::PickGizmo(FVector pickPosition, FEditorViewportClient* InActiveViewport)
 {
     bool isPickedGizmo = false;
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
@@ -133,7 +144,7 @@ bool AEditorPlayer::PickGizmo(FVector& pickPosition, FEditorViewportClient* InAc
     return isPickedGizmo;
 }
 
-void AEditorPlayer::PickActor(const FVector& pickPosition, std::shared_ptr<FEditorViewportClient> ActiveViewport)
+void UEditorPlayer::PickActor(const FVector& pickPosition, std::shared_ptr<FEditorViewportClient> ActiveViewport)
 {
     if (!(ActiveViewport->GetShowFlag() & EEngineShowFlags::SF_Primitives)) return;
 
@@ -142,59 +153,63 @@ void AEditorPlayer::PickActor(const FVector& pickPosition, std::shared_ptr<FEdit
     float minDistance = FLT_MAX;
     for (const auto iter : TObjectRange<UPrimitiveComponent>())
     {
-        UPrimitiveComponent* pObj;
-        if (iter->IsA<UPrimitiveComponent>() || iter->IsA<ULightComponentBase>())
+        UPrimitiveComponent* PrimitiveComponent;
+        if (iter->IsA<UPrimitiveComponent>())
         {
-            pObj = static_cast<UPrimitiveComponent*>(iter);
+            PrimitiveComponent = static_cast<UPrimitiveComponent*>(iter);
         }
         else
         {
             continue;
         }
 
-        if (pObj && !pObj->IsA<UGizmoBaseComponent>())
+        if (PrimitiveComponent == nullptr || PrimitiveComponent->IsA<UGizmoBaseComponent>())
         {
-            float Distance = 0.0f;
-            int currentIntersectCount = 0;
-            if (RayIntersectsObject(pickPosition, pObj, Distance, currentIntersectCount))
+            continue;
+        }
+        
+        float Distance = 0.0f;
+        int currentIntersectCount = 0;
+        if (RayIntersectsObject(pickPosition, PrimitiveComponent, Distance, currentIntersectCount))
+        {
+            if (Distance < minDistance)
             {
-                if (Distance < minDistance)
-                {
-                    minDistance = Distance;
-                    maxIntersect = currentIntersectCount;
-                    Possible = pObj;
-                }
-                else if (abs(Distance - minDistance) < FLT_EPSILON && currentIntersectCount > maxIntersect)
-                {
-                    maxIntersect = currentIntersectCount;
-                    Possible = pObj;
-                }
+                minDistance = Distance;
+                maxIntersect = currentIntersectCount;
+                Possible = PrimitiveComponent;
+            }
+            else if (abs(Distance - minDistance) < FLT_EPSILON && currentIntersectCount > maxIntersect)
+            {
+                maxIntersect = currentIntersectCount;
+                Possible = PrimitiveComponent;
             }
         }
     }
     if (Possible)
     {
-        Cast<UEditorEngine>(GEngine)->SelectActor(Possible->GetOwner());
-        Cast<UEditorEngine>(GEngine)->SelectComponent(Possible);
+        UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
+        EditorEngine->SelectActor(Possible->GetOwner());
+        EditorEngine->SelectComponent(Possible);
     }
     else
     {
-        Cast<UEditorEngine>(GEngine)->DeselectActor(Cast<UEditorEngine>(GEngine)->GetSelectedActor());
-        Cast<UEditorEngine>(GEngine)->DeselectComponent(Cast<UEditorEngine>(GEngine)->GetSelectedComponent());
+        UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine);
+        EditorEngine->DeselectActor(EditorEngine->GetSelectedActor());
+        EditorEngine->DeselectComponent(EditorEngine->GetSelectedComponent());
     }
 }
 
-void AEditorPlayer::AddControlMode()
+void UEditorPlayer::SetControlMode()
 {
     ControlMode = static_cast<EControlMode>((ControlMode + 1) % CM_END);
 }
 
-void AEditorPlayer::AddCoordiMode()
+void UEditorPlayer::SetCoordiMode()
 {
     CoordMode = static_cast<ECoordMode>((CoordMode + 1) % CDM_END);
 }
 
-void AEditorPlayer::ScreenToViewSpace(int32 ScreenX, int32 ScreenY, std::shared_ptr<FEditorViewportClient> ActiveViewport, FVector& RayOrigin)
+void UEditorPlayer::ScreenToViewSpace(int32 ScreenX, int32 ScreenY, std::shared_ptr<FEditorViewportClient> ActiveViewport, FVector& RayOrigin)
 {
     FRect Rect = ActiveViewport->GetViewport()->GetRect();
     
@@ -216,7 +231,7 @@ void AEditorPlayer::ScreenToViewSpace(int32 ScreenX, int32 ScreenY, std::shared_
     }
 }
 
-int AEditorPlayer::RayIntersectsObject(const FVector& PickPosition, USceneComponent* Component, float& HitDistance, int& IntersectCount)
+int UEditorPlayer::RayIntersectsObject(const FVector& PickPosition, USceneComponent* Component, float& HitDistance, int& IntersectCount)
 {
     FMatrix WorldMatrix = Component->GetWorldMatrix();
 	FMatrix ViewMatrix = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetViewMatrix();
@@ -272,7 +287,7 @@ int AEditorPlayer::RayIntersectsObject(const FVector& PickPosition, USceneCompon
     }
 }
 
-void AEditorPlayer::PickedObjControl()
+void UEditorPlayer::PickedObjControl()
 {
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
     FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
@@ -317,7 +332,7 @@ void AEditorPlayer::PickedObjControl()
     }
 }
 
-void AEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)
+void UEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)
 {
     const auto ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
     const FViewportCamera* ViewTransform = ActiveViewport->GetViewportType() == LVT_Perspective
@@ -375,7 +390,7 @@ void AEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseCompon
     Component->SetWorldRotation(RotationDelta * CurrentRotation); 
 }
 
-void AEditorPlayer::ControlScale(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)
+void UEditorPlayer::ControlScale(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)
 {
     const auto ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient();
     const FViewportCamera* ViewTransform = ActiveViewport->GetViewportType() == LVT_Perspective

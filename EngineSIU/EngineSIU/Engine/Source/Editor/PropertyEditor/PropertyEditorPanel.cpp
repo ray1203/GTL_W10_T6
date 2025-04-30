@@ -83,7 +83,7 @@ void PropertyEditorPanel::Render()
         // curve changed
     }
     
-    AEditorPlayer* Player = Engine->GetEditorPlayer();
+    UEditorPlayer* Player = Engine->GetEditorPlayer();
     AActor* SelectedActor = Engine->GetSelectedActor();
     USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
     USceneComponent* TargetComponent = nullptr;
@@ -218,7 +218,7 @@ void PropertyEditorPanel::HSVToRGB(const float H, const float S, const float V, 
     R += M;  G += M;  B += M;
 }
 
-void PropertyEditorPanel::RenderForSceneComponent(USceneComponent* SceneComponent, AEditorPlayer* Player) const
+void PropertyEditorPanel::RenderForSceneComponent(USceneComponent* SceneComponent, UEditorPlayer* Player) const
 {
     ImGui::SetItemDefaultFocus();
     // TreeNode 배경색을 변경 (기본 상태)
@@ -250,7 +250,7 @@ void PropertyEditorPanel::RenderForSceneComponent(USceneComponent* SceneComponen
 
         if (ImGui::Button(CoordiButtonLabel.c_str(), ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
         {
-            Player->AddCoordiMode();
+            Player->SetCoordiMode();
         }
         ImGui::TreePop(); // 트리 닫기
     }
@@ -610,6 +610,10 @@ ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
 
 void PropertyEditorPanel::RenderForLightShadowCommon(ULightComponentBase* LightComponent) const
 {
+    if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+    {
+        return;
+    }
     // bCastShadow 토글.
     // Shadow Property 수치 조절.
 
@@ -634,7 +638,7 @@ void PropertyEditorPanel::RenderForLightShadowCommon(ULightComponentBase* LightC
 
         // 2. 활성 에디터 뷰포트 클라이언트 가져오기 (!!! 엔진별 구현 필요 !!!)
         std::shared_ptr<FEditorViewportClient> ViewportClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient(); // 위에 정의된 헬퍼 함수 사용 (또는 직접 구현)
-
+        
         // 3. 뷰포트 클라이언트가 유효하면 카메라 설정
         if (ViewportClient)
         {

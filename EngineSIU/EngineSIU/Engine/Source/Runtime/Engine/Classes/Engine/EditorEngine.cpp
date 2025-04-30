@@ -38,7 +38,8 @@ void UEditorEngine::Init()
     EditorWorldContext.SetCurrentWorld(EditorWorld);
     ActiveWorld = EditorWorld;
 
-    EditorPlayer = FObjectFactory::ConstructObject<AEditorPlayer>(this);
+    EditorPlayer = FObjectFactory::ConstructObject<UEditorPlayer>(this);
+    EditorPlayer->Initialize();
 
     if (AssetManager == nullptr)
     {
@@ -126,7 +127,6 @@ void UEditorEngine::Tick(float DeltaTime)
             {
                 // TODO: World에서 EditorPlayer 제거 후 Tick 호출 제거 필요.
                 World->Tick(DeltaTime);
-                EditorPlayer->Tick(DeltaTime);
                 ULevel* Level = World->GetActiveLevel();
                 TArray CachedActors = Level->Actors;
                 if (Level)
@@ -329,7 +329,7 @@ void UEditorEngine::HoverComponent(USceneComponent* InComponent)
     }
 }
 
-AEditorPlayer* UEditorEngine::GetEditorPlayer() const
+UEditorPlayer* UEditorEngine::GetEditorPlayer() const
 {
     return EditorPlayer;
 }

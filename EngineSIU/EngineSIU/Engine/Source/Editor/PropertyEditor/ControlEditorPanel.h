@@ -28,8 +28,6 @@ private:
     bool bOpenMenu = false;
     bool bShowImGuiDemoWindow = false; // 데모 창 표시 여부를 관리하는 변수
 
-    float CameraSpeed = 0.0f;
-    float GridScale = 1.0f;
     FLightGridGenerator LightGridGenerator;
 };
 

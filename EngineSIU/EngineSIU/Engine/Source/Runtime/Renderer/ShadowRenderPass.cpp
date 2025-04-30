@@ -129,25 +129,24 @@ void FShadowRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
         }
 
         // Cascade Shadow Map을 위한 ViewProjection Matrix 설정
-            ShadowManager->UpdateCascadeMatrices(Viewport, DirectionalLight);
+        ShadowManager->UpdateCascadeMatrices(Viewport, DirectionalLight);
 
-            PrepareCSMRenderState();
-            FCascadeConstantBuffer CascadeData = {};
-            uint32 NumCascades = ShadowManager->GetNumCasCades();
-            for (uint32 i = 0; i < NumCascades; i++)
-            {
-                CascadeData.ViewProj[i] = ShadowManager->GetCascadeViewProjMatrix(i);
-            }
+        PrepareCSMRenderState();
+        FCascadeConstantBuffer CascadeData = {};
+        uint32 NumCascades = ShadowManager->GetNumCasCades();
+        for (uint32 i = 0; i < NumCascades; i++)
+        {
+            CascadeData.ViewProj[i] = ShadowManager->GetCascadeViewProjMatrix(i);
+        }
 
-            ShadowManager->BeginDirectionalShadowCascadePass(0);
-            //RenderAllStaticMeshes(Viewport);
+        ShadowManager->BeginDirectionalShadowCascadePass(0);
+        //RenderAllStaticMeshes(Viewport);
 
-            RenderAllStaticMeshesForCSM(CascadeData);
+        RenderAllStaticMeshesForCSM(CascadeData);
 
-            Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
-            Graphics->DeviceContext->RSSetViewports(0, nullptr);
-            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-       
+        Graphics->DeviceContext->GSSetShader(nullptr, nullptr, 0);
+        Graphics->DeviceContext->RSSetViewports(0, nullptr);
+        Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
     }
     PrepareRenderState();
     for (int i = 0 ; i < SpotLights.Num(); i++)
@@ -277,7 +276,6 @@ void FShadowRenderPass::RenderAllStaticMeshesForCSM(FCascadeConstantBuffer FCasC
             continue;
         }
 
-        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
         FCasCadeData.World = WorldMatrix;
         BufferManager->UpdateConstantBuffer(TEXT("FCascadeConstantBuffer"), FCasCadeData);

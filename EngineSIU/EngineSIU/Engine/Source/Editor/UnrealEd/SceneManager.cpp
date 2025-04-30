@@ -98,7 +98,6 @@ struct FSceneData
     //TMap<int32, UObject*> Primitives;
 
     TArray<FActorSaveData> Actors; // 씬에 있는 모든 액터 정보
-    //TMap<int32, UObject*> Cameras;
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(FSceneData, Version, NextUUID, Actors)
 };
