@@ -4,6 +4,7 @@
 #include "Character.h"
 
 class UCameraComponent;
+class APlayerCameraManager;
 class UPlayerInput;
 class UInputComponent;
 class APlayerController : public AController
@@ -33,7 +34,7 @@ public:
     void InputAxis(EKeys::Type Key);
 
     UPROPERTY
-    (UCameraComponent*, PlayerCameraManager, = nullptr)
+    (APlayerCameraManager*, PlayerCameraManager, = nullptr)
 
     UPROPERTY
     (TArray<UInputComponent*>, InputComponentStack, = {})
