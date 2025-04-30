@@ -7,6 +7,8 @@
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
 
+#include "CameraModifier.h"
+
 void FViewTarget::SetNewTarget(AActor* NewTarget)
 {
     Target = NewTarget;
@@ -69,7 +71,17 @@ void APlayerCameraManager::UpdateCamera(float DeltaTime)
     // 이 함수는 매 프레임마다 호출됩니다.
 
 
+}
 
+void APlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV)
+{
+    for (UCameraModifier* Modifier : ModifierList)
+    {
+        if (Modifier)
+        {
+            Modifier->ModifyCamera(DeltaTime, InOutPOV);
+        }
+    }
 }
 
 void APlayerCameraManager::SetCameraCachePOV(const FMinimalViewInfo& InPOV)

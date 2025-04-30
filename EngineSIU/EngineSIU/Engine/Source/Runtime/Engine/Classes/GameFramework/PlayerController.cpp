@@ -3,6 +3,7 @@
 #include "PlayerInput.h"
 #include "Components/InputComponent.h"
 
+#include "World/World.h"
 #include "Camera/PlayerCameraManager.h"
 
 void APlayerController::BeginPlay()
@@ -13,8 +14,15 @@ void APlayerController::BeginPlay()
     {
         PlayerInput = FObjectFactory::ConstructObject<UPlayerInput>(this);
     }
-
     PlayerInput->InitializeDefaultMappings();
+
+    if (!PlayerCameraManager)
+    {
+        PlayerCameraManager = GetWorld()->SpawnActor<APlayerCameraManager>();
+
+        // Init
+        // PlayerCameraManager->Initialize();
+    }
 }
 
 void APlayerController::Tick(float DeltaTime)
