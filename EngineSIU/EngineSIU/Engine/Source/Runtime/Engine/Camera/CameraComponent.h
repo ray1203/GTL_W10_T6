@@ -10,14 +10,17 @@ class UCameraComponent : public USceneComponent
     DECLARE_CLASS(UCameraComponent, USceneComponent)
 
 public:
-    UCameraComponent() = default; 
+    UCameraComponent() = default;
+
+    void GetProperties(TMap<FString, FString>& OutProperties) const override;
+    void SetProperties(const TMap<FString, FString>& InProperties) override;
 
     // 카메라의 위치와 회전 설정
-    float GetFieldOfView() const { return ViewFOV; }
+    float GetFieldOfView() const { return FieldOfView; }
     float GetAspectRatio() const { return AspectRatio; }
     float GetNearClip() const { return NearClip; }
     float GetFarClip() const { return FarClip; }
-    void SetFieldOfView(float InFOV) { ViewFOV = InFOV; }
+    void SetFieldOfView(float InFOV) { FieldOfView = InFOV; }
     void SetAspectRatio(float InAspectRatio) { AspectRatio = InAspectRatio; }
     void SetNearClip(float InNearClip) { NearClip = InNearClip; }
     void SetFarClip(float InFarClip) { FarClip = InFarClip; }
@@ -47,7 +50,7 @@ public:
     
 private:
     // 카메라 정보 
-    float ViewFOV = 90.0f;
+    float FieldOfView = 90.0f;
     float AspectRatio;
     float NearClip = 0.1f;
     float FarClip = 1000.0f;
