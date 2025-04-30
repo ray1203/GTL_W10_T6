@@ -67,6 +67,7 @@ struct FMath
         return pow(A, B);
     }
 
+
     // A의 제곱근을 구합니다.
     [[nodiscard]] static FORCEINLINE float Sqrt(float A) { return sqrtf(A); }
     [[nodiscard]] static FORCEINLINE double Sqrt(double A) { return sqrt(A); }
@@ -87,6 +88,18 @@ struct FMath
     [[nodiscard]] static FORCEINLINE constexpr T Lerp(const T& A, const T& B, double Alpha)
     {
         return static_cast<T>((A * (1.0 - Alpha)) + (B * Alpha));
+    }
+
+    template <
+        typename T,
+        typename U
+    >
+    [[nodiscard]] static constexpr T CubicInterp(const T& P0, const T& T0, const T& P1, const T& T1, const U& A)
+    {
+        const U A2 = A * A;
+        const U A3 = A2 * A;
+
+        return T((((2 * A3) - (3 * A2) + 1) * P0) + ((A3 - (2 * A2) + A) * T0) + ((A3 - A2) * T1) + (((-2 * A3) + (3 * A2)) * P1));
     }
 
     template <typename T>
@@ -140,6 +153,25 @@ struct FMath
     // 1.0 / Loge(2) = 1.442695040888963387
     static FORCEINLINE double Log2(double Value) { return Loge(Value) * std::numbers::log2e; }
 
+    [[nodiscard]] static FORCEINLINE bool IsNearlyEqual(float A, float B, float ErrorTolerance = KINDA_SMALL_NUMBER)
+    {
+        return Abs<float>(A - B) <= ErrorTolerance;
+    }
+
+    [[nodiscard]] static FORCEINLINE bool IsNearlyEqual(double A, double B, double ErrorTolerance = SMALL_NUMBER)
+    {
+        return Abs<double>(A - B) <= ErrorTolerance;
+    }
+
+    [[nodiscard]] static FORCEINLINE bool IsNearlyZero(float Value, float ErrorTolerance = KINDA_SMALL_NUMBER)
+    {
+        return Abs<float>(Value) <= ErrorTolerance;
+    }
+
+    [[nodiscard]] static FORCEINLINE bool IsNearlyZero(double Value, double ErrorTolerance = SMALL_NUMBER)
+    {
+        return Abs<double>(Value) <= ErrorTolerance;
+    }
 
     [[nodiscard]] static FORCEINLINE double Cos(double RadVal) { return cos(RadVal); }
     [[nodiscard]] static FORCEINLINE float Cos(float RadVal) { return cosf(RadVal); }
