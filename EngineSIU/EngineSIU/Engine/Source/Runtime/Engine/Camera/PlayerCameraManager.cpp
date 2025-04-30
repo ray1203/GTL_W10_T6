@@ -1,5 +1,6 @@
 #include "PlayerCameraManager.h"
 
+#include "World/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
 
@@ -49,8 +50,6 @@ void APlayerCameraManager::RegisterLuaType(sol::state& Lua)
 {
     DEFINE_LUA_TYPE_WITH_PARENT(APlayerCameraManager, sol::bases<AActor>());
 
-
-
 }
 
 bool APlayerCameraManager::BindSelfLuaProperties()
@@ -61,4 +60,59 @@ bool APlayerCameraManager::BindSelfLuaProperties()
     LuaScriptComponent->GetLuaSelfTable()["this"] = this;
 
     return true;
+}
+
+void APlayerCameraManager::UpdateCamera(float DeltaTime)
+{
+    // 카메라 업데이트 로직을 여기에 추가합니다.
+    // 예를 들어, 카메라의 위치나 회전을 업데이트할 수 있습니다.
+    // 이 함수는 매 프레임마다 호출됩니다.
+
+
+
+}
+
+void APlayerCameraManager::SetCameraCachePOV(const FMinimalViewInfo& InPOV)
+{
+    CameraCachePrivate.POV = InPOV;
+}
+
+void APlayerCameraManager::SetLastFrameCameraCachePOV(const FMinimalViewInfo& InPOV)
+{
+    LastFrameCameraCachePrivate.POV = InPOV;
+}
+
+const FMinimalViewInfo& APlayerCameraManager::GetCameraCacheView() const
+{
+    return CameraCachePrivate.POV;
+}
+
+const FMinimalViewInfo& APlayerCameraManager::GetLastFrameCameraCacheView() const
+{
+    return LastFrameCameraCachePrivate.POV;
+}
+
+FMinimalViewInfo APlayerCameraManager::GetCameraCachePOV() const
+{
+    return GetCameraCacheView();
+}
+
+FMinimalViewInfo APlayerCameraManager::GetLastFrameCameraCachePOV() const
+{
+    return GetLastFrameCameraCacheView();
+}
+
+void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
+{
+    // Backup last frame results.
+    const float CurrentCacheTime = GetCameraCacheTime();
+    const float CurrentGameTime = GetWorld()->TimeSeconds;
+    if (CurrentCacheTime != CurrentGameTime)
+    {
+        SetLastFrameCameraCachePOV(GetCameraCacheView());
+        SetLastFrameCameraCacheTime(CurrentCacheTime);
+    }
+
+    SetCameraCachePOV(NewInfo);
+    SetCameraCacheTime(CurrentGameTime);
 }

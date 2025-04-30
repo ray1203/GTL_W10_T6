@@ -28,6 +28,23 @@ public:
 
 };
 
+/**
+ * Cached camera POV info, stored as optimization so we only
+ * need to do a full camera update once per tick.
+ */
+struct FCameraCacheEntry
+{
+    /** World time this entry was created. */
+    float TimeStamp;
+
+    /** Camera POV to cache. */
+    FMinimalViewInfo POV;
+
+    FCameraCacheEntry()
+        : TimeStamp(0.f)
+    {
+    }
+};
 
 class APlayerCameraManager : public AActor
 {
@@ -41,6 +58,8 @@ public:
 
     virtual void RegisterLuaType(sol::state& Lua) override;
     virtual bool BindSelfLuaProperties() override;
+
+    virtual void UpdateCamera(float DeltaTime);
 
 private:
     class APlayerController* PCOwner;
@@ -67,6 +86,35 @@ public:
     
 protected:
     TArray<UCameraModifier*> ModifierList;
+
+public:
+    virtual void SetCameraCachePOV(const FMinimalViewInfo& InPOV);
+    virtual void SetLastFrameCameraCachePOV(const FMinimalViewInfo& InPOV);
+
+    virtual const FMinimalViewInfo& GetCameraCacheView() const;
+    virtual const FMinimalViewInfo& GetLastFrameCameraCacheView() const;
+
+    virtual FMinimalViewInfo GetCameraCachePOV() const;
+    virtual FMinimalViewInfo GetLastFrameCameraCachePOV() const;
+
+    float GetCameraCacheTime() const { return CameraCachePrivate.TimeStamp; }
+    float GetLastFrameCameraCacheTime() const { return LastFrameCameraCachePrivate.TimeStamp; }
+
+protected:
+    /** Get value of CameraCachePrivate.Time  */
+    void SetCameraCacheTime(float InTime) { CameraCachePrivate.TimeStamp = InTime; }
+
+    /** Get value of LastFrameCameraCachePrivate.Time  */
+    void SetLastFrameCameraCacheTime(float InTime) { LastFrameCameraCachePrivate.TimeStamp = InTime; }
+
+private:
+    FCameraCacheEntry CameraCachePrivate;
+    /** Cached camera properties, one frame old. */
+    FCameraCacheEntry LastFrameCameraCachePrivate;
+
+public:
+    void FillCameraCache(const FMinimalViewInfo& NewInfo);
+
 
 };
 

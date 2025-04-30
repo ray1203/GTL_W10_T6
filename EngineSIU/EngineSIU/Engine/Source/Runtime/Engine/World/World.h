@@ -5,12 +5,12 @@
 #include "UObject/ObjectMacros.h"
 #include "WorldType.h"
 #include "Level.h"
-#include "GameFramework/PlayerController.h"
 
 class FObjectFactory;
 class AActor;
 class UObject;
 class USceneComponent;
+class APlayerController;
 
 class UWorld : public UObject
 {
@@ -75,6 +75,10 @@ private:
     TArray<AActor*> PendingDestroyActors;
 
     TArray<APlayerController*> PlayerControllers;
+
+public:
+
+    float TimeSeconds;
 };
 
 

@@ -50,6 +50,13 @@ void UWorld::BeginPlay()
 
 void UWorld::Tick(float DeltaTime)
 {
+
+    // TODO: 시간 관련 부분 나머지 추가 필요.
+    // TimeSeconds 는 Pause되지 않았을 때 도는 Game Time.
+    // if (!bIsPaused)
+    TimeSeconds += DeltaTime;
+
+
     if (WorldType != EWorldType::Editor)
     {
         for (AActor* Actor : PendingBeginPlayActors)
@@ -85,6 +92,15 @@ void UWorld::Tick(float DeltaTime)
         }
         PendingDestroyActors.Empty();
     }
+
+    for (APlayerController* PlayerController : PlayerControllers)
+    {
+        if (PlayerController)
+        {
+            PlayerController->UpdateCameraManager(DeltaTime);
+        }
+    }
+
 }
 
 void UWorld::Release()

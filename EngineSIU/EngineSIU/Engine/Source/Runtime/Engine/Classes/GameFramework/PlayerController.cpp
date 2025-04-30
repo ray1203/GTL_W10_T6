@@ -3,6 +3,8 @@
 #include "PlayerInput.h"
 #include "Components/InputComponent.h"
 
+#include "Camera/PlayerCameraManager.h"
+
 void APlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -27,6 +29,15 @@ void APlayerController::Tick(float DeltaTime)
             // 키에 대응하는 InputAxis 호출
             InputAxis(Key);
         }
+    }
+}
+
+void APlayerController::UpdateCameraManager(float DeltaTime)
+{
+    if (PlayerCameraManager)
+    {
+        // 카메라 매니저 업데이트
+        PlayerCameraManager->UpdateCamera(DeltaTime);
     }
 }
 
