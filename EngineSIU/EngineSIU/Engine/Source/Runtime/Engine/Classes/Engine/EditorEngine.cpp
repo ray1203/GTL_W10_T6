@@ -192,10 +192,10 @@ void UEditorEngine::StartPIE()
     ActiveWorld->AddPlayerController(PC);
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);
 
+    PIEWorld->BeginPlay();
+
     ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
     // 나중에 제거하기
-
-    PIEWorld->BeginPlay();
 }
 
 void UEditorEngine::EndPIE()

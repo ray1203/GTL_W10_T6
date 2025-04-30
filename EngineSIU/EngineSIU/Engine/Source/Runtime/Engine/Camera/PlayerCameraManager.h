@@ -85,10 +85,6 @@ public:
     // Blending에 쓰일 시간.
     float BlendTimeToGo;
 
-public:
-    void UpdateCamera(float DeltaTime);
-
-
     
 protected:
     TArray<UCameraModifier*> ModifierList;
@@ -120,7 +116,6 @@ private:
 
 public:
     void FillCameraCache(const FMinimalViewInfo& NewInfo);
-
 
 };
 
