@@ -316,6 +316,24 @@ void APlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInf
     }
 }
 
+void APlayerCameraManager::InitializeFor(APlayerController* PC)
+{
+    FMinimalViewInfo DefaultFOVCache = GetCameraCacheView();
+    DefaultFOVCache.FOV = DefaultFOV;
+    SetCameraCachePOV(DefaultFOVCache);
+
+    PCOwner = PC;
+
+    SetViewTarget(PC);
+
+    // set the level default scale
+    //SetDesiredColorScale(GetWorldSettings()->DefaultColorScale, 5.f);
+
+    // Force camera update so it doesn't sit at (0,0,0) for a full tick.
+    // This can have side effects with streaming.
+    UpdateCamera(0.f);
+}
+
 void APlayerCameraManager::SetCameraCachePOV(const FMinimalViewInfo& InPOV)
 {
     CameraCachePrivate.POV = InPOV;
@@ -361,7 +379,7 @@ void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
     SetCameraCacheTime(CurrentGameTime);
 }
 
-void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams InTransitionParams = FViewTargetTransitionParams())
+void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams InTransitionParams)
 {
     if (!NewTarget)
     {

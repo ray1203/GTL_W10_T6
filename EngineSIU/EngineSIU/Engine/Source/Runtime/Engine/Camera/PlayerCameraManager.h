@@ -152,6 +152,7 @@ public:
 
     virtual void ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV);
 
+    virtual void InitializeFor(class APlayerController* PC);
     
 protected:
     TArray<UCameraModifier*> ModifierList;

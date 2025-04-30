@@ -19,9 +19,8 @@ void APlayerController::BeginPlay()
     if (!PlayerCameraManager)
     {
         PlayerCameraManager = GetWorld()->SpawnActor<APlayerCameraManager>();
-
+        PlayerCameraManager->InitializeFor(this);
         // Init
-        // PlayerCameraManager->Initialize();
     }
 }
 
