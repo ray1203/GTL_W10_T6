@@ -63,5 +63,19 @@ void UAssetManager::LoadObjFiles()
             // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
             // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
         }
+
+        if (Entry.is_regular_file() && Entry.path().extension() == ".csv")
+        {
+            FAssetInfo NewAssetInfo;
+            NewAssetInfo.AssetName = FName(Entry.path().filename().string());
+            NewAssetInfo.PackagePath = FName(Entry.path().parent_path().string());
+            NewAssetInfo.AssetType = EAssetType::Curve;
+            NewAssetInfo.Size = static_cast<uint32>(std::filesystem::file_size(Entry.path()));
+            
+            AssetRegistry->PathNameToAssetInfo.Add(NewAssetInfo.AssetName, NewAssetInfo);
+            
+            // ObjFileNames.push_back(UGTLStringLibrary::StringToWString(Entry.path().string()));
+            // FObjManager::LoadObjStaticMeshAsset(UGTLStringLibrary::StringToWString(Entry.path().string()));
+        }
     }
 }

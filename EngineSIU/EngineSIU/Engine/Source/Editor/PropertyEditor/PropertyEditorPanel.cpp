@@ -1,6 +1,7 @@
 #include "PropertyEditorPanel.h"
 
 #include "ImGUI/Bezier.h"
+#include "ImGUI/Curve.h"
 
 #include <filesystem>
 #include <shellapi.h>
@@ -32,7 +33,6 @@
 #include "Components/Shapes/BoxComponent.h"
 #include "Components/Shapes/CapsuleComponent.h"
 #include "Components/Shapes/SphereComponent.h"
-#include "ImGUI/Curve.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -66,38 +66,10 @@ void PropertyEditorPanel::Render()
 
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
-    
 
-    // 초기값
-    static float v[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
-    if (ImGui::Bezier("Label", v))
-    {
-        float y = ImGui::BezierValue( 0.5f, v ); // x delta in [0..1] range
-        UE_LOG(LogLevel::Display, "Value: %.3f", y);
-    }
-    
-    // 조절 가능 Value
-    // ------
-    const static int PointCount = 10;
-    ImVec2 Min = ImVec2(0, 0);
-    ImVec2 Max = ImVec2(1, 1);
-    // ------
-    
-    static ImVec2 foo[PointCount] = {
-        Min,
-        Max,
-        ImVec2(-10000, 1),
-    };
-    
-    static int selectedIndex = -1;
-    if (ImGui::Curve("Das editor", ImVec2(200, 200), PointCount, foo, &selectedIndex, Min, Max))
-    {
-        // curve changed
-        float Value = ImGui::CurveValue(0.5, PointCount, foo); // x delta in [0..1] range
-        float SmoothValue = ImGui::CurveValueSmooth(0.5, PointCount, foo); // x delta in [0..1] range
-        UE_LOG(LogLevel::Display, "Value: %.3f, Smooth Value: %.3f", Value, SmoothValue);
-    }
-    
+
+    RenderForCurve();
+
     
     UEditorPlayer* Player = Engine->GetEditorPlayer();
     AActor* SelectedActor = Engine->GetSelectedActor();
@@ -442,16 +414,19 @@ void PropertyEditorPanel::RenderForStaticMesh(UStaticMeshComponent* StaticMeshCo
             {
                 StaticMeshComp->SetStaticMesh(nullptr);
             }
-            
+
             for (const auto& Asset : Assets)
             {
-                if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
+                if (Asset.Value.AssetType == EAssetType::StaticMesh)
                 {
-                    FString MeshName = Asset.Value.PackagePath.ToString() + "/" + Asset.Value.AssetName.ToString();
-                    UStaticMesh* StaticMesh = FManagerOBJ::GetStaticMesh(MeshName.ToWideString());
-                    if (StaticMesh)
+                    if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
                     {
-                        StaticMeshComp->SetStaticMesh(StaticMesh);
+                        FString MeshName = Asset.Value.PackagePath.ToString() + "/" + Asset.Value.AssetName.ToString();
+                        UStaticMesh* StaticMesh = FManagerOBJ::GetStaticMesh(MeshName.ToWideString());
+                        if (StaticMesh)
+                        {
+                            StaticMeshComp->SetStaticMesh(StaticMesh);
+                        }
                     }
                 }
             }
@@ -1289,6 +1264,249 @@ void PropertyEditorPanel::RenderForSpringArmComponent(USpringArmComponent* Sprin
         ImGui::TreePop();
     }
     ImGui::PopStyleColor();
+}
+
+void PropertyEditorPanel::RenderForCurve() const
+{
+    // 초기값
+    static float v[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
+    if (ImGui::Bezier("Label", v))
+    {
+        float y = ImGui::BezierValue( 0.5f, v ); // x delta in [0..1] range
+        UE_LOG(LogLevel::Display, "Value: %.3f", y);
+    }
+    
+    // 조절 가능 Value
+    // ------
+    const static uint32 PointCount = 20;
+    const ImVec2 Min = ImVec2(0, 0);
+    const ImVec2 Max = ImVec2(1, 1);
+    // ------
+
+    const ImVec2 End = ImVec2(-10000, 1);
+    
+    static ImVec2 Curves[PointCount] = {
+        Min,
+        Max,
+        End,
+    };
+    
+    static int selectedIndex = -1;
+    if (ImGui::Curve("Das editor", ImVec2(200, 200), PointCount, Curves, &selectedIndex, Min, Max))
+    {
+        // curve changed
+        float Value = ImGui::CurveValue(0.5, PointCount, Curves); // x delta in [0..1] range
+        float SmoothValue = ImGui::CurveValueSmooth(0.5, PointCount, Curves); // x delta in [0..1] range
+        UE_LOG(LogLevel::Display, "Value: %.3f, Smooth Value: %.3f", Value, SmoothValue);
+    }
+    
+    static char CurveFileName[256];
+    
+    ImGui::InputText("Curve Name", CurveFileName, IM_ARRAYSIZE(CurveFileName));
+
+
+    std::filesystem::path CurveFilePath = GetData("Contents/Curves/" + FString(CurveFileName) + ".csv");
+
+    bool isOpen;
+    if (std::filesystem::exists(CurveFilePath))
+    {
+        isOpen = ImGui::Button("Overwrite Curve");
+    }
+    else
+    {
+        isOpen = ImGui::Button("Create Curve");
+    }
+
+    if (isOpen)
+    {
+        try
+        {
+            std::filesystem::path Dir = CurveFilePath.parent_path();
+            if (!std::filesystem::exists(Dir))
+            {
+                std::filesystem::create_directories(Dir);
+            }
+
+            bool bIsExist = std::filesystem::exists(CurveFilePath);
+
+            std::ofstream file(CurveFilePath);
+            if (file.is_open())
+            {
+                if (bIsExist)
+                {
+                    UAssetManager::Get().LoadObjFiles();
+                }
+                // Linear
+                // Cubic Hermite?
+                // Cubic Bezier
+                // Catmull Rom
+                // B Spline
+                // Stop Interporation
+                // file << "Time,Value,InTangent,OutTangent.Interpolation,\n";
+                file << "Time,Value,\n";
+
+                // 데이터 작성
+                for (const auto& key : Curves) {
+                    file << key.x << "," << key.y << ",\n";
+                    //file << key.time << "," << key.value << "," << key.inTangent << "," << key.outTangent << "," << key.Interpolation << ",\n";
+                }
+                
+                file.close();
+            }
+            else
+            {
+                // TODO: Error Check
+                MessageBoxA(nullptr, "Failed to Create Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
+            }
+        }
+        catch (const std::filesystem::filesystem_error& e) 
+        {
+            // TODO: Error Check
+            MessageBoxA(nullptr, "Failed to Curve Script File for writing: ", "Error", MB_OK | MB_ICONERROR);
+        }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Reset"))
+    {
+        try
+        {
+            bool bIsExist = std::filesystem::exists(CurveFilePath);
+
+            if (bIsExist)
+            {
+                LoadCurve(CurveFilePath, PointCount, Curves);
+            }
+            else
+            {
+                ResetCurve(Curves, Min, Max, End, PointCount);
+            }
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            // TODO: Error Check
+            MessageBoxA(nullptr, "Failed to Load Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
+        }
+    }
+
+    ImGui::Text("Curve");
+    ImGui::SameLine();
+
+    FString FileName;
+    if (CurveFilePath.stem().string().starts_with("."))
+    {
+        FileName = "";
+    }
+    else
+    {
+        FileName = FString(CurveFilePath.stem());
+    }
+    const TMap<FName, FAssetInfo> Assets = UAssetManager::Get().GetAssetRegistry();
+
+    if (ImGui::BeginCombo("##Curve", GetData(FileName), ImGuiComboFlags_None))
+    {
+        if (ImGui::Selectable(TEXT("Empty"), false))
+        {
+            strcpy_s(CurveFileName, "");
+            ResetCurve(Curves, Min, Max, End, PointCount);
+        }        
+            
+        for (const auto& Asset : Assets)
+        {
+            if (Asset.Value.AssetType == EAssetType::Curve)
+            {
+                if (ImGui::Selectable(GetData(Asset.Value.AssetName.ToString()), false))
+                {
+                    FString filepath = Asset.Value.PackagePath.ToString() + "/" + Asset.Value.AssetName.ToString();
+                    if (std::filesystem::exists(std::filesystem::path(GetData(filepath))))
+                    {
+                        strcpy_s(CurveFileName, GetData(FString(std::filesystem::path(GetData(Asset.Value.AssetName.ToString())).stem())));
+                        std::filesystem::path filePath = GetData("Contents/Curves/" + FString(CurveFileName) + ".csv");
+                        LoadCurve(filePath, PointCount, Curves);
+                    }
+                }
+            }
+        }
+        ImGui::EndCombo();
+    }
+}
+
+void PropertyEditorPanel::LoadCurve(std::filesystem::path FilePath, uint32 PointCount, ImVec2* Curves) const
+{
+    try
+    {
+        std::ifstream File(FilePath);
+        if (File.is_open())
+        {
+            // file 파싱
+                    
+            // file << "Time,Value,\n";
+            // file << key.x << "," << key.y << ",\n";
+            std::string line;
+            std::getline(File, line); // "Time,Value,"
+            uint32 index = 0;
+            while (std::getline(File, line)) {
+                if (index >= PointCount) {
+                    std::cout << "Reached max array size. Breaking.\n";
+                    break;
+                }
+
+                std::stringstream ss(line);
+                std::string timeStr, valueStr;
+
+                if (!std::getline(ss, timeStr, ',') || !std::getline(ss, valueStr, ',')) {
+                    std::cout << "Line ended prematurely. Breaking.\n";
+                    break;
+                }
+
+                try {
+                    float time = std::stof(timeStr);
+                    float value = std::stof(valueStr);
+                    Curves[index] = ImVec2(time, value);
+                    index++;
+                } catch (...) {
+                    std::cerr << "Invalid float format in line: " << line << std::endl;
+                    break;
+                }
+            } 
+            
+            File.close();
+        }
+        else
+        {
+            // TODO: Error Check
+
+            MessageBoxA(nullptr, "Failed to Load Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
+        }
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        // TODO: Error Check
+        MessageBoxA(nullptr, "Failed to Load Curve File for writing: ", "Error", MB_OK | MB_ICONERROR);
+    }
+}
+
+void PropertyEditorPanel::ResetCurve(ImVec2* Curves, ImVec2 Min, ImVec2 Max, ImVec2 End, uint32 MaxPoint) const
+{
+    for (uint32 i = 0; i < MaxPoint; i++)
+    {
+        Curves[i] = ImVec2(0, 0);
+    }
+                
+    if (MaxPoint > 1)
+    {
+        Curves[0] = Min;
+    }
+
+    if (MaxPoint > 2)
+    {
+        Curves[1] = Max;
+    }
+
+    if (MaxPoint > 3)
+    {
+        Curves[2] = End;
+    }
 }
 
 void PropertyEditorPanel::OnResize(HWND hWnd)
