@@ -265,7 +265,7 @@ void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FViewportClient>& Viewp
     }
     else if (GEngine->ActiveWorld->WorldType == EWorldType::PIE)
     {
-        auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV;
+        auto CameraPOV = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->GetCameraCachePOV();
         CameraConstantBuffer.ViewMatrix = JungleMath::CreateViewMatrix(
                                         CameraPOV.Location,
                                         CameraPOV.Location  + CameraPOV.Rotation.GetForwardVector(),

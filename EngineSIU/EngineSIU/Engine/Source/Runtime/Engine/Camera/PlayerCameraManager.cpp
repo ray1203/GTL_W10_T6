@@ -6,6 +6,7 @@
 
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
+#include "CameraModifier.h"
 
 #include "CameraModifier.h"
 #include "Actors/CameraActor.h"
@@ -104,6 +105,7 @@ float FViewTargetTransitionParams::GetBlendAlpha(const float& TimePct) const
 void APlayerCameraManager::PostSpawnInitialize()
 {
     Super::PostSpawnInitialize();
+    ViewTarget.POV.Location = FVector(-3.0f, 0.0f, 3.0f);
 }
 
 UObject* APlayerCameraManager::Duplicate(UObject* InOuter)
@@ -112,6 +114,16 @@ UObject* APlayerCameraManager::Duplicate(UObject* InOuter)
 
 
     return NewCameraManager;
+}
+
+void APlayerCameraManager::AddModifier(UCameraModifier* Modifier)
+{
+    if (Modifier)
+    {
+        Modifier->CameraOwner = this;
+        Modifier->bDisabled = false;
+        ModifierList.Add(Modifier);
+    }
 }
 
 void APlayerCameraManager::RegisterLuaType(sol::state& Lua)
@@ -211,7 +223,7 @@ void APlayerCameraManager::UpdateCamera(float DeltaTime)
 
 void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
 {
-    if ((PendingViewTarget.Target == nullptr) /*&& BlendParams.bLockOutgoing*/ && OutVT.Equals(ViewTarget))
+    if ((PendingViewTarget.Target == nullptr) && BlendParams.bLockOutgoing && OutVT.Equals(ViewTarget))
     {
         return;
     }

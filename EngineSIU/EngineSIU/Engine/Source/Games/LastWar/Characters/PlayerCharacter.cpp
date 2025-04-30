@@ -16,6 +16,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Games/LastWar/UI/LastWarUI.h"
 #include "Audio/AudioManager.h"
+#include "Camera/CameraModifier/CameraShakeModifier.h"
+#include "Camera/PlayerCameraManager.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -45,6 +47,18 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
+    auto Location = FollowCamera->GetWorldLocation();
+
+    if (APlayerController* PC = Cast<APlayerController>(Controller))
+    {
+        UCameraShakeModifier* ShakeModifier = FObjectFactory::ConstructObject<UCameraShakeModifier>(this);
+        ShakeModifier->SetDuration(0.5f);
+        ShakeModifier->SetBlendInTime(0.1f);
+        ShakeModifier->SetBlendOutTime(0.1f);
+        ShakeModifier->SetScale(1.0f);
+
+        PC->PlayerCameraManager->AddModifier(ShakeModifier);
+    }
 
     if (!LastWarUI::bShowGameOver && Health <= 0)
     {
@@ -133,6 +147,18 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
             LuaScriptComponent->ActivateFunction("OnOverlapEnemy", Enemy);
         }
 
+        if (APlayerController* PC = Cast<APlayerController>(Controller))
+        {
+            UCameraShakeModifier* ShakeModifier = FObjectFactory::ConstructObject<UCameraShakeModifier>(this);
+            ShakeModifier->SetDuration(0.5f);
+            ShakeModifier->SetBlendInTime(0.1f);
+            ShakeModifier->SetBlendOutTime(0.1f);
+            ShakeModifier->SetScale(1.0f);
+            ShakeModifier->SetInCurve(std::make_shared<EaseInInterp>());
+
+            PC->PlayerCameraManager->AddModifier(ShakeModifier);
+        }
+        
         AudioManager::Get().PlayOneShot(EAudioType::Shot);
     }
     else if (AWall* Wall = Cast<AWall>(OtherActor))

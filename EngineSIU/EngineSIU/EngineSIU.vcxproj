@@ -180,6 +180,7 @@
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\Wall.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Audio\AudioManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\CollisionMath.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\LuaScriptComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\BoxComponent.cpp" />
@@ -423,6 +424,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\Interpolator.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\CameraActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\Bullet.h" />
@@ -433,6 +435,7 @@
     <ClInclude Include="Engine\Source\Runtime\Audio\AudioManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\CollisionMath.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\EditorConfigManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\LuaScriptComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\BoxComponent.h" />
