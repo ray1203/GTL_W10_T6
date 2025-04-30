@@ -1,8 +1,11 @@
 #include "Math/JungleMath.h"
-#include <DirectXMath.h>
-#include "MathUtility.h"
 
+#include <DirectXMath.h>
+
+#include "Matrix.h"
+#include "Quat.h"
 #include "Rotator.h"
+
 
 using namespace DirectX;
 
@@ -144,7 +147,7 @@ FQuat JungleMath::EulerToQuaternion(const FVector& eulerDegrees)
     quat.Y = cosYaw * sinPitch * cosRoll + sinYaw * cosPitch * sinRoll;
     quat.Z = sinYaw * cosPitch * cosRoll - cosYaw * sinPitch * sinRoll;
 
-    quat.Normalize();
+    quat = quat.GetSafeNormal();
     return quat;
 }
 FVector JungleMath::QuaternionToEuler(const FQuat& quat)
@@ -152,8 +155,7 @@ FVector JungleMath::QuaternionToEuler(const FQuat& quat)
     FVector euler;
 
     // 쿼터니언 정규화
-    FQuat q = quat;
-    q.Normalize();
+    FQuat q = quat.GetSafeNormal();
 
     // Yaw (Z 축 회전)
     float sinYaw = 2.0f * (q.W * q.Z + q.X * q.Y);
@@ -248,4 +250,42 @@ FVector JungleMath::VInterpToConstant(const FVector& Current, const FVector& Tar
     }
 
     return Target;
+}
+
+FQuat JungleMath::QInterpTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed)
+{
+    // If no interp speed, jump to target value
+    if (InterpSpeed <= 0.f)
+    {
+        return Target;
+    }
+
+    // If the values are nearly equal, just return Target and assume we have reached our destination.
+    if (Current.Equals(Target))
+    {
+        return Target;
+    }
+
+    return FQuat::Slerp(Current, Target, FMath::Clamp<float>(InterpSpeed * DeltaTime, 0.f, 1.f));
+}
+
+FQuat JungleMath::QInterpConstantTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed)
+{
+    // If no interp speed, jump to target value
+    if (InterpSpeed <= 0.f)
+    {
+        return Target;
+    }
+
+    // If the values are nearly equal, just return Target and assume we have reached our destination.
+    if (Current.Equals(Target))
+    {
+        return Target;
+    }
+
+    float DeltaInterpSpeed = FMath::Clamp<float>(DeltaTime * InterpSpeed, 0.f, 1.f);
+    float AngularDistance = FMath::Max<float>(SMALL_NUMBER, (float)(Target.AngularDistance(Current)));
+    float Alpha = FMath::Clamp<float>(DeltaInterpSpeed / AngularDistance, 0.f, 1.f);
+
+    return FQuat::Slerp(Current, Target, Alpha);
 }

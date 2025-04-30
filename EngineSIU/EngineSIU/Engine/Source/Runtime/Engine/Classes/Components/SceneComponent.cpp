@@ -3,6 +3,7 @@
 #include "GameFramework/Actor.h"
 #include "Math/Rotator.h"
 #include "Math/JungleMath.h"
+#include "Math/Quat.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 
@@ -206,7 +207,7 @@ void USceneComponent::SetRelativeRotation(const FRotator& InRotation)
 
 void USceneComponent::SetRelativeRotation(const FQuat& InQuat)
 {
-    FQuat NormalizedQuat = InQuat.Normalize();
+    FQuat NormalizedQuat = InQuat.GetSafeNormal();
     RelativeRotation = NormalizedQuat.Rotator();
     RelativeRotation.Normalize();
 }

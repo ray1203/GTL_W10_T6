@@ -28,6 +28,7 @@
 #include "Components/TextComponent.h"
 #include "Components/HeightFogComponent.h"
 #include "Components/ProjectileMovementComponent.h"
+#include "Components/SpringArmComponent.h"
 #include "Components/Shapes/BoxComponent.h"
 #include "Components/Shapes/CapsuleComponent.h"
 #include "Components/Shapes/SphereComponent.h"
@@ -74,7 +75,7 @@ void PropertyEditorPanel::Render()
         float y = ImGui::BezierValue( 0.5f, v ); // x delta in [0..1] range
         UE_LOG(LogLevel::Display, "Value: %.3f", y);
     }
-
+    
     // 조절 가능 Value
     // ------
     const static int PointCount = 10;
@@ -175,6 +176,11 @@ void PropertyEditorPanel::Render()
         RenderForShapeComponent(ShapeComponent);
     }
 
+    if (USpringArmComponent* SpringArmComponent = GetTargetComponent<USpringArmComponent>(SelectedActor, SelectedComponent))
+    {
+        RenderForSpringArmComponent(SpringArmComponent);
+    }
+
     ImGui::End();
 }
 
@@ -257,13 +263,13 @@ void PropertyEditorPanel::RenderForSceneComponent(USceneComponent* SceneComponen
         SceneComponent->SetRelativeRotation(Rotation);
         SceneComponent->SetRelativeScale3D(Scale);
 
-        std::string CoordiButtonLabel;
+        FString CoordiButtonLabel;
         if (Player->GetCoordMode() == ECoordMode::CDM_WORLD)
             CoordiButtonLabel = "World";
         else if (Player->GetCoordMode() == ECoordMode::CDM_LOCAL)
             CoordiButtonLabel = "Local";
 
-        if (ImGui::Button(CoordiButtonLabel.c_str(), ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
+        if (ImGui::Button(GetData(FString(CoordiButtonLabel + "##")), ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
         {
             Player->SetCoordiMode();
         }
@@ -1175,6 +1181,113 @@ void PropertyEditorPanel::RenderForShapeComponent(UShapeComponent* ShapeComponen
         }
     }
     
+    ImGui::PopStyleColor();
+}
+
+void PropertyEditorPanel::RenderForSpringArmComponent(USpringArmComponent* SpringArmComp) const
+{
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+    
+    if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        float TargetArmLength = SpringArmComp->GetTargetArmLength();
+        
+        ImGui::Text("Target Arm Length");
+        ImGui::SameLine();
+        if (ImGui::DragFloat("##Target ArmLength", &TargetArmLength, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetTargetArmLength(TargetArmLength);
+        }
+        
+        FVector SocketOffset = SpringArmComp->GetSocketOffset();
+        float SocketOffsets[3] = { SocketOffset.X, SocketOffset.Y, SocketOffset.Z };
+
+        ImGui::Text("Socket Offset");
+        ImGui::SameLine();
+        if (ImGui::DragFloat3("##Socket Offset", SocketOffsets, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetSocketOffset(FVector(SocketOffsets[0], SocketOffsets[1], SocketOffsets[2]));
+        }
+        
+        FVector TargetOffset = SpringArmComp->GetTargetOffset();
+        float TargetOffsets[3] = { TargetOffset.X, TargetOffset.Y, TargetOffset.Z };
+
+        ImGui::Text("Target Offset");
+        ImGui::SameLine();
+        if (ImGui::DragFloat3("##Target Offset", TargetOffsets, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetTargetOffset(FVector(TargetOffsets[0], TargetOffsets[1], TargetOffsets[2]));
+        }
+        
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNodeEx("Camera Setting", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        bool bUsePawnControlRotation = SpringArmComp->GetUsePawnControlRotation();
+        bool bInheritPitch = SpringArmComp->GetInheritPitch();
+        bool bInheritYaw = SpringArmComp->GetInheritYaw();
+        bool bInheritRoll = SpringArmComp->GetInheritRoll();
+
+        if (ImGui::Checkbox("Use Pawn Control Rotation", &bUsePawnControlRotation))
+        {
+            SpringArmComp->SetUsePawnControlRotation(bUsePawnControlRotation);
+        }
+        
+        if (ImGui::Checkbox("Inherit Pitch", &bInheritPitch))
+        {
+            SpringArmComp->SetInheritPitch(bInheritPitch);
+        }
+
+        if (ImGui::Checkbox("Inherit Yaw", &bInheritYaw))
+        {
+            SpringArmComp->SetInheritYaw(bInheritYaw);
+        }
+
+        if (ImGui::Checkbox("Inherit Roll", &bInheritRoll))
+        {
+            SpringArmComp->SetInheritRoll(bInheritRoll);
+        }
+        
+        ImGui::TreePop();
+    }
+    
+    if (ImGui::TreeNodeEx("Lag", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        bool bEnableCameraLag = SpringArmComp->GetEnableCameraLag();
+        bool bEnableCameraRotationLag = SpringArmComp->GetEnableCameraRotationLag();
+
+        if (ImGui::Checkbox("Enable Lag", &bEnableCameraLag))
+        {
+            SpringArmComp->SetEnableCameraLag(bEnableCameraLag);
+        }
+        
+        if (ImGui::Checkbox("Enable Rotation Lag", &bEnableCameraRotationLag))
+        {
+            SpringArmComp->SetEnableCameraRotationLag(bEnableCameraRotationLag);
+        }
+
+        float CameraLagSpeed = SpringArmComp->GetCameraLagSpeed();
+        float CameraRotationLagSpeed = SpringArmComp->GetCameraRotationLagSpeed();
+        float CameraLagMaxDistance = SpringArmComp->GetCameraLagMaxDistance();
+        
+        ImGui::Text("Lag Speed");
+        ImGui::SameLine();
+        if (ImGui::DragFloat("##Lag Speed", &CameraLagSpeed, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetCameraLagSpeed(CameraLagSpeed);
+        }
+
+        ImGui::Text("Rotation Lag Speed");
+        ImGui::SameLine();
+        if (ImGui::DragFloat("##Rotation Lag Speed", &CameraRotationLagSpeed, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetCameraRotationLagSpeed(CameraRotationLagSpeed);
+        }
+
+        ImGui::Text("Lag Max Distance");
+        ImGui::SameLine();
+        if (ImGui::DragFloat("##Lag Max Distance", &CameraLagMaxDistance, 0.1f, 0, 0, "%.1f")) {
+            SpringArmComp->SetCameraLagMaxDistance(CameraLagMaxDistance);
+        }
+        
+        ImGui::TreePop();
+    }
     ImGui::PopStyleColor();
 }
 
