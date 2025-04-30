@@ -13,6 +13,7 @@
 #include "Games/LastWar/Characters/PlayerCharacter.h"
 #include "Games/LastWar/Characters/EnemyCharacter.h"
 #include "Games/LastWar/Characters/Wall.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Audio/AudioManager.h"
 
 namespace PrivateEditorSelection
@@ -190,6 +191,9 @@ void UEditorEngine::StartPIE()
     // 3) 월드에 컨트롤러 등록
     ActiveWorld->AddPlayerController(PC);
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);
+
+    ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
+    // 나중에 제거하기
 
     PIEWorld->BeginPlay();
 }

@@ -6,6 +6,7 @@
 #include "Engine/Engine.h"
 #include "UnrealEd/SceneManager.h"
 #include "Components/PrimitiveComponent.h"
+#include "Camera/PlayerCameraManager.h"
 #include "GameFramework/Actor.h"
 
 UWorld* UWorld::CreateWorld(UObject* InOuter, const EWorldType InWorldType, const FString& InWorldName)
@@ -56,6 +57,7 @@ void UWorld::Tick(float DeltaTime)
             Actor->BeginPlay();
         }
         PendingBeginPlayActors.Empty();
+        GetFirstPlayerController()->PlayerCameraManager->UpdateCamera(DeltaTime);
     }
     TArray<AActor*> ActorsCopy = GetActiveLevel()->Actors;
 
@@ -84,6 +86,7 @@ void UWorld::Tick(float DeltaTime)
         }
         PendingDestroyActors.Empty();
     }
+
 }
 
 void UWorld::Release()

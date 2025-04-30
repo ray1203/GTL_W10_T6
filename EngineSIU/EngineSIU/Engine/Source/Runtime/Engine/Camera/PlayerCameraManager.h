@@ -26,6 +26,7 @@ public:
 
     bool Equals(const FViewTarget& Other) const;
 
+
 };
 
 
@@ -41,6 +42,7 @@ public:
 
     virtual void RegisterLuaType(sol::state& Lua) override;
     virtual bool BindSelfLuaProperties() override;
+    void StartCameraFade(float FromAlpha, float ToAlpha, float Duration, const FLinearColor& Color);
 
 private:
     class APlayerController* PCOwner;
@@ -63,6 +65,10 @@ public:
 
     // Blending에 쓰일 시간.
     float BlendTimeToGo;
+
+public:
+    void UpdateCamera(float DeltaTime);
+
 
     
 protected:
