@@ -68,7 +68,5 @@ public:
 protected:
     TArray<UCameraModifier*> ModifierList;
 
-
-
 };
 
