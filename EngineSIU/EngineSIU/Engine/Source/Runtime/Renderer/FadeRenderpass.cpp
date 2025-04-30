@@ -96,6 +96,11 @@ void FFadeRenderPass::CreateShader()
 
 void FFadeRenderPass::ReleaseShader()
 {
+   
+        if (VertexShader) { VertexShader->Release(); VertexShader = nullptr; }
+        if (PixelShader) { PixelShader->Release(); PixelShader = nullptr; }
+        if (BlendState) { BlendState->Release();  BlendState = nullptr; }
+    
 
 }
 

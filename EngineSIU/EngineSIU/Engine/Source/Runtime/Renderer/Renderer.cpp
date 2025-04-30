@@ -168,6 +168,10 @@ void FRenderer::CreateConstantBuffers()
     UINT LightInfoBufferSize = sizeof(FLightInfoBuffer);
     BufferManager->CreateBufferGeneric<FLightInfoBuffer>("FLightInfoBuffer", nullptr, LightInfoBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT FadeConstantBufferSize = sizeof(FFadeConstants);
+    BufferManager->CreateBufferGeneric<FFadeConstants>("FFadeConstants", nullptr, FadeConstantBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+
+
 
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
