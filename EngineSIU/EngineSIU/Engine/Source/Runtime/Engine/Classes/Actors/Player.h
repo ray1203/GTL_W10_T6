@@ -11,6 +11,7 @@ class UStaticMeshComponent;
 
 class UEditorPlayer : public UObject
 {
+    DECLARE_CLASS(UEditorPlayer, UObject)
     UEditorPlayer() = default;
     virtual ~UEditorPlayer() = default;
 

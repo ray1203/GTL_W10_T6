@@ -1,17 +1,20 @@
 ﻿#pragma once
 #include "Container/String.h"
+#include "MathUtility.h"
 
 struct FVector;
 struct FQuat;
 struct FMatrix;
 
-#include "MathUtility.h"
 
 // 회전 정보를 Degree 단위로 저장하는 구조체
 struct FRotator
 {
+    /** Rotation around the right axis (around Y axis), Looking up and down (0=Straight Ahead, +Up, -Down) */
     float Pitch;
+    /** Rotation around the up axis (around Z axis), Turning around (0=Forward, +Right, -Left)*/
     float Yaw;
+    /** Rotation around the forward axis (around X axis), Tilting your head, (0=Straight, +Clockwise, -CCW) */
     float Roll;
 
     explicit FRotator()
@@ -72,4 +75,6 @@ struct FRotator
     FVector GetForwardVector() const;
     FVector GetRightVector() const;
     FVector GetUpVector() const;
+
+    FVector Vector() const;
 };

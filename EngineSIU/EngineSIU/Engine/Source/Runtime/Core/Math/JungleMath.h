@@ -1,12 +1,5 @@
 #pragma once
-#include "Define.h"
-#include "Rotator.h"
-#include "Quat.h"
-
-//  Near Clip Plane 값을 정의한 헤더
-#ifndef NEAR_PLANE
-#define NEAR_PLANE 1.f 
-#endif
+#include "Vector4.h"
 
 class JungleMath
 {
@@ -27,4 +20,9 @@ public:
 
     static FVector VInterpTo(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed);
     static FVector VInterpToConstant(const FVector& Current, const FVector& Target, float DeltaTime, float InterpSpeed);
+
+    /** Interpolate quaternion from Current to Target. Scaled by angle to Target, so it has a strong start speed and ease out. */
+    static FQuat QInterpTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed);
+    /** Interpolate quaternion from Current to Target with constant step (in radians) */
+    static FQuat QInterpConstantTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed);
 };

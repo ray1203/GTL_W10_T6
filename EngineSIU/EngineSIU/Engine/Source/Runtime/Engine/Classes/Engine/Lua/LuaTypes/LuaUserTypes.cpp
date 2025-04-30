@@ -207,6 +207,8 @@ void LuaTypes::FBindLua<FQuat>::Bind(sol::table& Table)
 
         // Utility functions
         LUA_BIND_MEMBER(&FQuat::Normalize),
+        LUA_BIND_MEMBER(&FQuat::GetSafeNormal),
+        LUA_BIND_MEMBER(&FQuat::GetUnsafeNormal),
         LUA_BIND_MEMBER(&FQuat::IsNormalized),
         LUA_BIND_MEMBER(&FQuat::RotateVector)
         // LUA_BIND_MEMBER(&FQuat::GetAxisX),

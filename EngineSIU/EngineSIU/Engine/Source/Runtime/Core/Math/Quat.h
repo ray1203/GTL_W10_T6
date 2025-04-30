@@ -2,9 +2,6 @@
 #include "Rotator.h"
 #include "Serialization/Archive.h"
 
-struct FVector;
-struct FMatrix;
-
 // 쿼터니언
 struct FQuat
 {
@@ -35,7 +32,10 @@ struct FQuat
     bool IsNormalized() const;
 
     // 쿼터니언 정규화 (단위 쿼터니언으로 만듬)
-    FQuat Normalize() const;
+    void Normalize(float Tolerance = SMALL_NUMBER);
+
+    FQuat GetUnsafeNormal() const;
+    FQuat GetSafeNormal(float Tolerance = SMALL_NUMBER) const;
 
     // 회전 각도와 축으로부터 쿼터니언 생성 (axis-angle 방식)
     static FQuat FromAxisAngle(const FVector& Axis, float Angle);
@@ -48,6 +48,12 @@ struct FQuat
     bool Equals(const FQuat& Q, float Tolerance = KINDA_SMALL_NUMBER) const;
 
     FRotator Rotator() const;
+
+    float AngularDistance(const FQuat& Q) const;
+    
+    static FQuat Slerp(const FQuat& Quat1, const FQuat& Quat2, float Slerp);
+    
+    static FQuat Slerp_NotNormalized(const FQuat& Quat1, const FQuat& Quat2, float Slerp);
 };
 
 inline FArchive& operator<<(FArchive& Ar, FQuat& Q)

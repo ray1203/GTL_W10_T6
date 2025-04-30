@@ -88,7 +88,7 @@ public:
     uint32 bLockOutgoing : 1;
 
     FViewTargetTransitionParams()
-        : BlendTime(0.f)
+        : BlendTime(0.1f)
         , BlendFunction(EViewTargetBlendFunction::VTBlend_Cubic)
         , BlendExp(2.f)
         , bLockOutgoing(false)
@@ -108,6 +108,8 @@ public:
 
     virtual void PostSpawnInitialize() override;
     virtual UObject* Duplicate(UObject* InOuter) override;
+
+    void AddModifier(UCameraModifier* Modifier);
 
     virtual void RegisterLuaType(sol::state& Lua) override;
     virtual bool BindSelfLuaProperties() override;

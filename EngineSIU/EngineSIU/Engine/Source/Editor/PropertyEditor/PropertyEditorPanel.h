@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Components/ActorComponent.h"
+#include "Components/SpringArmComponent.h"
 #include "Components/Shapes/ShapeComponent.h"
 #include "UnrealEd/EditorPanel.h"
 
@@ -54,6 +55,8 @@ private:
     void RenderForExponentialHeightFogComponent(UHeightFogComponent* ExponentialHeightFogComp) const;
 
     void RenderForShapeComponent(UShapeComponent* ShapeComponent) const;
+
+    void RenderForSpringArmComponent(USpringArmComponent* SpringArmComp) const;
 
     template<typename T>
         requires std::derived_from<T, UActorComponent>

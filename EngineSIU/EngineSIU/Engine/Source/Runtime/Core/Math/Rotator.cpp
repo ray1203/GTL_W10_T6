@@ -231,3 +231,32 @@ FVector FRotator::GetUpVector() const
     Up = JungleMath::FVectorRotate(Up, *this);
     return Up;
 }
+
+FVector FRotator::Vector() const
+{
+    // Extremely large but valid values (or invalid values from uninitialized vars) can cause SinCos to return NaN/Inf, so catch that here. Similar to what is done in FRotator::Quaternion().
+    // if (FMath::Abs(Pitch) > UE_FLOAT_NON_FRACTIONAL ||
+    //     FMath::Abs(Yaw  ) > UE_FLOAT_NON_FRACTIONAL ||
+    //     FMath::Abs(Roll ) > UE_FLOAT_NON_FRACTIONAL)
+    // {
+    //     logOrEnsureNanError(TEXT("FRotator::Vector() provided with unreasonably large input values (%s), possible use of uninitialized variable?"), *ToString());
+    // }
+	
+    // Remove winding and clamp to [-360, 360]
+    const float PitchNoWinding = FMath::Fmod(Pitch, (float)360.0);
+    const float YawNoWinding = FMath::Fmod(Yaw, (float)360.0);
+
+    float CP, SP, CY, SY;
+    FMath::SinCos( &SP, &CP, FMath::DegreesToRadians(PitchNoWinding) );
+    FMath::SinCos( &SY, &CY, FMath::DegreesToRadians(YawNoWinding) );
+    FVector V = FVector( CP*CY, CP*SY, SP );
+
+    // Error checking
+    // if (V.ContainsNaN())
+    // {
+    //     UE_LOG(LogLevel::Error, TEXT("FRotator::Vector() resulted in NaN/Inf with input: %s output: %s"), *ToString(), *V.ToString());
+    //     V = FVector::ForwardVector;
+    // }
+
+    return V;
+}

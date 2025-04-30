@@ -93,10 +93,29 @@ bool FQuat::IsNormalized() const
     return fabs(W * W + X * X + Y * Y + Z * Z - 1.0f) < 1e-6f;
 }
 
-FQuat FQuat::Normalize() const
+void FQuat::Normalize(float Tolerance)
 {
-    float magnitude = sqrtf(W * W + X * X + Y * Y + Z * Z);
-    return FQuat(W / magnitude, X / magnitude, Y / magnitude, Z / magnitude);
+    float Magnitude = sqrtf(W * W + X * X + Y * Y + Z * Z);
+    W /= Magnitude;
+    X /= Magnitude;
+    Y /= Magnitude;
+    Z /= Magnitude;
+}
+
+FQuat FQuat::GetUnsafeNormal() const
+{
+    float Magnitude = sqrtf(W * W + X * X + Y * Y + Z * Z);
+    return FQuat(W / Magnitude, X / Magnitude, Y / Magnitude, Z / Magnitude);
+}
+
+FQuat FQuat::GetSafeNormal(float Tolerance) const
+{
+    float Magnitude = sqrtf(W * W + X * X + Y * Y + Z * Z);
+    if (Magnitude < Tolerance)
+    {
+        return FQuat(1, 0, 0, 0);
+    }
+    return FQuat(W / Magnitude, X / Magnitude, Y / Magnitude, Z / Magnitude);
 }
 
 FQuat FQuat::FromAxisAngle(const FVector& Axis, float Angle)
@@ -183,4 +202,47 @@ FRotator FQuat::Rotator() const
     FRotator RotatorFromQuat = FRotator(Pitch, Yaw, Roll);
 
     return RotatorFromQuat;
+}
+
+float FQuat::AngularDistance(const FQuat& Q) const
+{
+    float InnerProd = X*Q.X + Y*Q.Y + Z*Q.Z + W*Q.W;
+    return FMath::Acos((2 * InnerProd * InnerProd) - 1.f);
+}
+
+FQuat FQuat::Slerp(const FQuat& Quat1, const FQuat& Quat2, float Slerp)
+{
+    return Slerp_NotNormalized(Quat1, Quat2, Slerp).GetSafeNormal();
+}
+
+FQuat FQuat::Slerp_NotNormalized(const FQuat& Quat1, const FQuat& Quat2, float Slerp)
+{
+    // Get cosine of angle between quats.
+    float RawCosom =
+        Quat1.X * Quat2.X +
+        Quat1.Y * Quat2.Y +
+        Quat1.Z * Quat2.Z +
+        Quat1.W * Quat2.W;
+
+    // Unaligned quats - compensate, results in taking shorter route.
+        
+    const float Sign = (RawCosom >= 0.0f) ? static_cast<float>(1.0) : static_cast<float>(-1.0);
+    RawCosom *= Sign;
+		
+    float Scale0 = static_cast<float>(1.0) - Slerp;
+    float Scale1 = Slerp * Sign;
+		
+    if (RawCosom < static_cast<float>(0.9999))
+    {
+        const float Omega = FMath::Acos(RawCosom);
+        const float InvSin = static_cast<float>(1.0) / FMath::Sin(Omega);
+        Scale0 = FMath::Sin(Scale0 * Omega) * InvSin;
+        Scale1 = FMath::Sin(Scale1 * Omega) * InvSin;
+    }
+		
+    return FQuat(
+        Scale0 * Quat1.W + Scale1 * Quat2.W,
+        Scale0 * Quat1.X + Scale1 * Quat2.X,
+        Scale0 * Quat1.Y + Scale1 * Quat2.Y,
+        Scale0 * Quat1.Z + Scale1 * Quat2.Z);
 }

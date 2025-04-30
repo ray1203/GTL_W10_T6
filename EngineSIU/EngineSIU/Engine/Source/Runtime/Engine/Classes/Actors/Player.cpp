@@ -61,11 +61,6 @@ void UEditorPlayer::Initialize()
             return;
         }
         
-        if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
-        {
-            return;
-        }
-        
         PickedObjControl();
     });
 
