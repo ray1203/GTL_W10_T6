@@ -335,4 +335,9 @@ struct FMath
     {
         return (T)((A * (1.0f - Alpha)) + (B * Alpha));
     }
+
+    [[nodiscard]] static FORCEINLINE bool IsNearlyZero(float Value, float ErrorTolerance = SMALL_NUMBER)
+    {
+        return Abs<float>(Value) <= ErrorTolerance;
+    }
 };
