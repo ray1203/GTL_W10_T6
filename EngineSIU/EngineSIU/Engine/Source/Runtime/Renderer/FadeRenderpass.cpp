@@ -38,8 +38,8 @@ void FFadeRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDe
 void FFadeRenderPass::PrepareRenderArr()
 {
     if (GEngine->ActiveWorld&&GEngine->ActiveWorld->WorldType == EWorldType::PIE) {
-            FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeAlpha;
-            FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeColor;
+            FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeAmount;
+            FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeColor;
     }
 }
 
@@ -52,8 +52,6 @@ void FFadeRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
 
     ViewportResource->ClearRenderTarget(Graphics->DeviceContext, ResourceType);
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
-
-    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->SRV);
 
     PrepareRenderState();
 
