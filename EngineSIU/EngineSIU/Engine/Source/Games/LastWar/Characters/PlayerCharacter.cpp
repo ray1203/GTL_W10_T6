@@ -44,13 +44,7 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    FVector Forward = GetActorForwardVector();
-    FVector BackOffset = -Forward * 3.0f;
-    FVector UpOffset = FVector(0.0f, 0.0f, 3.0f);
-    FVector CamLocation = GetActorLocation() + BackOffset + UpOffset;
-    FollowCamera->SetLocation(CamLocation);
-    FollowCamera->SetRotation(GetActorRotation());
+    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
 
     if (!LastWarUI::bShowGameOver && Health <= 0)
     {
