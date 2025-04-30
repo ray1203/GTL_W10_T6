@@ -26,8 +26,10 @@ public:
     void SetOrthoZoom(float InOrthoZoom) { assert(InOrthoZoom >= MIN_ORTHOZOOM && InOrthoZoom <= MAX_ORTHOZOOM); OrthoZoom = InOrthoZoom; }
 
     // 카메라의 프로젝션 모드 설정
-    void SetProjectionMode(CameraProjectionMode InProjectionMode){ ProjectionMode = InProjectionMode; }
-    CameraProjectionMode GetProjectionMode() const { return ProjectionMode; }
+    void SetProjectionMode(ECameraProjectionMode InProjectionMode){ ProjectionMode = InProjectionMode; }
+    ECameraProjectionMode GetProjectionMode() const { return ProjectionMode; }
+
+    virtual void GetCameraView(float DeltaTime, FMinimalViewInfo& DesiredView);
 
 private:
     // 카메라 정보 
@@ -36,6 +38,14 @@ private:
     float NearClip = 0.1f;
     float FarClip = 1000.0f;
     float OrthoZoom;
+    float OrthoWidth = 1536.0f;
+    float OrthoNearClipPlane = -1536.0f / 2.0f;
+    float OrthoFarClipPlane = 2097152.0f;
 
-    CameraProjectionMode ProjectionMode = CameraProjectionMode::Perspective;
+
+    ECameraProjectionMode ProjectionMode = ECameraProjectionMode::Perspective;
+
+
+public:
+    bool bUsePawnControlRotation = false;
 };
