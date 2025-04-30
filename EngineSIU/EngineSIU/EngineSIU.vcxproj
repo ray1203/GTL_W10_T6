@@ -170,6 +170,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\CameraActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\EditorConfigManager.cpp" />
     <ClCompile Include="Engine\Source\Games\LastWar\Characters\Bullet.cpp" />
@@ -422,6 +423,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\CameraActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\Bullet.h" />
     <ClInclude Include="Engine\Source\Games\LastWar\Characters\EnemyCharacter.h" />

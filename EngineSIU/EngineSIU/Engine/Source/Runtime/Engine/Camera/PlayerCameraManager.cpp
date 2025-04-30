@@ -2,12 +2,14 @@
 
 #include "World/World.h"
 #include "GameFramework/Pawn.h"
-#include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/LuaScriptComponent.h"
 
 #include "CameraModifier.h"
+#include "Actors/CameraActor.h"
+#include "Camera/CameraComponent.h"
 
 void FViewTarget::SetNewTarget(AActor* NewTarget)
 {
@@ -33,6 +35,70 @@ APawn* FViewTarget::GetTargetPawn() const
 bool FViewTarget::Equals(const FViewTarget& Other) const
 {
     return Target == Other.Target && POV.Equals(Other.POV);
+}
+
+void FViewTarget::CheckViewTarget(APlayerController* OwningController)
+{
+    if (!OwningController)
+    {
+        assert(false && TEXT("OwningController is null"));
+    }
+
+    if (Target == nullptr)
+    {
+        Target = OwningController;
+    }
+
+    // TODO: PlayerState와 관련된 부분은 생략. 추후 PlayerState가 생기면 추가로 구현 필수.
+    //// Update ViewTarget PlayerState (used to follow same player through pawn transitions, etc., when spectating)
+    //if (Target == OwningController)
+    //{
+    //    PlayerState = NULL;
+    //}
+    //else if (AController* TargetAsController = Cast<AController>(Target))
+    //{
+    //    PlayerState = TargetAsController->PlayerState;
+    //}
+    //else if (APawn* TargetAsPawn = Cast<APawn>(Target))
+    //{
+    //    PlayerState = TargetAsPawn->GetPlayerState();
+    //}
+    //else if (APlayerState* TargetAsPlayerState = Cast<APlayerState>(Target))
+    //{
+    //    PlayerState = TargetAsPlayerState;
+    //}
+    //else
+    //{
+    //    PlayerState = NULL;
+    //}
+
+    if (Target)
+    {
+        // 원래는 PlayerState가 되어야 함.
+        if (OwningController->GetPawn())
+        {
+            OwningController->PlayerCameraManager->AssignViewTarget(OwningController->GetPawn(), *this);
+        }
+        else
+        {
+            Target = OwningController;
+        }
+    }
+}
+
+float FViewTargetTransitionParams::GetBlendAlpha(const float& TimePct) const
+{
+    switch (BlendFunction)
+    {
+    case EViewTargetBlendFunction::VTBlend_Linear: return FMath::Lerp(0.f, 1.f, TimePct);
+    case EViewTargetBlendFunction::VTBlend_Cubic:	return FMath::CubicInterp(0.f, 0.f, 1.f, 0.f, TimePct);
+    case EViewTargetBlendFunction::VTBlend_EaseInOut: return FMath::InterpEaseInOut(0.f, 1.f, TimePct, BlendExp);
+    case EViewTargetBlendFunction::VTBlend_EaseIn: return FMath::Lerp(0.f, 1.f, FMath::Pow(TimePct, BlendExp));
+    case EViewTargetBlendFunction::VTBlend_EaseOut: return FMath::Lerp(0.f, 1.f, FMath::Pow(TimePct, (FMath::IsNearlyZero(BlendExp) ? 1.f : (1.f / BlendExp))));
+    default:
+        break;
+    }
+    return 1.f;
 }
 
 void APlayerCameraManager::PostSpawnInitialize()
@@ -66,10 +132,130 @@ bool APlayerCameraManager::BindSelfLuaProperties()
 
 void APlayerCameraManager::UpdateCamera(float DeltaTime)
 {
-    // 카메라 업데이트 로직을 여기에 추가합니다.
-    // 예를 들어, 카메라의 위치나 회전을 업데이트할 수 있습니다.
-    // 이 함수는 매 프레임마다 호출됩니다.
+    FMinimalViewInfo NewPOV = ViewTarget.POV;
 
+    if (PendingViewTarget.Target == NULL)
+    {
+        ViewTarget.CheckViewTarget(PCOwner);
+        UpdateViewTarget(ViewTarget, DeltaTime);
+    }
+
+    if (PendingViewTarget.Target != NULL)
+    {
+        BlendTimeToGo -= DeltaTime;
+
+        ViewTarget.CheckViewTarget(PCOwner);
+        UpdateViewTarget(PendingViewTarget, DeltaTime);
+
+        if (BlendTimeToGo > 0)
+        {
+            // Blend 로직 추가.
+
+            float DurationPct = (BlendParams.BlendTime - BlendTimeToGo) / BlendParams.BlendTime;
+            float BlendPct = 0.f;
+            switch (BlendParams.BlendFunction)
+            {
+            case EViewTargetBlendFunction::VTBlend_Linear:
+                BlendPct = FMath::Lerp(0.f, 1.f, DurationPct);
+                break;
+            case EViewTargetBlendFunction::VTBlend_Cubic:
+                BlendPct = FMath::CubicInterp(0.f, 0.f, 1.f, 0.f, DurationPct);
+                break;
+            case EViewTargetBlendFunction::VTBlend_EaseIn:
+                BlendPct = FMath::Lerp(0.f, 1.f, FMath::Pow(DurationPct, BlendParams.BlendExp));
+                break;
+            case EViewTargetBlendFunction::VTBlend_EaseOut:
+                BlendPct = FMath::Lerp(0.f, 1.f, FMath::Pow(DurationPct, 1.f / BlendParams.BlendExp));
+                break;
+            case EViewTargetBlendFunction::VTBlend_EaseInOut:
+                BlendPct = FMath::InterpEaseInOut(0.f, 1.f, DurationPct, BlendParams.BlendExp);
+                break;
+            case EViewTargetBlendFunction::VTBlend_PreBlended:
+                BlendPct = 1.0f;
+                break;
+            default:
+                break;
+            }
+
+            // Update pending view target blend
+            NewPOV = ViewTarget.POV;
+            NewPOV.BlendViewInfo(PendingViewTarget.POV, BlendPct);
+        }
+        else
+        {
+            ViewTarget = PendingViewTarget;
+            PendingViewTarget.Target = NULL;
+            BlendTimeToGo = 0;
+            NewPOV = PendingViewTarget.POV;
+        }
+    }
+
+    if (bEnableFading)
+    {
+        FadeTimeRemaining = FMath::Max(FadeTimeRemaining - DeltaTime, 0.0f);
+        if (FadeTime > 0.0f)
+        {
+            FadeAmount = FadeAlpha.X + ((1.f - FadeTimeRemaining / FadeTime) * (FadeAlpha.Y - FadeAlpha.X));
+        }
+
+        if ((bHoldFadeWhenFinished == false) && (FadeTimeRemaining <= 0.f))
+        {
+            // done
+            StopCameraFade();
+        }
+    }
+
+
+    FillCameraCache(NewPOV);
+}
+
+void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
+{
+    if ((PendingViewTarget.Target == nullptr) /*&& BlendParams.bLockOutgoing*/ && OutVT.Equals(ViewTarget))
+    {
+        return;
+    }
+
+    // Store previous POV, in case we need it later
+    FMinimalViewInfo OrigPOV = OutVT.POV;
+
+    // Reset the view target POV fully
+    static const FMinimalViewInfo DefaultViewInfo;
+    OutVT.POV = DefaultViewInfo;
+    OutVT.POV.FOV = DefaultFOV;
+    OutVT.POV.OrthoWidth = DefaultOrthoWidth;
+    OutVT.POV.AspectRatio = DefaultAspectRatio;
+    //OutVT.POV.bConstrainAspectRatio = bDefaultConstrainAspectRatio;
+    OutVT.POV.ProjectionMode = bIsOrthographic ? ECameraProjectionMode::Orthographic : ECameraProjectionMode::Perspective;
+    //OutVT.POV.PostProcessBlendWeight = 1.0f;
+    //OutVT.POV.bAutoCalculateOrthoPlanes = bAutoCalculateOrthoPlanes;
+    //OutVT.POV.AutoPlaneShift = AutoPlaneShift;
+    //OutVT.POV.bUpdateOrthoPlanes = bUpdateOrthoPlanes;
+    //OutVT.POV.bUseCameraHeightAsViewTarget = bUseCameraHeightAsViewTarget;
+
+    if (ACameraActor* CamActor = Cast<ACameraActor>(OutVT.Target))
+    {
+        // Viewing through a camera actor.
+        // Target 액터가 카메라 액터이고.
+        // 액터가 카메라 컴포넌트를 가지고 있을 때.
+        CamActor->GetCameraComponent()->GetCameraView(DeltaTime, OutVT.POV);
+    }
+    else
+    {
+        OutVT.POV = OrigPOV;
+
+        FVector Loc = OutVT.Target->GetActorLocation();
+        FRotator Rotator = OutVT.Target->GetActorRotation();
+
+        if (OutVT.Target == PCOwner)
+        {
+            Loc = PCOwner->GetPawn()->GetActorLocation();
+        }
+
+        PCOwner->GetControlRotation();
+        // 여기 뭔가 더 추가되어야 함.
+        // 아니면 그냥 CameraComponent를 무조건 가지고 있다고 가정하고 짜도 될 듯.
+    }
 
 }
 
@@ -127,4 +313,55 @@ void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
 
     SetCameraCachePOV(NewInfo);
     SetCameraCacheTime(CurrentGameTime);
+}
+
+void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT)
+{
+    if (!NewTarget)
+    {
+        return;
+    }
+
+    if (NewTarget == VT.Target)
+    {
+        return;
+    }
+
+    AActor* OldViewTarget = VT.Target;
+    VT.Target = NewTarget; // 핵심은 이 줄. 현재 타겟을 뉴 타겟으로 바꿔줌.
+
+    VT.POV.AspectRatio = DefaultAspectRatio;
+    VT.POV.FOV = DefaultFOV;
+
+    if (OldViewTarget)
+    {
+        // ViewTarget 없어졌다는 이벤트 호출.
+        // OldViewTarget->OnEnd(PCOwner);
+    }
+
+    // 새 ViewTarget에 대한 이벤트 호출.
+    //VT.Target->BecomeViewTarget(PCOwner);
+}
+
+void APlayerCameraManager::StartCameraFade(float FromAlpha, float ToAlpha, float InFadeTime, FLinearColor InFadeColor, bool bInFadeAudio, bool bInHoldWhenFinished)
+{
+    bEnableFading = true;
+
+    FadeColor = InFadeColor;
+    FadeAlpha = FVector2D(FromAlpha, ToAlpha);
+    FadeTime = InFadeTime;
+    FadeTimeRemaining = InFadeTime;
+
+    //bAutoAnimateFade = true;
+    bHoldFadeWhenFinished = bInHoldWhenFinished;
+}
+
+void APlayerCameraManager::StopCameraFade()
+{
+    if (bEnableFading == true)
+    {
+        // Make sure FadeAmount finishes at the desired value
+        FadeAmount = FadeAlpha.Y;
+        bEnableFading = false;
+    }
 }

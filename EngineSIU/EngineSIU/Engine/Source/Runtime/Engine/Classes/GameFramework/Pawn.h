@@ -55,6 +55,9 @@ public:
     virtual bool BindSelfLuaProperties() override; // LuaEnv에서 사용할 멤버 변수 등록 함수.
 
 
+    AController* GetController() const { return Controller; }
+
+protected:
     UPROPERTY
     (AController*, Controller, = nullptr) // 현재 조종 중인 컨트롤러
 
