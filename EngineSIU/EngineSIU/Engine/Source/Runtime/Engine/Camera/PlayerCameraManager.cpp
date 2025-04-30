@@ -254,6 +254,57 @@ void APlayerCameraManager::UpdateViewTarget(FViewTarget& OutVT, float DeltaTime)
 
 }
 
+void APlayerCameraManager::SetViewTarget(AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
+{
+    if (NewViewTarget == nullptr)
+    {
+        return;
+    }
+
+    ViewTarget.CheckViewTarget(PCOwner);
+    if (PendingViewTarget.Target)
+    {
+        PendingViewTarget.CheckViewTarget(PCOwner);
+    }
+
+    // If we're already transitioning to this new target, don't interrupt.
+    if (PendingViewTarget.Target != NULL && NewViewTarget == PendingViewTarget.Target)
+    {
+        return;
+    }
+
+    if ((NewViewTarget != ViewTarget.Target) /*|| (PendingViewTarget.Target && BlendParams.bLockOutgoing)*/)
+    {
+        // if a transition time is specified, then set pending view target accordingly
+        if (TransitionParams.BlendTime > 0)
+        {
+            // band-aid fix so that EndViewTarget() gets called properly in this case
+            if (PendingViewTarget.Target == NULL)
+            {
+                PendingViewTarget.Target = ViewTarget.Target;
+            }
+
+            // use last frame's POV
+            ViewTarget.POV = GetLastFrameCameraCacheView();
+            BlendTimeToGo = TransitionParams.BlendTime;
+
+            AssignViewTarget(NewViewTarget, PendingViewTarget, TransitionParams);
+            PendingViewTarget.CheckViewTarget(PCOwner);
+
+        }
+        else
+        {
+            // otherwise, assign new viewtarget instantly
+            AssignViewTarget(NewViewTarget, ViewTarget);
+            ViewTarget.CheckViewTarget(PCOwner);
+            // remove old pending ViewTarget so we don't still try to switch to it
+            PendingViewTarget.Target = NULL;
+        }
+    }
+
+    BlendParams = TransitionParams;
+}
+
 void APlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV)
 {
     for (UCameraModifier* Modifier : ModifierList)
@@ -310,7 +361,7 @@ void APlayerCameraManager::FillCameraCache(const FMinimalViewInfo& NewInfo)
     SetCameraCacheTime(CurrentGameTime);
 }
 
-void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT)
+void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams InTransitionParams = FViewTargetTransitionParams())
 {
     if (!NewTarget)
     {
@@ -327,6 +378,7 @@ void APlayerCameraManager::AssignViewTarget(AActor* NewTarget, FViewTarget& VT)
 
     VT.POV.AspectRatio = DefaultAspectRatio;
     VT.POV.FOV = DefaultFOV;
+    BlendParams = InTransitionParams;
 
     if (OldViewTarget)
     {
