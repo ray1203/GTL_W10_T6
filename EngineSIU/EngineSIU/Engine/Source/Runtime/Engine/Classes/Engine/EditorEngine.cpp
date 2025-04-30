@@ -183,18 +183,18 @@ void UEditorEngine::StartPIE()
     // GameMode 없으므로 StartPIE에서 바로 PC 생성
     // 1) PlayerController 스폰
     APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
+    ActiveWorld->AddPlayerController(PC);
 
     // 2) Character 스폰 및 Possess
     ACharacter* PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
     // 3) 월드에 컨트롤러 등록
-    ActiveWorld->AddPlayerController(PC);
     AudioManager::Get().PlayBgm(EAudioType::MainTheme);
 
-    PIEWorld->BeginPlay();
+    //PIEWorld->BeginPlay();
 
-    ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
+    
     // 나중에 제거하기
 }
 
