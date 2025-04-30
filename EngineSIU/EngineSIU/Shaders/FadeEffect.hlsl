@@ -15,17 +15,27 @@ struct VSOut
 };
 
 // 풀스크린 트라이앵글 정점 위치
-static const float2 triVerts[3] =
+static float2 QuadPositions[6] =
 {
-    float2(-1, -1),
-    float2(-1, 3),
-    float2(3, -1)
+    float2(-1, 1), // Top Left
+        float2(1, 1), // Top Right
+        float2(-1, -1), // Bottom Left
+        float2(1, 1), // Top Right
+        float2(1, -1), // Bottom Right
+        float2(-1, -1) // Bottom Left
 };
+
+static float2 UVs[6] =
+{
+    float2(0, 0), float2(1, 0), float2(0, 1),
+        float2(1, 0), float2(1, 1), float2(0, 1)
+};
+
 
 VSOut mainVS(uint vertexID : SV_VertexID)
 {
     VSOut output;
-    output.pos = float4(triVerts[vertexID], 0, 1);
+    output.pos = float4(QuadPositions[vertexID], UVs[vertexID]);
     return output;
 }
 

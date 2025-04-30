@@ -15,10 +15,9 @@
 #include "Engine/Camera/PlayerCameraManager.h"
 #include "Engine/Classes/GameFramework/PlayerController.h"
 
+
 FFadeRenderPass::FFadeRenderPass()
 {
-
-
 }
 
 FFadeRenderPass::~FFadeRenderPass()
@@ -33,47 +32,8 @@ void FFadeRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDe
     ShaderManager = InShaderManager;
     CreateShader();
     CreateBlendState();
+    CreateSampler();
 }
-
-void FFadeRenderPass::PrepareRenderArr()
-{
-    if (GEngine->ActiveWorld&&GEngine->ActiveWorld->WorldType != EWorldType::Editor) {
-            FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeAmount;
-            FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeColor;
-    }
-    else
-    {
-        FadeAlpha = 0;
-        FadeColor = FLinearColor(0, 0, 0, 0);
-    }
-}
-
-void FFadeRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
-{
-
-    FViewportResource* ViewportResource = Viewport->GetViewportResource();
-    const EResourceType ResourceType = EResourceType::ERT_PP_Fog;
-    FRenderTargetRHI* RenderTargetRHI = Viewport->GetViewportResource()->GetRenderTarget(ResourceType);
-
-    ViewportResource->ClearRenderTarget(Graphics->DeviceContext, ResourceType);
-    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
-
-    PrepareRenderState();
-
-    UpdateFadeConstant();
-
-    float blendFactor[4] = { 0, 0, 0, 0 };
-    Graphics->DeviceContext->OMSetBlendState(BlendState, blendFactor, 0xffffffff);
-
- 
-    Graphics->DeviceContext->IASetInputLayout(nullptr);
-    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    Graphics->DeviceContext->Draw(3, 0);
-
-    ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
-    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, NullSRV);
-}
-
 
 void FFadeRenderPass::CreateShader()
 {
@@ -95,44 +55,43 @@ void FFadeRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"FadePixelShader");
 }
 
+void FFadeRenderPass::UpdateShader()
+{
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"FadeVertexShader");
+    PixelShader = ShaderManager->GetPixelShaderByKey(L"FadePixelShader");
+}
+
 void FFadeRenderPass::ReleaseShader()
 {
-   
-        if (VertexShader) { VertexShader->Release(); VertexShader = nullptr; }
-        if (PixelShader) { PixelShader->Release(); PixelShader = nullptr; }
-        if (BlendState) { BlendState->Release();  BlendState = nullptr; }
-    
+    if (VertexShader)
+    {
+        VertexShader->Release();
+        VertexShader = nullptr;
+    }
+    if (PixelShader)
+    {
+        PixelShader->Release();
+        PixelShader = nullptr;
+    }
 
 }
 
-void FFadeRenderPass::CreateBlendState()
+void FFadeRenderPass::PrepareRenderArr()
 {
-    D3D11_BLEND_DESC blendDesc = {};
-    blendDesc.RenderTarget[0].BlendEnable = TRUE;
-    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-    HRESULT hr = Graphics->Device->CreateBlendState(&blendDesc, &BlendState);
-    if (FAILED(hr))
+    if (GEngine->ActiveWorld && GEngine->ActiveWorld->WorldType != EWorldType::Editor) {
+        FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeAmount;
+        FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->FadeColor;
+    }
+    else
     {
-        MessageBox(NULL, L"AlphaBlendState 생성에 실패했습니다!", L"Error", MB_ICONERROR | MB_OK);
+        FadeAlpha = 0;
+        FadeColor = FLinearColor(0, 0, 0, 0);
     }
 }
 
 void FFadeRenderPass::ClearRenderArr()
 {
-
-}
-
-void FFadeRenderPass::ReloadShader()
-{
-    VertexShader = ShaderManager->GetVertexShaderByKey(L"FadeVertexShader");
-    PixelShader = ShaderManager->GetPixelShaderByKey(L"FadePixelShader");
+   
 }
 
 void FFadeRenderPass::PrepareRenderState()
@@ -144,6 +103,8 @@ void FFadeRenderPass::PrepareRenderState()
     Graphics->DeviceContext->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
     Graphics->DeviceContext->IASetInputLayout(nullptr);
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
+    Graphics->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 
     TArray<FString> PSBufferKeys = {
         TEXT("FFadeConstants")
@@ -152,12 +113,80 @@ void FFadeRenderPass::PrepareRenderState()
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
 }
 
+void FFadeRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
+{
+    const EViewModeIndex ViewMode = Viewport->GetViewMode();
+
+    if (ViewMode == EViewModeIndex::VMI_Wireframe)
+    {
+        return;
+    }
+
+    FViewportResource* ViewportResource = Viewport->GetViewportResource();
+    const EResourceType ResourceType = EResourceType::ERT_Fade;
+    FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
+
+    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
+    Graphics->DeviceContext->OMSetBlendState(BlendState, nullptr, 0xffffffff);
+
+    UpdateShader();
+
+    PrepareRenderState();
+
+ 
+    UpdateFadeConstant();
+
+    Graphics->DeviceContext->Draw(6, 0);
+
+    ID3D11RenderTargetView* nullRTV[1] = { nullptr };
+    Graphics->DeviceContext->OMSetRenderTargets(1, nullRTV, nullptr);
+
+}
+
 void FFadeRenderPass::UpdateFadeConstant()
 {
     FFadeConstants Constants = {
-        Constants.FadeColor = FadeColor, Constants.FadeAlpha = FadeAlpha    
+         Constants.FadeColor = FadeColor, Constants.FadeAlpha = FadeAlpha
     };
     BufferManager->UpdateConstantBuffer(TEXT("FFadeConstants"), Constants);
+}
+
+void FFadeRenderPass::CreateBlendState()
+{
+    D3D11_BLEND_DESC blendDesc = {};
+    blendDesc.AlphaToCoverageEnable = FALSE;
+    blendDesc.IndependentBlendEnable = FALSE;
+    blendDesc.RenderTarget[0].BlendEnable = true;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+
+    HRESULT hr = Graphics->Device->CreateBlendState(&blendDesc, &BlendState);
+    if (FAILED(hr))
+    {
+        MessageBox(NULL, L"AlphaBlendState 생성에 실패했습니다!", L"Error", MB_ICONERROR | MB_OK);
+    }
+}
+
+void FFadeRenderPass::CreateSampler()
+{
+    D3D11_SAMPLER_DESC SamplerDesc = {};
+    SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    SamplerDesc.MinLOD = 0;
+    SamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    Graphics->Device->CreateSamplerState(&SamplerDesc, &Sampler);
 }
 
 

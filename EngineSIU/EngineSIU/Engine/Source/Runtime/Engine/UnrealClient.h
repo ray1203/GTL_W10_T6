@@ -25,6 +25,7 @@ enum class EResourceType : uint8
     ERT_Gizmo,
     ERT_Overlay,
     ERT_PostProcessCompositing,
+    ERT_Fade,
     ERT_MAX,
 };
 

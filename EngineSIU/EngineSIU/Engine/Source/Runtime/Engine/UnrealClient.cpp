@@ -12,6 +12,7 @@ FViewportResource::FViewportResource()
     ClearColors.Add(EResourceType::ERT_Gizmo, { 0.f, 0.f, 0.f, 0.f });
     ClearColors.Add(EResourceType::ERT_Overlay, { 0.f, 0.f, 0.f, 0.f });
     ClearColors.Add(EResourceType::ERT_PostProcessCompositing, { 0.f, 0.f, 0.f, 0.f });
+    ClearColors.Add(EResourceType::ERT_Fade, { 0.f, 0.f, 0.f, 0.f });
 }
 
 FViewportResource::~FViewportResource()
@@ -51,6 +52,11 @@ void FViewportResource::Initialize(uint32 InWidth, uint32 InHeight)
     }
 
     hr = CreateRenderTarget(EResourceType::ERT_Scene);
+    if (FAILED(hr))
+    {
+        return;
+    }
+    hr = CreateRenderTarget(EResourceType::ERT_Fade);
     if (FAILED(hr))
     {
         return;

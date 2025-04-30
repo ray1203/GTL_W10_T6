@@ -4,8 +4,7 @@
 #include <memory>
 
 #include "IRenderPass.h"
-#include "Engine/Source/Runtime/Core/Math/Vector.h"
-#include "Core/Math/Color.h"
+#include "Engine/Classes/Components/HeightFogComponent.h"
 
 class FGraphicsDevice;
 class FDXDShaderManager;
@@ -26,28 +25,31 @@ public:
 
     virtual void ClearRenderArr() override;
 
-    void ReloadShader();
 
-    // Fade 렌더링용 셰이더 생성 및 입력 레이아웃 설정
+    // Fog 렌더링용 셰이더 생성 및 입력 레이아웃 설정
     void CreateShader();
+    void UpdateShader();
     void ReleaseShader();
 
     void PrepareRenderState();
 
     void UpdateFadeConstant();
-
     void CreateBlendState();
+    void CreateSampler();
 
 private:
     FGraphicsDevice* Graphics = nullptr;
     FDXDBufferManager* BufferManager = nullptr;
     FDXDShaderManager* ShaderManager = nullptr;
 
+    ID3D11SamplerState* Sampler = nullptr;
+
     ID3D11VertexShader* VertexShader = nullptr;
     ID3D11PixelShader* PixelShader = nullptr;
 
     ID3D11BlendState* BlendState = nullptr;
 
-    float FadeAlpha = 0.0f;
+
     FLinearColor FadeColor;
+    float FadeAlpha;
 };

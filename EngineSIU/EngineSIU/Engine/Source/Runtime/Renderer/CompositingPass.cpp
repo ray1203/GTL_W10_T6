@@ -54,12 +54,17 @@ void FCompositingPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
     {
         return;
     }
+    ID3D11ShaderResourceView* PostProcessSRV = Viewport->GetViewportResource()->GetRenderTarget(EResourceType::ERT_PostProcessCompositing)->SRV;
+    Graphics->DeviceContext->PSSetShaderResources(101, 1, &PostProcessSRV);
+
+
+
 
     const EResourceType ResourceType = EResourceType::ERT_Compositing; 
     FRenderTargetRHI* RenderTargetRHI = Viewport->GetViewportResource()->GetRenderTarget(ResourceType);
 
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Scene), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_Scene)->SRV);
-    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_PostProcess), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_PP_Fog)->SRV);
+    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_PostProcess), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_PostProcessCompositing)->SRV);
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_EditorOverlay), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_Editor)->SRV);
 
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
