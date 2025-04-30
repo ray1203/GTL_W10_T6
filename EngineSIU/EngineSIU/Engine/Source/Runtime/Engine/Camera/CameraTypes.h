@@ -4,7 +4,7 @@
 #include "Math/Rotator.h"
 #include "Math/Color.h"
 
-enum class CameraProjectionMode : uint8
+enum class ECameraProjectionMode : uint8
 {
     Perspective,
     Orthographic,
@@ -23,7 +23,7 @@ public:
     float DesiredFOV;
 
     // Orthographic mode 일 때의 Orthographic Width. Perspective mode 일 때는 무시됨.
-    float OthoroWidth;
+    float OrthoWidth;
 
     /** The near plane distance of the orthographic view (in world units) */
     float OrthoNearClipPlane;
@@ -39,7 +39,7 @@ public:
 
     float PerspectiveFarClipPlane;
 
-    CameraProjectionMode ProjectionMode;
+    ECameraProjectionMode ProjectionMode;
 
     float FadeAlpha;
     FLinearColor FadeColor;
@@ -54,13 +54,13 @@ public:
         , Rotation(FVector::ZeroVector)
         , FOV(90.0f)
         , DesiredFOV(90.0f)
-        , OthoroWidth(512.0f)
+        , OrthoWidth(512.0f)
         , AspectRatio(1.33333333f)
         , OrthoNearClipPlane(0.0f)
         , OrthoFarClipPlane(2097152.0)
         , PerspectiveNearClipPlane(-1.0f)
         , PerspectiveFarClipPlane(10000.0)
-        , ProjectionMode(CameraProjectionMode::Perspective)
+        , ProjectionMode(ECameraProjectionMode::Perspective)
         , FadeAlpha(0.0f)
         , FadeColor(FLinearColor::Black)
     { }

@@ -576,12 +576,12 @@ void FShadowManager::UpdateCascadeMatrices(const std::shared_ptr<FViewportClient
             CameraPOV.Rotation.GetUpVector()
         );
         
-        if (CameraPOV.ProjectionMode == CameraProjectionMode::Perspective)
+        if (CameraPOV.ProjectionMode == ECameraProjectionMode::Perspective)
         {
             NearClip = CameraPOV.PerspectiveNearClipPlane;
             FarClip = CameraPOV.PerspectiveFarClipPlane;
         }
-        else if (CameraPOV.ProjectionMode == CameraProjectionMode::Orthographic)
+        else if (CameraPOV.ProjectionMode == ECameraProjectionMode::Orthographic)
         {
             NearClip = CameraPOV.OrthoNearClipPlane;
             FarClip = CameraPOV.OrthoFarClipPlane;

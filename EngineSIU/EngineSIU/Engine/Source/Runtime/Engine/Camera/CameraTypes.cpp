@@ -6,7 +6,7 @@ bool FMinimalViewInfo::Equals(const FMinimalViewInfo& OtherInfo) const
         Rotation.Equals(OtherInfo.Rotation) &&
         FOV == OtherInfo.FOV &&
         DesiredFOV == OtherInfo.DesiredFOV &&
-        OthoroWidth == OtherInfo.OthoroWidth &&
+        OrthoWidth == OtherInfo.OrthoWidth &&
         AspectRatio == OtherInfo.AspectRatio &&
         OrthoNearClipPlane == OtherInfo.OrthoNearClipPlane &&
         OrthoFarClipPlane == OtherInfo.OrthoFarClipPlane &&
@@ -22,7 +22,7 @@ void FMinimalViewInfo::BlendViewInfo(FMinimalViewInfo& OtherInfo, float OtherWei
     Rotation = Rotation + DeltaAng;
 
     FOV = FMath::Lerp(FOV, OtherInfo.FOV, OtherWeight);
-    OthoroWidth = FMath::Lerp(OthoroWidth, OtherInfo.OthoroWidth, OtherWeight);
+    OrthoWidth = FMath::Lerp(OrthoWidth, OtherInfo.OrthoWidth, OtherWeight);
     OrthoNearClipPlane = FMath::Lerp(OrthoNearClipPlane, OtherInfo.OrthoNearClipPlane, OtherWeight);
     OrthoFarClipPlane = FMath::Lerp(OrthoFarClipPlane, OtherInfo.OrthoFarClipPlane, OtherWeight);
     PerspectiveNearClipPlane = FMath::Lerp(PerspectiveNearClipPlane, OtherInfo.PerspectiveNearClipPlane, OtherWeight);
@@ -38,7 +38,7 @@ void FMinimalViewInfo::ApplyBlendWeight(float BlendWeight)
     Rotation *= BlendWeight;
     FOV *= BlendWeight;
     DesiredFOV *= BlendWeight;
-    OthoroWidth *= BlendWeight;
+    OrthoWidth *= BlendWeight;
     AspectRatio *= BlendWeight;
     OrthoNearClipPlane *= BlendWeight;
     OrthoFarClipPlane *= BlendWeight;

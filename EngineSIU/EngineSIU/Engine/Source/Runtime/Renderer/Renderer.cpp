@@ -273,7 +273,7 @@ void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FViewportClient>& Viewp
                                     );
         CameraConstantBuffer.InvViewMatrix = FMatrix::Inverse(CameraConstantBuffer.ViewMatrix);
 
-        if (CameraPOV.ProjectionMode == CameraProjectionMode::Perspective)
+        if (CameraPOV.ProjectionMode == ECameraProjectionMode::Perspective)
         {
             CameraConstantBuffer.ProjectionMatrix = JungleMath::CreateProjectionMatrix(
                 FMath::DegreesToRadians(CameraPOV.FOV),
@@ -284,11 +284,11 @@ void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FViewportClient>& Viewp
             CameraConstantBuffer.NearClip = CameraPOV.PerspectiveNearClipPlane;
             CameraConstantBuffer.FarClip = CameraPOV.PerspectiveFarClipPlane;
         }
-        else if (CameraPOV.ProjectionMode == CameraProjectionMode::Orthographic)
+        else if (CameraPOV.ProjectionMode == ECameraProjectionMode::Orthographic)
         {
             // 오쏘그래픽 너비는 줌 값과 가로세로 비율에 따라 결정됩니다.
-            const float OrthoWidth = CameraPOV.OthoroWidth;
-            const float OrthoHeight = CameraPOV.OthoroWidth / CameraPOV.AspectRatio;
+            const float OrthoWidth = CameraPOV.OrthoWidth;
+            const float OrthoHeight = CameraPOV.OrthoWidth / CameraPOV.AspectRatio;
 
             // 오쏘그래픽 투영 행렬 생성 (nearPlane, farPlane 은 기존 값 사용)
             CameraConstantBuffer.ProjectionMatrix = JungleMath::CreateOrthoProjectionMatrix(

@@ -179,7 +179,7 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
             CameraPOV.Rotation.GetUpVector()
         );
 
-        if (CameraPOV.ProjectionMode == CameraProjectionMode::Perspective)
+        if (CameraPOV.ProjectionMode == ECameraProjectionMode::Perspective)
         {
             P = JungleMath::CreateProjectionMatrix(
                 FMath::DegreesToRadians(CameraPOV.FOV),
@@ -188,11 +188,11 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
                 CameraPOV.PerspectiveFarClipPlane
             );
         }
-        else if (CameraPOV.ProjectionMode == CameraProjectionMode::Orthographic)
+        else if (CameraPOV.ProjectionMode == ECameraProjectionMode::Orthographic)
         {
             // 오쏘그래픽 너비는 줌 값과 가로세로 비율에 따라 결정됩니다.
-            const float OrthoWidth = CameraPOV.OthoroWidth;
-            const float OrthoHeight = CameraPOV.OthoroWidth / CameraPOV.AspectRatio;
+            const float OrthoWidth = CameraPOV.OrthoWidth;
+            const float OrthoHeight = CameraPOV.OrthoWidth / CameraPOV.AspectRatio;
 
             // 오쏘그래픽 투영 행렬 생성 (nearPlane, farPlane 은 기존 값 사용)
             P = JungleMath::CreateOrthoProjectionMatrix(
