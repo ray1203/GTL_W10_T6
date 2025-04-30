@@ -29,12 +29,6 @@ public:
     void SetNearClip(float InNearClip) { NearClip = InNearClip; }
     void SetFarClip(float InFarClip) { FarClip = InFarClip; }
 
-    FMatrix& GetViewMatrix() { return View; }
-    FMatrix& GetProjectionMatrix() { return Projection; }
-    void UpdateViewMatrix();
-    void UpdateProjectionMatrix();
-    void UpdateOrthoCameraLoc();
-
     FVector GetForwardVector() const;
     FVector GetRightVector() const;
     FVector GetUpVector() const;
