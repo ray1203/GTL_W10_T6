@@ -12,7 +12,7 @@ enum class EShaderSRVSlot : int8
     SRV_EditorOverlay = 102,
     SRV_Fog = 103,
     SRV_Debug = 104,
-    
+    SRV_Fade = 105,
     SRV_Viewport = 120,
 
     SRV_MAX = 127,

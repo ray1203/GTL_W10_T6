@@ -1,4 +1,4 @@
-﻿//     __ _____ _____ _____
+//     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
@@ -3047,7 +3047,7 @@ namespace detail
     // GCC selects the built-in operator< over an operator rewritten from
     // a user-defined spaceship operator
     // Clang, MSVC, and ICC select the rewritten candidate
-    // (see GCC bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105200)
+    // (see GCC bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id==105200)
 #if JSON_HAS_THREE_WAY_COMPARISON && defined(__GNUC__)
     inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     {

@@ -59,6 +59,7 @@ float4 mainPS(PS_Input Input) : SV_TARGET
     {
         FinalColor = lerp(Scene, PostProcess, PostProcess.a);
         FinalColor = lerp(FinalColor, Editor, Editor.a);
+
     }
 
     return FinalColor;

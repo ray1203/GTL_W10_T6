@@ -58,6 +58,12 @@ void FPostProcessCompositingPass::Render(const std::shared_ptr<FViewportClient>&
     FRenderTargetRHI* RenderTargetRHI = Viewport->GetViewportResource()->GetRenderTarget(ResourceType);
 
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Fog), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_PP_Fog)->SRV);
+    if (!ViewportResource->GetRenderTarget(EResourceType::ERT_Fade)->SRV)
+    {
+        UE_LOG(LogLevel::Error,"[CompositingPass] SRV_Fade is null!\n");
+    }
+
+    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Fade), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_Fade)->SRV);
 
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
 
@@ -81,6 +87,7 @@ void FPostProcessCompositingPass::Render(const std::shared_ptr<FViewportClient>&
     // Clear
     ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Fog), 1, NullSRV);
+    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Fade), 1, NullSRV);
 }
 
 void FPostProcessCompositingPass::ClearRenderArr()
