@@ -195,8 +195,10 @@ void UEditorEngine::StartPIE()
     //PIEWorld->BeginPlay();
     PIEWorld->BeginPlay();
     GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.Target = PlayerCharacter;
-    GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
+    GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 1.0f, FLinearColor::Black, false, true);
+
     
+
     // 나중에 제거하기
 }
 

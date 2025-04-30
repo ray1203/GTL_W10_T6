@@ -122,7 +122,7 @@ private:
     class USceneComponent* TransformComponent;
 
 public:
-    FLinearColor FadeColor;
+    FLinearColor FadeColor = FLinearColor::Red;
     float FadeAmount;
     FVector2D FadeAlpha;
     float FadeTime;
@@ -188,7 +188,7 @@ public:
     virtual void AssignViewTarget(AActor* NewTarget, FViewTarget& VT, struct FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams());
 
 public:
-    virtual void StartCameraFade(float FromAlpha, float ToAlpha, float Duration, FLinearColor Color, bool bShouldFadeAudio = false, bool bHoldWhenFinished = false);
+    virtual void StartCameraFade(float FromAlpha, float ToAlpha, float InFadeTime, FLinearColor InFadeColor, bool bInFadeAudio, bool bInHoldWhenFinished);
 
     virtual void StopCameraFade();
 

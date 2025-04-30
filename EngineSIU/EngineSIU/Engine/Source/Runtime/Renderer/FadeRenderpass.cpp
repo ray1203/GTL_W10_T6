@@ -37,11 +37,9 @@ void FFadeRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDe
 
 void FFadeRenderPass::PrepareRenderArr()
 {
-    if (GEngine->GetWorld() && GEngine->GetWorld()->GetFirstPlayerController()) {
-        if (GEngine->GetWorld()->GetFirstPlayerController()->PlayerCameraManager) {
-            FadeAlpha = GEngine->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeAlpha;
-            FadeColor = GEngine->GetWorld()->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeColor;
-        }
+    if (GEngine->ActiveWorld&&GEngine->ActiveWorld->WorldType == EWorldType::PIE) {
+            FadeAlpha = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeAlpha;
+            FadeColor = GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.POV.FadeColor;
     }
 }
 

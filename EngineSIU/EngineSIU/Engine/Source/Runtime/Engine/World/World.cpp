@@ -49,8 +49,7 @@ void UWorld::BeginPlay()
         }
     }
 
-    if (WorldType == EWorldType::PIE)
-        PlayerControllers[0]->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 0.5f, FLinearColor::Black);
+   
 }
 
 void UWorld::Tick(float DeltaTime)
