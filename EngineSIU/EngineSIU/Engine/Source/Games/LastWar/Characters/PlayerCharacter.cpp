@@ -18,6 +18,7 @@
 #include "Audio/AudioManager.h"
 #include "Camera/CameraModifier/CameraShakeModifier.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Actors/CameraActor.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -161,6 +162,28 @@ void APlayerCharacter::HandleOverlap(AActor* OtherActor)
     {
         OnDeath.Broadcast();
         DisableInput(Cast<APlayerController>(Controller));
+
+        if (APlayerController* PC = Cast<APlayerController>(Controller))
+        {
+            if (PC->PlayerCameraManager)
+            {
+                FVector SpawnLoc = GetActorLocation();
+                FRotator SpawnRot = FRotator(-89.0f, 0.0f, 0.0f);
+                ACameraActor* CameraActor = PC->GetWorld()->SpawnActor<ACameraActor>();
+                CameraActor->SetActorLocation(SpawnLoc);
+                CameraActor->SetActorRotation(SpawnRot);
+
+                FViewTargetTransitionParams BlendParams;
+                BlendParams.BlendTime = 10.0f;
+                BlendParams.BlendFunction = EViewTargetBlendFunction::VTBlend_Linear;
+                BlendParams.BlendExp = 2.0f;
+                BlendParams.bLockOutgoing = false;
+
+                //PC->UnPossess();
+                PC->PlayerCameraManager->SetViewTarget(CameraActor, BlendParams);
+                
+            }
+        }
     }
 }
 

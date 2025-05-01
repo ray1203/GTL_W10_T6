@@ -7,13 +7,14 @@ class ACameraActor : public AActor
     DECLARE_CLASS(ACameraActor, AActor)
 
 public:
-    ACameraActor() = default;
+    ACameraActor();
 
+    virtual void BeginPlay() override;
 
 private:
     /** The camera component for this camera */
-    class UCameraComponent* CameraComponent;
-    class USceneComponent* SceneComponent;
+    class UCameraComponent* CameraComponent = nullptr;
+    class USceneComponent* SceneComponent = nullptr;
 
 public:
     /** Returns CameraComponent subobject **/

@@ -122,9 +122,9 @@ private:
     virtual bool RemoveCameraModifier(UCameraModifier* ModifierToRemove);
 
 private:
-    class APlayerController* PCOwner;
+    class APlayerController* PCOwner = nullptr;
     
-    class USceneComponent* TransformComponent;
+    class USceneComponent* TransformComponent = nullptr;
 
 public:
     FLinearColor FadeColor = FLinearColor::Red;

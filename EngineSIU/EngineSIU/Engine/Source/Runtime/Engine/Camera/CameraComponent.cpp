@@ -108,8 +108,8 @@ void UCameraComponent::GetCameraView(float DeltaTime, FMinimalViewInfo& DesiredV
         }
     }
 
-    DesiredView.Location = GetRelativeLocation();
-    DesiredView.Rotation = GetRelativeRotation();
+    DesiredView.Location = GetWorldLocation();
+    DesiredView.Rotation = GetWorldRotation();
 
     DesiredView.FOV = FieldOfView;
     DesiredView.AspectRatio = AspectRatio;
