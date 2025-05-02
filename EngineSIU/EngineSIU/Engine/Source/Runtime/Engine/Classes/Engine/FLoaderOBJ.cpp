@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <filesystem> 
+
 bool FLoaderOBJ::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
 {
     std::ifstream OBJ(ObjFilePath.ToWideString());
@@ -476,7 +478,7 @@ void FLoaderOBJ::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
 
     const float Denominator = s1 * t2 - s2 * t1;
     FVector Tangent;
-    
+
     if (FMath::Abs(Denominator) > SMALL_NUMBER)
     {
         // 정상적인 계산 진행
@@ -492,10 +494,10 @@ void FLoaderOBJ::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
         // 방법 1: 다른 방향에서 탄젠트 계산 시도
         FVector Edge1(E1x, E1y, E1z);
         FVector Edge2(E2x, E2y, E2z);
-    
+
         // 기하학적 접근: 두 에지 사이의 각도 이등분선 사용
         Tangent = (Edge1.GetSafeNormal() + Edge2.GetSafeNormal()).GetSafeNormal();
-    
+
         // 만약 두 에지가 평행하거나 반대 방향이면 다른 방법 사용
         if (Tangent.IsNearlyZero())
         {
@@ -513,35 +515,88 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
 {
     OBJ::FStaticMeshRenderData* NewStaticMesh = new OBJ::FStaticMeshRenderData();
 
-    if ( const auto It = ObjStaticMeshMap.Find(PathFileName))
+    if (const auto It = ObjStaticMeshMap.Find(PathFileName))
     {
         return *It;
     }
+    FWString BinaryPath = GetBinaryPath(PathFileName.ToWideString());
 
-    FWString BinaryPath = (PathFileName + ".bin").ToWideString();
-    if (std::ifstream(BinaryPath).good())
+
+    std::error_code ec;
+    bool bShouldParseObj = true;
+    bool bBinaryExists = std::filesystem::exists(BinaryPath, ec);
+
+    std::filesystem::file_time_type objTimestamp;
+    std::filesystem::file_time_type mtlTimestamp{};
+    std::filesystem::file_time_type binTimestamp;
+
+
+
+    FString mtlFilename = ScanObjForMtllib(PathFileName.ToWideString());
+
+    std::filesystem::path absoluteObjPath(PathFileName.ToWideString());
+
+    std::filesystem::path absoluteObjPathFs = std::filesystem::absolute(PathFileName.ToWideString(), ec);
+    std::filesystem::path objDirectoryFs = absoluteObjPathFs.parent_path();
+    std::filesystem::path mtlRelativePathFs(mtlFilename.ToWideString());
+
+    std::filesystem::path absoluteMtlPathFs = objDirectoryFs / mtlRelativePathFs;
+    absoluteMtlPathFs = absoluteMtlPathFs.lexically_normal();
+    absoluteMtlPathFs.make_preferred();
+
+    bool bMtlFileActuallyExists = std::filesystem::exists(absoluteMtlPathFs, ec);
+    if (bMtlFileActuallyExists && !ec)
     {
-        if (LoadStaticMeshFromBinary(BinaryPath, *NewStaticMesh))
+        mtlTimestamp = std::filesystem::last_write_time(absoluteMtlPathFs.wstring(), ec);
+        if (ec) {
+            std::wcerr << L"[Error] last_write_time() 실패: " << ec.message().c_str() << L"\n";
+            ec.clear();
+        }
+    }
+    objTimestamp = std::filesystem::last_write_time(PathFileName.ToWideString(), ec);
+
+    if (ec)
+    {
+        bShouldParseObj = true;
+        bBinaryExists = false;
+        ec.clear();
+    }
+    auto newestSource = std::max(objTimestamp, mtlTimestamp);
+    if (bBinaryExists)
+    {
+        binTimestamp = std::filesystem::last_write_time(BinaryPath, ec);
+        if (ec)
         {
-            ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
-            return NewStaticMesh;
+            bShouldParseObj = true;
+            ec.clear(); // Clear error code
+        }
+
+        else if (binTimestamp >= newestSource)
+        {
+            OBJ::FStaticMeshRenderData* LoadedMesh = new OBJ::FStaticMeshRenderData();
+            if (LoadStaticMeshFromBinary(BinaryPath, *LoadedMesh))
+            {
+                ObjStaticMeshMap[PathFileName] = LoadedMesh;
+                bShouldParseObj = false;
+                return LoadedMesh;
+            }
+            else
+            {
+                delete LoadedMesh; // Clean up allocated memory
+                bShouldParseObj = true; // Force parsing
+            }
+        }
+        else
+        {
+            bShouldParseObj = true; // Force parsing
         }
     }
 
-    // Parse OBJ
-    FObjInfo NewObjInfo;
-    bool Result = FLoaderOBJ::ParseOBJ(PathFileName, NewObjInfo);
-
-    if (!Result)
+    if (bShouldParseObj)
     {
-        delete NewStaticMesh;
-        return nullptr;
-    }
-
-    // Material
-    if (NewObjInfo.MaterialSubsets.Num() > 0)
-    {
-        Result = FLoaderOBJ::ParseMaterial(NewObjInfo, *NewStaticMesh);
+        // Parse OBJ
+        FObjInfo NewObjInfo;
+        bool Result = FLoaderOBJ::ParseOBJ(PathFileName, NewObjInfo);
 
         if (!Result)
         {
@@ -549,24 +604,36 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
             return nullptr;
         }
 
-        CombineMaterialIndex(*NewStaticMesh);
+        // Material
+        if (NewObjInfo.MaterialSubsets.Num() > 0)
+        {
+            Result = FLoaderOBJ::ParseMaterial(NewObjInfo, *NewStaticMesh);
 
-        for (int materialIndex = 0; materialIndex < NewStaticMesh->Materials.Num(); materialIndex++) {
-            CreateMaterial(NewStaticMesh->Materials[materialIndex]);
+            if (!Result)
+            {
+                delete NewStaticMesh;
+                return nullptr;
+            }
+
+            CombineMaterialIndex(*NewStaticMesh);
+
+            for (int materialIndex = 0; materialIndex < NewStaticMesh->Materials.Num(); materialIndex++) {
+                CreateMaterial(NewStaticMesh->Materials[materialIndex]);
+            }
         }
-    }
 
-    // Convert FStaticMeshRenderData
-    Result = FLoaderOBJ::ConvertToStaticMesh(NewObjInfo, *NewStaticMesh);
-    if (!Result)
-    {
-        delete NewStaticMesh;
-        return nullptr;
-    }
+        // Convert FStaticMeshRenderData
+        Result = FLoaderOBJ::ConvertToStaticMesh(NewObjInfo, *NewStaticMesh);
+        if (!Result)
+        {
+            delete NewStaticMesh;
+            return nullptr;
+        }
 
-    SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh); 
-    ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
-    return NewStaticMesh;
+        SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh); // TODO: refactoring 끝나면 활성화하기
+        ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
+        return NewStaticMesh;
+    }
 }
 
 void FManagerOBJ::CombineMaterialIndex(OBJ::FStaticMeshRenderData& OutFStaticMesh)
@@ -587,6 +654,27 @@ void FManagerOBJ::CombineMaterialIndex(OBJ::FStaticMeshRenderData& OutFStaticMes
 
 bool FManagerOBJ::SaveStaticMeshToBinary(const FWString& FilePath, const OBJ::FStaticMeshRenderData& StaticMesh)
 {
+
+    std::filesystem::path binaryFilePath(FilePath);
+
+    std::filesystem::path directoryPath = binaryFilePath.parent_path();
+
+    if (!directoryPath.empty())
+    {
+        std::error_code ec;
+        if (!std::filesystem::exists(directoryPath, ec))
+        {
+            if (!std::filesystem::create_directories(directoryPath, ec))
+            {
+                return false;
+            }
+        }
+        else if (ec)
+        {
+            return false;
+        }
+    }
+
     std::ofstream File(FilePath, std::ios::binary);
     if (!File.is_open())
     {
@@ -623,25 +711,19 @@ bool FManagerOBJ::SaveStaticMeshToBinary(const FWString& FilePath, const OBJ::FS
         File.write(reinterpret_cast<const char*>(&Material.Specular), sizeof(Material.Specular));
         File.write(reinterpret_cast<const char*>(&Material.Ambient), sizeof(Material.Ambient));
         File.write(reinterpret_cast<const char*>(&Material.Emissive), sizeof(Material.Emissive));
-        
         File.write(reinterpret_cast<const char*>(&Material.SpecularScalar), sizeof(Material.SpecularScalar));
         File.write(reinterpret_cast<const char*>(&Material.DensityScalar), sizeof(Material.DensityScalar));
         File.write(reinterpret_cast<const char*>(&Material.TransparencyScalar), sizeof(Material.TransparencyScalar));
-        File.write(reinterpret_cast<const char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.write(reinterpret_cast<const char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
 
         Serializer::WriteFString(File, Material.DiffuseTextureName);
         Serializer::WriteFWString(File, Material.DiffuseTexturePath);
-        
         Serializer::WriteFString(File, Material.AmbientTextureName);
         Serializer::WriteFWString(File, Material.AmbientTexturePath);
-        
         Serializer::WriteFString(File, Material.SpecularTextureName);
         Serializer::WriteFWString(File, Material.SpecularTexturePath);
-        
         Serializer::WriteFString(File, Material.BumpTextureName);
         Serializer::WriteFWString(File, Material.BumpTexturePath);
-        
         Serializer::WriteFString(File, Material.AlphaTextureName);
         Serializer::WriteFWString(File, Material.AlphaTexturePath);
     }
@@ -712,25 +794,18 @@ bool FManagerOBJ::LoadStaticMeshFromBinary(const FWString& FilePath, OBJ::FStati
         File.read(reinterpret_cast<char*>(&Material.Specular), sizeof(Material.Specular));
         File.read(reinterpret_cast<char*>(&Material.Ambient), sizeof(Material.Ambient));
         File.read(reinterpret_cast<char*>(&Material.Emissive), sizeof(Material.Emissive));
-        
         File.read(reinterpret_cast<char*>(&Material.SpecularScalar), sizeof(Material.SpecularScalar));
         File.read(reinterpret_cast<char*>(&Material.DensityScalar), sizeof(Material.DensityScalar));
         File.read(reinterpret_cast<char*>(&Material.TransparencyScalar), sizeof(Material.TransparencyScalar));
-        File.read(reinterpret_cast<char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.read(reinterpret_cast<char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
-        
         Serializer::ReadFString(File, Material.DiffuseTextureName);
         Serializer::ReadFWString(File, Material.DiffuseTexturePath);
-        
         Serializer::ReadFString(File, Material.AmbientTextureName);
         Serializer::ReadFWString(File, Material.AmbientTexturePath);
-        
         Serializer::ReadFString(File, Material.SpecularTextureName);
         Serializer::ReadFWString(File, Material.SpecularTexturePath);
-        
         Serializer::ReadFString(File, Material.BumpTextureName);
         Serializer::ReadFWString(File, Material.BumpTexturePath);
-        
         Serializer::ReadFString(File, Material.AlphaTextureName);
         Serializer::ReadFWString(File, Material.AlphaTexturePath);
 
@@ -789,7 +864,7 @@ bool FManagerOBJ::LoadStaticMeshFromBinary(const FWString& FilePath, OBJ::FStati
     return true;
 }
 
-UMaterial* FManagerOBJ::CreateMaterial(FObjMaterialInfo materialInfo)
+UMaterial* FManagerOBJ::CreateMaterial(const FObjMaterialInfo& materialInfo)
 {
     if (materialMap[materialInfo.MaterialName] != nullptr)
         return materialMap[materialInfo.MaterialName];
@@ -800,7 +875,7 @@ UMaterial* FManagerOBJ::CreateMaterial(FObjMaterialInfo materialInfo)
     return newMaterial;
 }
 
-UMaterial* FManagerOBJ::GetMaterial(FString name)
+UMaterial* FManagerOBJ::GetMaterial(const FString& name)
 {
     return materialMap[name];
 }
@@ -824,7 +899,103 @@ UStaticMesh* FManagerOBJ::CreateStaticMesh(const FString& filePath)
     return StaticMesh;
 }
 
-UStaticMesh* FManagerOBJ::GetStaticMesh(FWString name)
+UStaticMesh* FManagerOBJ::GetStaticMesh(const FWString& name)
 {
     return StaticMeshMap[name];
+}
+
+FString FManagerOBJ::ScanObjForMtllib(const FWString& absoluteObjPathW)
+{
+    std::ifstream objFile(absoluteObjPathW);
+    if (!objFile)
+    {
+        return "";
+    }
+
+    std::string line;
+    std::string mtllibFilename;
+    while (std::getline(objFile, line))
+    {
+        if (line.empty() || line[0] == '#')
+            continue;
+
+        std::istringstream lineStream(line);
+        std::string token;
+        lineStream >> token;
+
+        if (token == "mtllib")
+        {
+            if (lineStream >> mtllibFilename)
+            {
+                break;
+            }
+            else
+            {
+                mtllibFilename = "";
+            }
+        }
+    }
+    objFile.close();
+    return mtllibFilename; // Return std::string
+}
+
+
+FWString FManagerOBJ::GetBinaryPath(const FWString& ObjFilePathW)
+{
+    std::filesystem::path objPath(ObjFilePathW);
+
+    std::error_code ec_abs;
+    std::filesystem::path absoluteObjPath = std::filesystem::absolute(objPath, ec_abs);
+    if (ec_abs) {
+        absoluteObjPath = objPath; // Fallback
+    }
+    objPath = absoluteObjPath;
+
+    if (!objPath.has_filename()) {
+        return L"";
+    }
+
+    // 2. Find the 'Contents' or 'Assets' directory root by walking up
+    std::filesystem::path assetRoot;
+    std::filesystem::path current = objPath.parent_path(); // Start from the directory containing the file
+
+    while (true) {
+        if (!current.has_filename()) { // Check if we reached the root (e.g., "C:/")
+            break;
+        }
+
+        if (current.filename() == L"Contents" || current.filename() == L"Assets") {
+            assetRoot = current;
+            break;
+        }
+
+        // Check if we can go further up
+        if (!current.has_parent_path() || current.parent_path() == current) {
+            break; // Reached the top without finding the root marker
+        }
+        current = current.parent_path();
+    }
+
+    if (assetRoot.empty()) {
+        return L""; // Asset root marker not found
+    }
+
+    std::filesystem::path baseBinaryPath = assetRoot / L"Binary";
+
+    // 4. Get the OBJ file path relative to the asset root directory
+    std::error_code ec_rel;
+    // Use the absolute objPath here for reliable relative calculation
+    std::filesystem::path relativeObjPath = std::filesystem::relative(objPath, assetRoot, ec_rel);
+    if (ec_rel) {
+        return L"";
+    }
+    if (relativeObjPath.empty()) {
+        return L"";
+    }
+
+    std::filesystem::path finalBinaryPath = baseBinaryPath / relativeObjPath;
+
+    finalBinaryPath += L".bin"; // Appends .bin, resulting in .obj.bin
+
+    return finalBinaryPath.wstring();
 }
