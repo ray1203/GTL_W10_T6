@@ -349,4 +349,29 @@ struct FMath
         if (Min > Max) std::swap(Min, Max);
         return Min + (Max - Min) * FRand();
     }
+
+    static inline bool IsNaN(float Value)
+    {
+        // NaN은 자기 자신과 비교했을 때 같지 않음
+        // 컴파일러 최적화로 인해 이 비교가 제거되지 않도록 volatile 사용 고려 가능
+        // volatile float v = Value; return v != v;
+        // 하지만 대부분의 현대 컴파일러는 이 패턴을 올바르게 처리함
+        return Value != Value;
+    }
+
+    // double 타입에 대한 IsNaN 구현
+    static inline bool IsNaN(double Value)
+    {
+        return Value != Value;
+    }
+    static inline bool IsFinite(float Value)
+    {
+        return !IsNaN(Value) && !std::isinf(Value);
+    }
+
+    // double 타입에 대한 IsFinite 구현
+    static inline bool IsFinite(double Value)
+    {
+        return !IsNaN(Value) && !std::isinf(Value);
+    }
 };

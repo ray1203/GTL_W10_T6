@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "Serialization/Archive.h"
 
 struct FVector;
@@ -8,7 +8,7 @@ struct FQuat;
 
 #include "Vector.h"
 #include "Vector4.h"
-
+#include "fbxsdk.h"
 // 4x4 행렬 연산
 struct alignas(16) FMatrix
 {
@@ -54,6 +54,43 @@ public:
     FMatrix GetMatrixWithoutScale(float Tolerance = SMALL_NUMBER) const;
 
     void RemoveScaling(float Tolerance = SMALL_NUMBER);
+
+    static FMatrix ConvertFbxAMatrixToFMatrix(const FbxAMatrix& InFbxMatrix)
+    {
+        FMatrix OutMatrix; // 초기화되지 않은 상태일 수 있으므로 모든 요소 설정 필요
+
+        FVector XAxisFBX(InFbxMatrix.Get(0, 0), InFbxMatrix.Get(0, 1), InFbxMatrix.Get(0, 2));
+        FVector YAxisFBX(InFbxMatrix.Get(1, 0), InFbxMatrix.Get(1, 1), InFbxMatrix.Get(1, 2));
+        FVector ZAxisFBX(InFbxMatrix.Get(2, 0), InFbxMatrix.Get(2, 1), InFbxMatrix.Get(2, 2));
+        FVector TranslationFBX(InFbxMatrix.Get(3, 0), InFbxMatrix.Get(3, 1), InFbxMatrix.Get(3, 2));
+
+        FVector XAxisUE(XAxisFBX.X, XAxisFBX.Z, XAxisFBX.Y);
+        FVector YAxisUE(ZAxisFBX.X, ZAxisFBX.Z, ZAxisFBX.Y); // FBX Z maps to UE Y
+        FVector ZAxisUE(YAxisFBX.X, YAxisFBX.Z, YAxisFBX.Y); // FBX Y maps to UE Z
+        FVector TranslationUE(TranslationFBX.X, TranslationFBX.Z, TranslationFBX.Y);
+
+        OutMatrix.M[0][0] = XAxisUE.X;
+        OutMatrix.M[1][0] = XAxisUE.Y;
+        OutMatrix.M[2][0] = XAxisUE.Z;
+        OutMatrix.M[3][0] = 0.0f;
+
+        OutMatrix.M[0][1] = YAxisUE.X;
+        OutMatrix.M[1][1] = YAxisUE.Y;
+        OutMatrix.M[2][1] = YAxisUE.Z;
+        OutMatrix.M[3][1] = 0.0f;
+
+        OutMatrix.M[0][2] = ZAxisUE.X;
+        OutMatrix.M[1][2] = ZAxisUE.Y;
+        OutMatrix.M[2][2] = ZAxisUE.Z;
+        OutMatrix.M[3][2] = 0.0f;
+
+        OutMatrix.M[0][3] = TranslationUE.X;
+        OutMatrix.M[1][3] = TranslationUE.Y;
+        OutMatrix.M[2][3] = TranslationUE.Z;
+        OutMatrix.M[3][3] = 1.0f;
+
+        return OutMatrix;
+    }
 };
 
 inline FArchive& operator<<(FArchive& Ar, FMatrix& M)
@@ -64,3 +101,4 @@ inline FArchive& operator<<(FArchive& Ar, FMatrix& M)
     Ar << M.M[3][0] << M.M[3][1] << M.M[3][2] << M.M[3][3];
     return Ar;
 }
+

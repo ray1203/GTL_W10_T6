@@ -27,6 +27,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "Components/Light/PointLightComponent.h"
 
+#include "FLoaderFBX.h"
 FStaticMeshRenderPass::FStaticMeshRenderPass()
     : VertexShader(nullptr)
     , PixelShader(nullptr)
@@ -154,7 +155,8 @@ void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGrap
     // ShadowRenderPass = new FShadowRenderPass();
     // ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     // ShadowRenderPass->InitializeShadowManager();
-    
+    FBXLoader = new FLoaderFBX();
+    FBXLoader->LoadFBXFile("C:/Users/Jungle/Documents/GitHub/GTL_W09_T5/EngineSIU/EngineSIU/Contents/Mutant.fbx", InGraphics->Device);
     CreateShader();
     //ShadowRenderPass = new FShadowRenderPass();
     //ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -374,7 +376,21 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewp
 
     PrepareRenderState(Viewport);
 
-    RenderAllStaticMeshes(Viewport);
+    TArray<FMatrix> FinalBoneTransforms;
+    // 1. 본 행렬 계산 (월드 기준 트랜스폼 포함)
+    FinalBoneTransforms.SetNum(FBXLoader->Bones.Num());
+    for (int32 i = 0; i < FBXLoader->Bones.Num(); ++i)
+    {
+        // 이건 예시일 뿐이며, 실제로는 본 트랜스폼을 계산해야 함
+        FinalBoneTransforms[i] = FMatrix::Identity; // 테스트용으로 전부 단위 행렬
+    }
+
+    // 2. 스키닝 적용
+   // FBXLoader->UpdateAndApplySkinning(Graphics->DeviceContext, FinalBoneTransforms);
+    FBXLoader->Render(Graphics->DeviceContext);
+
+
+    //RenderAllStaticMeshes(Viewport);
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);

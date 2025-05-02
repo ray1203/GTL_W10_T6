@@ -4,6 +4,7 @@
 #include "Serialization/Archive.h"
 
 #include "Rotator.h"
+#include <fbxsdk.h>
 
 struct FVector2D
 {
@@ -118,7 +119,7 @@ struct FVector
     static const FVector YAxisVector;
     // Unit Z Axis Vector (0, 0, 1)
     static const FVector ZAxisVector;
-
+   
 public:
     static inline FVector Zero() { return ZeroVector; }
     static inline FVector One() { return OneVector; }
