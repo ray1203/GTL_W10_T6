@@ -22,8 +22,7 @@
 
 APlayerCharacter::APlayerCharacter()
 {
-    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
-
+    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
     FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
@@ -63,7 +62,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     // Bind input actions and axes here  
-    //PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
+    PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
 }
 
@@ -111,10 +110,6 @@ void APlayerCharacter::MoveRight(float Value)
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
-        if (Location.Y > 14.0f)
-            Location.Y = 14.0f;
-        else if (Location.Y < -16.0f)
-            Location.Y = -16.0f;
 
         SetActorLocation(Location);
     }
@@ -271,7 +266,7 @@ void APlayerCharacter::SetCharacterMeshCount(int32 InCount)
     {
         UStaticMeshComponent* StaticMeshComponent = AddComponent<UStaticMeshComponent>();
         StaticMeshComponents.Add(StaticMeshComponent);
-        StaticMeshComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Gunner/Gunner.obj"));
+        StaticMeshComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
         StaticMeshComponent->SetupAttachment(RootComponent);
     }
 
