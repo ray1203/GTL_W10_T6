@@ -4,7 +4,7 @@
 #include <functional> // std::function
 #include <numeric>    // std::accumulate 등 (필요시)
 #include <algorithm>  // std::sort, std::find 등
-
+#include <fbxsdk/utils/fbxrootnodeutility.h>
 // 임시 구조체: 제어점별 스키닝 데이터 누적용
 struct FControlPointSkinningData
 {
@@ -154,78 +154,72 @@ void FLoaderFBX::ReleaseBuffers()
 
 bool FLoaderFBX::LoadFBXFile(const FString& Filepath, ID3D11Device* Device)
 {
-    if (!Device)
-    {
-        // UE_LOG(LogLevel::Error, TEXT("LoadFBXFile: Invalid D3D11 Device provided."));
-        return false;
-    }
+    if (!Device) return false;
 
-    // 1. 기존 데이터 및 리소스 정리
+    // 1. 기존 리소스 정리
     ReleaseBuffers();
     BindPoseVertices.Empty();
     FinalIndices.Empty();
     Bones.Empty();
     BoneNameToIndexMap.Empty();
-    ShutdownFBXSDK(); // 이전 Scene/Manager 정리
+    ShutdownFBXSDK();
 
-    // 2. FBX SDK 초기화
-    if (!InitializeFBXSDK())
-    {
-        return false;
-    }
+    // 2. SDK 초기화
+    if (!InitializeFBXSDK()) return false;
 
-    // 3. FBX Importer 생성 및 초기화
+    // 3. Importer 생성
     FbxImporter* Importer = FbxImporter::Create(SdkManager, "");
-    if (!Importer)
-    {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to create FbxImporter."));
-        ShutdownFBXSDK();
-        return false;
-    }
+    if (!Importer) { ShutdownFBXSDK(); return false; }
 
-    // 파일 경로를 UTF8로 변환 (FString -> char*)
-    // std::string FilepathUTF8 = TCHAR_TO_UTF8(*Filepath); // FString이 TCHAR 기반일 경우
-    // bool bInit = Importer->Initialize(FilepathUTF8.c_str(), -1, SdkManager->GetIOSettings());
-    bool bInit = Importer->Initialize(Filepath.GetContainerPrivate().c_str(), -1, SdkManager->GetIOSettings()); // FString이 char 기반이라고 가정
-
+    // 4. 파일 경로 → UTF-8
+    std::string FilepathUTF8 = (*Filepath);
+    bool bInit = Importer->Initialize(FilepathUTF8.c_str(), -1, SdkManager->GetIOSettings());
     if (!bInit)
     {
-        FbxString ErrorString = Importer->GetStatus().GetErrorString();
-        // UE_LOG(LogLevel::Error, TEXT("FbxImporter Initialize failed for '%s': %s"), *Filepath, UTF8_TO_TCHAR(ErrorString.Buffer()));
         Importer->Destroy();
         ShutdownFBXSDK();
         return false;
     }
 
-    // 4. Scene 임포트
+    // 5. 씬 임포트
     if (!Importer->Import(Scene))
     {
-        FbxString ErrorString = Importer->GetStatus().GetErrorString();
-        // UE_LOG(LogLevel::Error, TEXT("FbxImporter Import failed for '%s': %s"), *Filepath, UTF8_TO_TCHAR(ErrorString.Buffer()));
         Importer->Destroy();
         ShutdownFBXSDK();
         return false;
     }
+    Importer->Destroy();
 
-    Importer->Destroy(); // 임포터는 더 이상 필요 없음
+    // 6. 축(axis) 변환
+    FbxAxisSystem targetAxis(FbxAxisSystem::eZAxis,
+        FbxAxisSystem::eParityOdd,
+        FbxAxisSystem::eLeftHanded);
+    FbxAxisSystem sourceAxis = Scene->GetGlobalSettings().GetAxisSystem();
+    if (sourceAxis != targetAxis)
+    {
+        targetAxis.ConvertScene(Scene);
+    }
 
-    // 5. 지오메트리 삼각화 (필수)
+    // 7. 단위(unit) 변환 (예: 센티미터 → 미터)
+    FbxSystemUnit::cm.ConvertScene(Scene);
+
+    FbxRootNodeUtility::RemoveAllFbxRoots(Scene);
+
+    // 9. 삼각화
     FbxGeometryConverter GeometryConverter(SdkManager);
     GeometryConverter.Triangulate(Scene, true);
 
-    // 6. Scene 처리 (메쉬, 스켈레톤 등)
+    // 10. 씬 처리
     if (!ProcessScene())
     {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to process the imported scene from '%s'."), *Filepath);
         ShutdownFBXSDK();
         return false;
     }
 
-    // 7. DirectX 버퍼 생성
+    // 11. DirectX 버퍼 생성
     if (!CreateBuffers(Device))
     {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to create DirectX buffers for '%s'."), *Filepath);
-        ReleaseBuffers(); // 생성 실패 시 부분적으로 생성된 버퍼 해제
+        ReleaseBuffers();
         ShutdownFBXSDK();
         return false;
     }
@@ -453,7 +447,7 @@ void FLoaderFBX::ExtractSkinningData(FbxMesh* Mesh, TArray<FControlPointSkinning
         if (!Skin) continue;
 
         const int32 ClusterCount = Skin->GetClusterCount();
-    
+
         for (int32 ClusterIndex = 0; ClusterIndex < ClusterCount; ++ClusterIndex)
         {
             FbxCluster* Cluster = Skin->GetCluster(ClusterIndex);
@@ -467,34 +461,25 @@ void FLoaderFBX::ExtractSkinningData(FbxMesh* Mesh, TArray<FControlPointSkinning
             int32* FoundIndexPtr = BoneNameToIndexMap.Find(BoneName);
             if (FoundIndexPtr == nullptr) // 새 뼈 발견
             {
-                // --- 수정된 부분 시작 ---
-                // 1. Emplace를 사용하여 배열에 기본 생성된 FBoneInfo 추가하고 인덱스 얻기
-                CurrentBoneIndex = Bones.Emplace(); // TArray::Emplace() 호출, 새 인덱스 반환
-
-                // 2. 유효한 인덱스인지 확인하고, 해당 요소의 참조를 얻어와 정보 설정
+                CurrentBoneIndex = Bones.Emplace();
                 if (Bones.IsValidIndex(CurrentBoneIndex))
                 {
-                    FBoneInfo& NewBone = Bones[CurrentBoneIndex]; // 인덱스를 사용하여 참조 얻기
+                    FBoneInfo& NewBone = Bones[CurrentBoneIndex];
                     NewBone.Name = BoneName;
-                    NewBone.ParentIndex = INDEX_NONE; // 부모는 나중에 계층 구조 처리 시 설정
+                    NewBone.ParentIndex = INDEX_NONE;
 
-                    // 역 바인드 포즈 행렬 (Link Matrix) 가져오기 및 변환
-                    FbxAMatrix BindPoseMatrix, TransformLinkMatrix;
-                    Cluster->GetTransformMatrix(BindPoseMatrix); // Global bind pose matrix for the geometry
-                    Cluster->GetTransformLinkMatrix(TransformLinkMatrix); // Global matrix of the bone at bind time
+                    FbxAMatrix BindPoseMatrix_Unused, TransformLinkMatrix; // BindPoseMatrix는 여전히 사용 안 함
+                    Cluster->GetTransformMatrix(BindPoseMatrix_Unused);
+                    Cluster->GetTransformLinkMatrix(TransformLinkMatrix);
 
-                    // 역 바인드 포즈 = (뼈의 월드 변환 @ 바인드 타임)의 역행렬
                     FbxAMatrix InvBindPoseFbx = TransformLinkMatrix.Inverse();
-                    NewBone.InverseBindPoseMatrix = FMatrix::ConvertFbxAMatrixToFMatrix(InvBindPoseFbx);
 
-                    BoneNameToIndexMap.Add(BoneName, CurrentBoneIndex); // 맵에 추가
-                    // UE_LOG(LogLevel::Display, TEXT("Added Bone: %s (Index: %d)"), *BoneName.ToString(), CurrentBoneIndex);
+                    NewBone.InverseBindPoseMatrix = FMatrix::ConvertFbxAMatrixToFMatrix(InvBindPoseFbx);
+                    NewBone.BindPoseMatrix = FMatrix::ConvertFbxAMatrixToFMatrix(TransformLinkMatrix);
+
+                    BoneNameToIndexMap.Add(BoneName, CurrentBoneIndex);
                 }
-                else
-                {
-                    continue; // 이 클러스터 처리를 건너뛰고 다음 클러스터로 이동
-                }
-                // --- 수정된 부분 끝 ---
+                else { continue; }
             }
             else // 이미 존재하는 뼈
             {
@@ -662,12 +647,7 @@ bool FLoaderFBX::ProcessSkeletonHierarchy(FbxNode* RootNode)
     bool bAllBonesHaveParentOrAreRoot = true;
     for (int32 i = 0; i < Bones.Num(); ++i)
     {
-        // 루트 뼈가 아닌데 부모가 없으면 문제 가능성 있음 (FBX 구조에 따라 다름)
-        // if (Bones[i].ParentIndex == INDEX_NONE && /* 이 뼈가 실제 루트가 아니라고 판단되면 */)
-        // {
-        //     UE_LOG(LogLevel::Warning, TEXT("Bone '%s' (Index %d) seems disconnected from hierarchy."), *Bones[i].Name.ToString(), i);
-        //     bAllBonesHaveParentOrAreRoot = false;
-        // }
+
     }
 
     return bAllBonesHaveParentOrAreRoot;
@@ -694,31 +674,21 @@ void FLoaderFBX::ProcessSkeletonNodeRecursive(FbxNode* Node, int32 CurrentParent
                 if (Bones[ThisNodeBoneIndex].ParentIndex == INDEX_NONE)
                 {
                     Bones[ThisNodeBoneIndex].ParentIndex = CurrentParentBoneIndex;
-                    // UE_LOG(LogLevel::Display, TEXT("Set Parent for Bone '%s' (Index %d) -> Parent Index %d"), *NodeName.ToString(), ThisNodeBoneIndex, CurrentParentBoneIndex);
                 }
                 // 이미 설정된 부모와 다른 경우 경고 (FBX 구조가 이상할 수 있음)
                 else if (Bones[ThisNodeBoneIndex].ParentIndex != CurrentParentBoneIndex)
                 {
-                    // UE_LOG(LogLevel::Warning, TEXT("Bone '%s' (Index %d) hierarchy conflict: Existing Parent %d, Node Parent %d."),
-                    //     *NodeName.ToString(), ThisNodeBoneIndex, Bones[ThisNodeBoneIndex].ParentIndex, CurrentParentBoneIndex);
-                    // -> 일반적으로 첫 번째 발견된 부모를 유지하거나, 로직 수정 필요
                 }
             }
             else
             {
-                // UE_LOG(LogLevel::Error, TEXT("Bone name '%s' found in map but index %d is invalid for Bones array (Size: %d)."),
-                //     *NodeName.ToString(), ThisNodeBoneIndex, Bones.Num());
                 ThisNodeBoneIndex = INDEX_NONE; // 유효하지 않은 인덱스 처리
             }
         }
-        // else: 스켈레톤 노드이지만 메쉬에 영향을 주지 않는 뼈일 수 있음 (무시)
     }
 
-    // 자식 노드 처리
     for (int32 i = 0; i < Node->GetChildCount(); ++i)
     {
-        // 자식에게 전달할 부모 인덱스:
-        // 현재 노드가 유효한 뼈 인덱스를 가졌다면 그 인덱스를, 아니라면 이전 부모 인덱스를 그대로 전달
         int32 ParentIndexForChild = (ThisNodeBoneIndex != INDEX_NONE) ? ThisNodeBoneIndex : CurrentParentBoneIndex;
         ProcessSkeletonNodeRecursive(Node->GetChild(i), ParentIndexForChild);
     }
@@ -731,7 +701,6 @@ bool FLoaderFBX::CreateBuffers(ID3D11Device* Device)
 {
     if (!Device || BindPoseVertices.IsEmpty() || FinalIndices.IsEmpty())
     {
-        // UE_LOG(LogLevel::Error, TEXT("CreateBuffers: Invalid parameters or no data to create buffers. Verts: %d, Indices: %d"), BindPoseVertices.Num(), FinalIndices.Num());
         return false;
     }
 
@@ -739,7 +708,6 @@ bool FLoaderFBX::CreateBuffers(ID3D11Device* Device)
 
     HRESULT hr;
 
-    // 1. 동적 정점 버퍼 (Dynamic Vertex Buffer) - CPU 스키닝용
     D3D11_BUFFER_DESC DynVertexBufferDesc = {};
     DynVertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC; // CPU 쓰기 가능, GPU 읽기 전용
     DynVertexBufferDesc.ByteWidth = sizeof(FMeshVertex) * BindPoseVertices.Num();
@@ -752,14 +720,10 @@ bool FLoaderFBX::CreateBuffers(ID3D11Device* Device)
     D3D11_SUBRESOURCE_DATA VertexInitData = {};
     VertexInitData.pSysMem = BindPoseVertices.GetData(); // TArray의 데이터 포인터
 
-    // ComPtr 사용 시
     hr = Device->CreateBuffer(&DynVertexBufferDesc, &VertexInitData, &DynamicVertexBuffer);
-    // Raw 포인터 사용 시
-    // hr = Device->CreateBuffer(&DynVertexBufferDesc, &VertexInitData, &DynamicVertexBuffer);
 
     if (FAILED(hr))
     {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to create Dynamic Vertex Buffer. HRESULT: 0x%08X"), hr);
         return false;
     }
 
@@ -773,16 +737,12 @@ bool FLoaderFBX::CreateBuffers(ID3D11Device* Device)
     IndexBufferDesc.StructureByteStride = 0;
 
     D3D11_SUBRESOURCE_DATA IndexInitData = {};
-    IndexInitData.pSysMem = FinalIndices.GetData(); // TArray의 데이터 포인터
+    IndexInitData.pSysMem = FinalIndices.GetData();
 
-    // ComPtr 사용 시
     hr = Device->CreateBuffer(&IndexBufferDesc, &IndexInitData, &IndexBuffer);
-    // Raw 포인터 사용 시
-    // hr = Device->CreateBuffer(&IndexBufferDesc, &IndexInitData, &IndexBuffer);
 
     if (FAILED(hr))
     {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to create Index Buffer. HRESULT: 0x%08X"), hr);
         ReleaseBuffers(); // 실패 시 생성된 정점 버퍼도 해제
         return false;
     }
@@ -790,125 +750,106 @@ bool FLoaderFBX::CreateBuffers(ID3D11Device* Device)
     // UE_LOG(LogLevel::Display, TEXT("DirectX buffers created successfully."));
     return true;
 }
-
-// --- 스키닝 및 렌더링 ---
 bool FLoaderFBX::UpdateAndApplySkinning(ID3D11DeviceContext* DeviceContext, const TArray<FMatrix>& FinalBoneTransforms)
 {
-    // 0. 입력 유효성 검사
-    if (!DeviceContext || !DynamicVertexBuffer || BindPoseVertices.IsEmpty())
-    {
-        // UE_LOG(LogLevel::Error, TEXT("UpdateAndApplySkinning - Invalid parameters or buffers not ready."));
+    // --- 입력 유효성 검사 및 버퍼 맵핑 (이전과 동일) ---
+    if (!DeviceContext || !DynamicVertexBuffer || BindPoseVertices.IsEmpty()) {
         return false;
     }
-    // 뼈 개수 일치 확인 (중요)
-    if (FinalBoneTransforms.Num() != Bones.Num())
-    {
-        return false; // 여기서는 중단
+    if (FinalBoneTransforms.Num() != Bones.Num()) {
+        return false;
     }
 
- 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     HRESULT hr = DeviceContext->Map(DynamicVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    if (FAILED(hr))
-    {
-        // UE_LOG(LogLevel::Error, TEXT("Failed to map Dynamic Vertex Buffer. HRESULT: 0x%08X"), hr);
+    if (FAILED(hr)) {
+        // UE_LOG(LogTemp, Error, TEXT("Failed to map Dynamic Vertex Buffer. HRESULT: 0x%08X"), hr);
         return false;
     }
 
-    // 매핑된 메모리 포인터 가져오기
     FMeshVertex* SkinnedVertices = static_cast<FMeshVertex*>(MappedResource.pData);
     const int32 VertexCount = BindPoseVertices.Num();
 
-    // 2. 각 정점에 대해 CPU 스키닝 수행
+    // 각 정점에 대해 CPU 스키닝 수행
     for (int32 i = 0; i < VertexCount; ++i)
     {
-        const FMeshVertex& BindVertex = BindPoseVertices[i]; // 원본 바인드 포즈 정점
-        FMeshVertex& SkinnedVertex = SkinnedVertices[i];     // 쓸 대상 (매핑된 버퍼)
+        const FMeshVertex& BindVertex = BindPoseVertices[i];
+        FMeshVertex& SkinnedVertex = SkinnedVertices[i];
 
-        // 스키닝 계산 (가중치가 있는 경우에만)
-        bool bHasWeight = false;
+        bool bHasSignificantWeight = false;
         for (int j = 0; j < MAX_BONE_INFLUENCES; ++j) {
-            // KINDA_SMALL_NUMBER 같은 작은 값보다 큰지 확인
-            if (BindVertex.BoneWeights[j] > 1e-4f) {
-                bHasWeight = true;
+            if (BindVertex.BoneWeights[j] > KINDA_SMALL_NUMBER) {
+                bHasSignificantWeight = true;
                 break;
             }
         }
 
-        // 가중치가 없거나 뼈 정보가 없으면 바인드 포즈 그대로 복사
-        if (!bHasWeight || Bones.IsEmpty())
-        {
+        if (!bHasSignificantWeight || Bones.IsEmpty()) {
             SkinnedVertex = BindVertex;
             continue;
         }
 
-        // 스키닝 계산 시작: 결과 누적 변수 초기화
         FVector SkinnedPosition = FVector::ZeroVector;
         FVector SkinnedNormal = FVector::ZeroVector;
         const FVector& BindPositionVec = BindVertex.Position;
         const FVector& BindNormalVec = BindVertex.Normal;
 
-        // 각 뼈 영향력(Influence) 순회
         for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
         {
-            uint32 BoneIndex = BindVertex.BoneIndices[j];
             float Weight = BindVertex.BoneWeights[j];
+            if (Weight <= KINDA_SMALL_NUMBER) continue;
 
-            // 유효한 가중치와 뼈 인덱스인지 확인
-            // FinalBoneTransforms 배열 접근 전에도 인덱스 유효성 검사 추가
-            if (Weight > 1e-4f && Bones.IsValidIndex(BoneIndex) && FinalBoneTransforms.IsValidIndex(BoneIndex))
+            uint32 BoneIndex = BindVertex.BoneIndices[j];
+            if (!Bones.IsValidIndex(BoneIndex) || !FinalBoneTransforms.IsValidIndex(BoneIndex)) continue;
+
+            const FMatrix& InvBindPoseMat = Bones[BoneIndex].InverseBindPoseMatrix;
+            const FMatrix& FinalBoneTransformMat = FinalBoneTransforms[BoneIndex];
+
+            const FMatrix SkinMatrix = FinalBoneTransformMat * InvBindPoseMat; // 곱셈 순서 확인!
+
+            // --- 1. 위치 변환 ---
+            // TransformPosition 멤버 함수 사용
+            SkinnedPosition += SkinMatrix.TransformPosition(BindPositionVec) * Weight;
+
+            // --- 2. 노멀 변환 (역전치 및 올바른 TransformVector 사용) ---
+            FMatrix NormalMatrix = SkinMatrix;
+            if (FMath::Abs(NormalMatrix.Determinant()) > KINDA_SMALL_NUMBER)
             {
-                // 필요한 행렬 가져오기 (const 참조 사용)
-                const FMatrix& InvBindPoseMat = Bones[BoneIndex].InverseBindPoseMatrix;
-                const FMatrix& FinalBoneTransformMat = FinalBoneTransforms[BoneIndex];
+                NormalMatrix = FMatrix::Inverse(NormalMatrix);      // static Inverse 사용
+                NormalMatrix = FMatrix::Transpose(NormalMatrix); // static Transpose 사용
 
-                // 스키닝 행렬 계산: M_skin = M_invBindPose * M_finalTransform
-                // 행렬 곱셈 순서는 FMatrix 클래스 규칙에 따름 (이전에 확인된 순서 사용)
-                const FMatrix SkinMatrix = InvBindPoseMat * FinalBoneTransformMat;
+                // *** 수정된 부분: 올바른 static TransformVector 사용 ***
+                FVector TransformedNormal = FMatrix::TransformVector(BindNormalVec, NormalMatrix);
 
-                // --- 1. 위치 변환 ---
-                // FMatrix::TransformPosition 함수 사용 (위치 벡터 변환에 적합)
-                SkinnedPosition += SkinMatrix.TransformPosition(BindPositionVec) * Weight;
-
-                // --- 2. 노멀 변환 (수정된 부분 - "성게" 현상 해결) ---
-                // 노멀은 방향 벡터이므로 이동(Translation)을 무시해야 함
-                // FVector4의 W 컴포넌트를 0으로 설정하여 TransformFVector4 사용
-                FVector4 NormalW0 = FVector4(BindNormalVec.X, BindNormalVec.Y, BindNormalVec.Z, 0.0f);
-                // SkinMatrix * NormalW0 연산 (FMatrix::TransformFVector4 사용)
-                FVector4 TransformedNormalW0 = SkinMatrix.TransformFVector4(NormalW0);
-                // 결과 FVector4에서 FVector(x, y, z) 부분만 사용
-                FVector TransformedNormal = FVector(TransformedNormalW0.X, TransformedNormalW0.Y, TransformedNormalW0.Z);
-                // 가중치를 곱해 누적
                 SkinnedNormal += TransformedNormal * Weight;
             }
-        } // End Bone Influence Loop
+            else
+            {
+                // 특이 행렬일 경우 대체 처리
+                SkinnedNormal += BindNormalVec * Weight;
+                // UE_LOG(LogTemp, Warning, TEXT("Vertex %d, Bone %u: SkinMatrix determinant near zero. Using bind normal."), i, BoneIndex);
+            }
+        } // 뼈 영향력 루프 종료
 
-        // 계산된 결과 저장
+        // --- 최종 데이터 저장 ---
         SkinnedVertex.Position = SkinnedPosition;
 
-        // 노멀 안전하게 정규화 (0 벡터 방지)
-        if (!SkinnedNormal.IsNearlyZero(1e-4f)) // FMath::IsNearlyZero 같은 함수 사용
-        {
-            // FVector::GetSafeNormal() 또는 Normalize() 함수 사용
-            SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal();
+        if (!SkinnedNormal.IsNearlyZero(KINDA_SMALL_NUMBER)) {
+            SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal(); // FVector의 멤버 함수 가정
         }
-        else
-        {
-            // 노멀 계산 결과가 0 벡터에 가까우면 바인드 포즈 노멀 사용 (또는 기본값)
+        else {
             SkinnedVertex.Normal = BindVertex.Normal;
         }
 
         SkinnedVertex.TexCoord = BindVertex.TexCoord;
-        memcpy(SkinnedVertex.BoneIndices, BindVertex.BoneIndices, sizeof(BindVertex.BoneIndices));
-        memcpy(SkinnedVertex.BoneWeights, BindVertex.BoneWeights, sizeof(BindVertex.BoneWeights));
+        for (int k = 0; k < MAX_BONE_INFLUENCES; ++k) {
+            SkinnedVertex.BoneIndices[k] = BindVertex.BoneIndices[k];
+            SkinnedVertex.BoneWeights[k] = BindVertex.BoneWeights[k];
+        }
 
-     
+    } // 정점 루프 종료
 
-    } // End Vertex Loop
-
-    // 3. 동적 정점 버퍼 언매핑 (잠금 해제)
     DeviceContext->Unmap(DynamicVertexBuffer, 0);
-
     return true;
 }
 void FLoaderFBX::Render(ID3D11DeviceContext* DeviceContext)
@@ -1054,9 +995,6 @@ bool FLoaderFBX::GetElementData(
         else if (ReferenceMode == FbxGeometryElement::eIndexToDirect)
         {
             const int32 IndexArrayCount = IndexArray.GetCount();
-            if (IndexArrayCount != PolygonVertexCount) {
-                // UE_LOG(LogLevel::Warning, TEXT("eByPolygonVertex/eIndexToDirect index count mismatch. Expected %d, Got %d."), PolygonVertexCount, IndexArrayCount);
-            }
             for (int32 i = 0; i < PolygonVertexCount; ++i) {
                 if (i < IndexArrayCount) {
                     int32 DataIndex = IndexArray.GetAt(i);
@@ -1079,23 +1017,18 @@ bool FLoaderFBX::GetElementData(
 
 
 // --- 좌표계 변환 헬퍼 구현 ---
-
 FVector FLoaderFBX::ConvertFbxPosition(const FbxVector4& Vector)
 {
-    // FBX (X, Y, Z) -> UE/DX (X, Z, Y)
-    // Right-Handed -> Left-Handed 변환 포함 (Y축 반전 효과)
-    // 일반적으로 FBX 임포트 시 Axis Conversion 옵션이 있지만, 수동 변환 시
-    // return FVector(Vector[0], Vector[2], Vector[1]); // Z-up, Left-Handed (Unreal)
-    // 또는
-    return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[2]), static_cast<float>(Vector[1]));
-    // 스케일 변환이 필요하면 여기에 곱함 (예: cm -> m)
+    // SDK에서 이미 목표 좌표계로 변환됨. 축 스와핑 불필요.
+    // 필요시 스케일 변환(예: cm -> m)만 적용.
+    return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2]));
 }
 
 FVector FLoaderFBX::ConvertFbxNormal(const FbxVector4& Vector)
 {
-    return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[2]), static_cast<float>(Vector[1]));
+    // SDK에서 이미 목표 좌표계로 변환됨. 축 스와핑 불필요.
+    return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2]));
 }
-
 FVector2D FLoaderFBX::ConvertFbxUV(const FbxVector2& Vector)
 {
     return FVector2D(static_cast<float>(Vector[0]), 1.0f - static_cast<float>(Vector[1]));

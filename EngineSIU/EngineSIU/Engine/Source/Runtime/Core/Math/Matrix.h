@@ -57,39 +57,32 @@ public:
 
     static FMatrix ConvertFbxAMatrixToFMatrix(const FbxAMatrix& InFbxMatrix)
     {
-        FMatrix OutMatrix; // 초기화되지 않은 상태일 수 있으므로 모든 요소 설정 필요
 
-        FVector XAxisFBX(InFbxMatrix.Get(0, 0), InFbxMatrix.Get(0, 1), InFbxMatrix.Get(0, 2));
-        FVector YAxisFBX(InFbxMatrix.Get(1, 0), InFbxMatrix.Get(1, 1), InFbxMatrix.Get(1, 2));
-        FVector ZAxisFBX(InFbxMatrix.Get(2, 0), InFbxMatrix.Get(2, 1), InFbxMatrix.Get(2, 2));
-        FVector TranslationFBX(InFbxMatrix.Get(3, 0), InFbxMatrix.Get(3, 1), InFbxMatrix.Get(3, 2));
+        FMatrix OutMatrix;
 
-        FVector XAxisUE(XAxisFBX.X, XAxisFBX.Z, XAxisFBX.Y);
-        FVector YAxisUE(ZAxisFBX.X, ZAxisFBX.Z, ZAxisFBX.Y); // FBX Z maps to UE Y
-        FVector ZAxisUE(YAxisFBX.X, YAxisFBX.Z, YAxisFBX.Y); // FBX Y maps to UE Z
-        FVector TranslationUE(TranslationFBX.X, TranslationFBX.Z, TranslationFBX.Y);
-
-        OutMatrix.M[0][0] = XAxisUE.X;
-        OutMatrix.M[1][0] = XAxisUE.Y;
-        OutMatrix.M[2][0] = XAxisUE.Z;
-        OutMatrix.M[3][0] = 0.0f;
-
-        OutMatrix.M[0][1] = YAxisUE.X;
-        OutMatrix.M[1][1] = YAxisUE.Y;
-        OutMatrix.M[2][1] = YAxisUE.Z;
-        OutMatrix.M[3][1] = 0.0f;
-
-        OutMatrix.M[0][2] = ZAxisUE.X;
-        OutMatrix.M[1][2] = ZAxisUE.Y;
-        OutMatrix.M[2][2] = ZAxisUE.Z;
-        OutMatrix.M[3][2] = 0.0f;
-
-        OutMatrix.M[0][3] = TranslationUE.X;
-        OutMatrix.M[1][3] = TranslationUE.Y;
-        OutMatrix.M[2][3] = TranslationUE.Z;
-        OutMatrix.M[3][3] = 1.0f;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                OutMatrix.M[i][j] = static_cast<float>(InFbxMatrix.Get(i, j));
+            }
+        }
 
         return OutMatrix;
+    }
+    static inline float Determinant3x3(float a, float b, float c,
+        float d, float e, float f,
+        float g, float h, float i)
+    {
+        return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+    }
+    float Determinant() const
+    {
+        // 여인수 전개 (첫 번째 행 기준)
+        float Det3x3_00 = Determinant3x3(M[1][1], M[1][2], M[1][3], M[2][1], M[2][2], M[2][3], M[3][1], M[3][2], M[3][3]);
+        float Det3x3_01 = Determinant3x3(M[1][0], M[1][2], M[1][3], M[2][0], M[2][2], M[2][3], M[3][0], M[3][2], M[3][3]);
+        float Det3x3_02 = Determinant3x3(M[1][0], M[1][1], M[1][3], M[2][0], M[2][1], M[2][3], M[3][0], M[3][1], M[3][3]);
+        float Det3x3_03 = Determinant3x3(M[1][0], M[1][1], M[1][2], M[2][0], M[2][1], M[2][2], M[3][0], M[3][1], M[3][2]);
+
+        return M[0][0] * Det3x3_00 - M[0][1] * Det3x3_01 + M[0][2] * Det3x3_02 - M[0][3] * Det3x3_03;
     }
 };
 

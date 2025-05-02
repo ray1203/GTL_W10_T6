@@ -106,6 +106,7 @@ struct FBoneInfo
     FName Name;
     int32 ParentIndex = INDEX_NONE; // 부모 뼈의 인덱스 (루트면 INDEX_NONE)
     FMatrix InverseBindPoseMatrix = FMatrix::Identity; // 역 바인드 포즈 행렬
+    FMatrix BindPoseMatrix = FMatrix::Identity; // 역 바인드 포즈 행렬
     // FMatrix CurrentTransform; // 현재 프레임의 최종 변환 행렬 (외부에서 계산하여 전달)
 };
 

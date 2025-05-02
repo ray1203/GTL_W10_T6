@@ -382,11 +382,11 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewp
     for (int32 i = 0; i < FBXLoader->Bones.Num(); ++i)
     {
         // 이건 예시일 뿐이며, 실제로는 본 트랜스폼을 계산해야 함
-        FinalBoneTransforms[i] = FMatrix::Identity; // 테스트용으로 전부 단위 행렬
+        FinalBoneTransforms[i] = FBXLoader->Bones[i].BindPoseMatrix; // 테스트용으로 전부 단위 행렬
     }
 
     // 2. 스키닝 적용
-   // FBXLoader->UpdateAndApplySkinning(Graphics->DeviceContext, FinalBoneTransforms);
+    FBXLoader->UpdateAndApplySkinning(Graphics->DeviceContext, FinalBoneTransforms);
     FBXLoader->Render(Graphics->DeviceContext);
 
 
