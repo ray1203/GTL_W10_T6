@@ -357,8 +357,8 @@ bool FLoaderFBX::ProcessMesh(FbxMesh* Mesh)
         if (i + 2 < PolygonVertexCount) // 배열 범위 확인
         {
             PolygonIndices.Add(FbxPolygonVertices[i]);     // 정점 0
-            PolygonIndices.Add(FbxPolygonVertices[i + 2]); // 정점 2
             PolygonIndices.Add(FbxPolygonVertices[i + 1]); // 정점 1
+            PolygonIndices.Add(FbxPolygonVertices[i + 2]); // 정점 2
         }
         else { break; }
     }
