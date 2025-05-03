@@ -1,38 +1,42 @@
 
 #include "Renderer.h"
-
-#include <array>
 #include "World/World.h"
-#include "Engine/EditorEngine.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "D3D11RHI/DXDShaderManager.h"
+#include "Engine/EditorEngine.h"
 #include "RendererHelpers.h"
-#include "StaticMeshRenderPass.h"
-#include "WorldBillboardRenderPass.h"
-#include "EditorBillboardRenderPass.h"
-#include "GizmoRenderPass.h"
-#include "UpdateLightBufferPass.h"
+
+#include "FadeRenderpass.h"
 #include "LineRenderPass.h"
 #include "FogRenderPass.h"
 #include "SlateRenderPass.h"
 #include "EditorRenderPass.h"
+#include "GizmoRenderPass.h"
+#include "ShadowRenderPass.h"
+#include "StaticMeshRenderPass.h"
+#include "SkeletalMeshRenderPass.h"
+#include "LightHeatMapRenderPass.h"
+#include "WorldBillboardRenderPass.h"
+#include "EditorBillboardRenderPass.h"
+
+#include "UpdateLightBufferPass.h"
 #include "DepthPrePass.h"
-#include "FadeRenderpass.h"
 #include "TileLightCullingPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
 
-#include "CompositingPass.h"
-#include "LightHeatMapRenderPass.h"
-#include "PostProcessCompositingPass.h"
-#include "ShadowManager.h"
-#include "ShadowRenderPass.h"
 #include "ShowFlag.h"
+#include "ShadowManager.h"
 #include "UnrealClient.h"
+#include "CompositingPass.h"
+#include "PostProcessCompositingPass.h"
+
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
+
 #include "GameFramework/PlayerController.h"
 #include "GameFrameWork/Actor.h"
+
 #include "Math/JungleMath.h"
 
 #include "Stats/Stats.h"
@@ -55,6 +59,8 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     CreateCommonShader();
     
     StaticMeshRenderPass = new FStaticMeshRenderPass();
+    SkeletalMeshRenderPass = new FSkeletalMeshRenderPass();
+
     WorldBillboardRenderPass = new FWorldBillboardRenderPass();
     EditorBillboardRenderPass = new FEditorBillboardRenderPass();
     GizmoRenderPass = new FGizmoRenderPass();
@@ -81,6 +87,8 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     
     StaticMeshRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     StaticMeshRenderPass->InitializeShadowManager(ShadowManager);
+    SkeletalMeshRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
+
     WorldBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     GizmoRenderPass->Initialize(BufferManager, Graphics, ShaderManager);

@@ -119,8 +119,9 @@ struct FVector
     static const FVector YAxisVector;
     // Unit Z Axis Vector (0, 0, 1)
     static const FVector ZAxisVector;
-   
 public:
+    static FVector Max(const FVector& A, const FVector& B);
+    static FVector Min(const FVector& A, const FVector& B);
     static inline FVector Zero() { return ZeroVector; }
     static inline FVector One() { return OneVector; }
 
@@ -421,7 +422,22 @@ inline FVector FVector::GetClampedToMaxSize(float MaxSize) const
     // 아니면 원본 그대로
     return *this;
 }
-
+inline FVector FVector::Max(const FVector& A, const FVector& B)
+{
+    return FVector(
+        FMath::Max(A.X, B.X),
+        FMath::Max(A.Y, B.Y),
+        FMath::Max(A.Z, B.Z)
+    );
+}
+inline FVector FVector::Min(const FVector& A, const FVector& B)
+{
+    return FVector(
+        FMath::Min(A.X, B.X),
+        FMath::Min(A.Y, B.Y),
+        FMath::Min(A.Z, B.Z)
+    );
+}
 inline FArchive& operator<<(FArchive& Ar, FVector2D& V)
 {
     return Ar << V.X << V.Y;

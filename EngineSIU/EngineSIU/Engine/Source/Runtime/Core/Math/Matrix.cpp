@@ -74,7 +74,43 @@ const float* FMatrix::operator[](int row) const
     return M[row];
 }
 
-// 전치 행렬
+bool FMatrix::Equals(const FMatrix& Other, float Tolerance) const
+{
+    for (int32 i = 0; i < 4; ++i)
+    {
+        for (int32 j = 0; j < 4; ++j)
+        {
+            if (!FMath::IsNearlyEqual(M[i][j], Other.M[i][j], Tolerance))
+            {
+                return false; // 하나라도 다르면 false
+            }
+        }
+    }
+    return true; // 모든 요소가 거의 같으면 true
+}
+
+bool FMatrix::operator==(const FMatrix& Other) const
+{
+    // Equals 함수를 사용하여 기본 오차 허용 범위로 비교
+    return Equals(Other);
+}
+
+void FMatrix::SetOrigin(const FVector& NewOrigin)
+{
+    M[3][0] = NewOrigin.X;
+    M[3][1] = NewOrigin.Y;
+    M[3][2] = NewOrigin.Z;
+    M[3][3] = 1.0f;
+}
+void FMatrix::RemoveTranslation()
+{
+    // Set the translation part to zero
+    M[3][0] = 0.0f;
+    M[3][1] = 0.0f;
+    M[3][2] = 0.0f;
+    M[3][3] = 1.0f; // Keep W as 1
+}
+
 FMatrix FMatrix::Transpose(const FMatrix& Mat) {
     FMatrix Result;
     for (int32 i = 0; i < 4; i++)

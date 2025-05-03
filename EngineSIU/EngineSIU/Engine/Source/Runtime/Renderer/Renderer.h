@@ -29,6 +29,8 @@ class FViewportClient;
 class FViewportResource;
 
 class FStaticMeshRenderPass;
+class FSkeletalMeshRenderPass;
+
 class FWorldBillboardRenderPass;
 class FEditorBillboardRenderPass;
 class FGizmoRenderPass;
@@ -97,6 +99,7 @@ public:
     class FShadowRenderPass* ShadowRenderPass;
 
     FStaticMeshRenderPass* StaticMeshRenderPass = nullptr;
+    FSkeletalMeshRenderPass* SkeletalMeshRenderPass = nullptr;
     FWorldBillboardRenderPass* WorldBillboardRenderPass = nullptr;
     FEditorBillboardRenderPass* EditorBillboardRenderPass = nullptr;
     FGizmoRenderPass* GizmoRenderPass = nullptr;

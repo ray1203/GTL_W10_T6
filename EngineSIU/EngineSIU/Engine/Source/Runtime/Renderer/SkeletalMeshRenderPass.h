@@ -13,12 +13,12 @@ class UStaticMeshComponent;
 struct FStaticMaterial;
 class FShadowRenderPass;
 class FLoaderFBX;
-class FStaticMeshRenderPass : public IRenderPass
+class FSkeletalMeshRenderPass : public IRenderPass
 {
 public:
-    FStaticMeshRenderPass();
+    FSkeletalMeshRenderPass();
     
-    virtual ~FStaticMeshRenderPass();
+    virtual ~FSkeletalMeshRenderPass();
     
     virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager) override;
     
@@ -33,7 +33,7 @@ public:
 
     virtual void PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport);
 
-    virtual void RenderAllStaticMeshes(const std::shared_ptr<FViewportClient>& Viewport);
+    virtual void RenderAllSKeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport);
     
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
   
@@ -41,10 +41,6 @@ public:
 
     void RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
     
-    void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const;
-
-    void RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices) const;
-
     // Shader 관련 함수 (생성/해제 등)
     void CreateShader();
     void ReleaseShader();
@@ -54,7 +50,7 @@ public:
 protected:
 
 
-    TArray<UStaticMeshComponent*> StaticMeshComponents;
+    TArray<UStaticMeshComponent*> SkeletalMeshComponents;
 
     ID3D11VertexShader* VertexShader;
     ID3D11InputLayout* InputLayout;
@@ -68,4 +64,5 @@ protected:
     FDXDShaderManager* ShaderManager;
     
     FShadowManager* ShadowManager;
+    FLoaderFBX* FBXLoader;
 };

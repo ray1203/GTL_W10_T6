@@ -1,4 +1,4 @@
-#include "StaticMeshRenderPass.h"
+#include "SkeletalMeshRenderPass.h"
 
 #include <array>
 
@@ -28,7 +28,7 @@
 #include "Components/Light/PointLightComponent.h"
 
 #include "FLoaderFBX.h"
-FStaticMeshRenderPass::FStaticMeshRenderPass()
+FSkeletalMeshRenderPass ::FSkeletalMeshRenderPass ()
     : VertexShader(nullptr)
     , PixelShader(nullptr)
     , InputLayout(nullptr)
@@ -38,12 +38,12 @@ FStaticMeshRenderPass::FStaticMeshRenderPass()
 {
 }
 
-FStaticMeshRenderPass::~FStaticMeshRenderPass()
+FSkeletalMeshRenderPass ::~FSkeletalMeshRenderPass ()
 {
     ReleaseShader();
 }
 
-void FStaticMeshRenderPass::CreateShader()
+void FSkeletalMeshRenderPass ::CreateShader()
 {
     // Begin Debug Shaders
     HRESULT hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderDepth", L"Shaders/StaticMeshPixelShaderDepth.hlsl", "mainPS");
@@ -102,12 +102,12 @@ void FStaticMeshRenderPass::CreateShader()
     DebugWorldNormalShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
 }
 
-void FStaticMeshRenderPass::ReleaseShader()
+void FSkeletalMeshRenderPass ::ReleaseShader()
 {
 
 }
 
-void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
+void FSkeletalMeshRenderPass ::ChangeViewMode(EViewModeIndex ViewModeIndex)
 {
     switch (ViewModeIndex)
     {
@@ -136,7 +136,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(0);
         break;
-        // HeatMap ViewMode 등
+ 
     default:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
@@ -146,38 +146,34 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
 }
 
-void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
+void FSkeletalMeshRenderPass ::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     BufferManager = InBufferManager;
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
 
-    // ShadowRenderPass = new FShadowRenderPass();
-    // ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
-    // ShadowRenderPass->InitializeShadowManager();
+    FBXLoader = new FLoaderFBX();
+    FBXLoader->LoadFBXFile("Contents/Mutant.fbx", InGraphics->Device);
     CreateShader();
-    //ShadowRenderPass = new FShadowRenderPass();
-    //ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
 }
 
-void FStaticMeshRenderPass::InitializeShadowManager(class FShadowManager* InShadowManager)
+void FSkeletalMeshRenderPass ::InitializeShadowManager(class FShadowManager* InShadowManager)
 {
-
     ShadowManager = InShadowManager;
 }
 
-void FStaticMeshRenderPass::PrepareRenderArr()
+void FSkeletalMeshRenderPass ::PrepareRenderArr()
 {
     for (const auto iter : TObjectRange<UStaticMeshComponent>())
     {
         if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
         {
-            StaticMeshComponents.Add(iter);
+            SkeletalMeshComponents.Add(iter);
         }
     }
 }
 
-void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport)
+void FSkeletalMeshRenderPass ::PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport)
 {
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
 
@@ -238,7 +234,7 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportCl
     }
 }
 
-void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
+void FSkeletalMeshRenderPass ::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
 {
     FObjectConstantBuffer ObjectData = {};
     ObjectData.WorldMatrix = WorldMatrix;
@@ -249,14 +245,14 @@ void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, con
     BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
 }
 
-void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
+void FSkeletalMeshRenderPass ::UpdateLitUnlitConstant(int32 isLit) const
 {
     FLitUnlitConstants Data;
     Data.bIsLit = isLit;
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FSkeletalMeshRenderPass ::RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
     UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;
@@ -297,26 +293,10 @@ void FStaticMeshRenderPass::RenderPrimitive(OBJ::FStaticMeshRenderData* RenderDa
     }
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
-{
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &pBuffer, &Stride, &Offset);
-    Graphics->DeviceContext->Draw(numVertices, 0);
-}
 
-void FStaticMeshRenderPass::RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices) const
+void FSkeletalMeshRenderPass::RenderAllSKeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport)
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &Stride, &Offset);
-    Graphics->DeviceContext->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    Graphics->DeviceContext->DrawIndexed(numIndices, 0, 0);
-}
-
-void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FViewportClient>& Viewport)
-{
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    for (UStaticMeshComponent* Comp : SkeletalMeshComponents)
     {
         if (!Comp || !Comp->GetStaticMesh())
         {
@@ -361,8 +341,8 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FViewpor
         }
     }
 }
-
-void FStaticMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
+bool bPoseChanged;
+void FSkeletalMeshRenderPass ::Render(const std::shared_ptr<FViewportClient>& Viewport)
 {
     //if (UPointLightComponent* PointLight = Cast<UPointLightComponent>(iter))
     //{
@@ -374,8 +354,45 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewp
 
     PrepareRenderState(Viewport);
 
+    TArray<FMatrix> FinalBoneTransforms;
 
-    RenderAllStaticMeshes(Viewport);
+    FinalBoneTransforms.SetNum(FBXLoader->Bones.Num());
+    for (int32 i = 0; i < FBXLoader->Bones.Num(); ++i)
+    {
+        FinalBoneTransforms[i] = FBXLoader->Bones[i].BindPoseMatrix;
+    }
+
+    // 2. 스키닝 적용
+    TArray<FName> BoneNames = FBXLoader->GetBoneNames();
+    if (BoneNames.Num())
+    {
+        FName SelectedBoneFName = BoneNames[1];
+        int SelectedBoneIndex = FBXLoader->GetBoneIndexByName(SelectedBoneFName);
+
+        if (SelectedBoneIndex != INDEX_NONE)
+        {
+            float MoveSpeed = 10.0f; // 초당 이동 거리
+            FMatrix CurrentLocal = FBXLoader->GetBoneLocalMatrix(SelectedBoneIndex);
+            FMatrix DeltaMove = FMatrix::CreateTranslationMatrix(FVector(0, MoveSpeed * 0.016f, 0)); // 로컬 Y축 이동
+            FMatrix NewLocal = DeltaMove * CurrentLocal; // 현재 로컬 기준 이동 적용
+            FBXLoader->SetBoneLocalMatrix(SelectedBoneIndex, NewLocal);
+            bPoseChanged = true;
+        }
+        else
+        {
+            bPoseChanged = false;
+            SelectedBoneIndex = -1; // 선택 실패 처리
+        }
+        if (bPoseChanged)
+        {
+            FBXLoader->UpdateWorldTransforms();
+        }
+        FBXLoader->UpdateAndApplySkinning(Graphics->DeviceContext);
+        FBXLoader->Render(Graphics->DeviceContext);
+    }
+
+
+    //RenderAllStaticMeshes(Viewport);
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
@@ -398,15 +415,15 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewp
 
 }
 
-void FStaticMeshRenderPass::ClearRenderArr()
+void FSkeletalMeshRenderPass ::ClearRenderArr()
 {
-    StaticMeshComponents.Empty();
+    SkeletalMeshComponents.Empty();
 }
 
 
-void FStaticMeshRenderPass::RenderAllStaticMeshesForPointLight(const std::shared_ptr<FViewportClient>& Viewport, UPointLightComponent*& PointLight)
+void FSkeletalMeshRenderPass ::RenderAllStaticMeshesForPointLight(const std::shared_ptr<FViewportClient>& Viewport, UPointLightComponent*& PointLight)
 {
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    for (UStaticMeshComponent* Comp : SkeletalMeshComponents)
     {
         if (!Comp || !Comp->GetStaticMesh()) { continue; }
 

@@ -100,7 +100,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -122,7 +122,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -141,7 +141,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\debug;$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\$(Configuration);$(ProjectDir)Engine\Source\ThirdParty\Lua\lib;$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DirectXTK.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;libfbxsdk-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;libfbxsdk-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -163,7 +163,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\$(Configuration);$(ProjectDir)Engine\Source\ThirdParty\Lua\lib;$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DirectXTK.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
@@ -183,6 +183,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\LuaScriptComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\BoxComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Core\Math\Plane.cpp" />
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
@@ -249,6 +250,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\ProjectileMovementComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SceneComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkySphereComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SphereComp.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\SphereComponent.cpp" />
@@ -271,6 +273,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerController.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerInput.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Level.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\FLoaderFBX.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\OverlapInfo.h" />
     <ClCompile Include="Engine\Source\Runtime\Engine\UnrealClient.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\UserInterface\Console.cpp" />
@@ -297,6 +300,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcessCompositingPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShadowManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\SlateRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.cpp" />
@@ -440,6 +444,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\LuaScriptComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\BoxComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\Plane.h" />
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
@@ -523,6 +528,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ProjectileMovementComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Quad.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SceneComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkySphereComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SphereComp.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\SphereComponent.h" />
@@ -550,6 +556,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerInput.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Level.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\ShapeInfo.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\FLoaderFBX.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\UnrealClient.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\UserInterface\Console.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\ViewportClient.h" />
@@ -584,6 +591,7 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResources.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderConstants.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShadowManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\SlateRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.h" />

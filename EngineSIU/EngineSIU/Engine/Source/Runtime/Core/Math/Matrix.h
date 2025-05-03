@@ -27,8 +27,11 @@ public:
     FMatrix operator/(float Scalar) const;
     float* operator[](int row);
     const float* operator[](int row) const;
-
+    bool Equals(const FMatrix& Other, float Tolerance = KINDA_SMALL_NUMBER) const;
+    bool operator==(const FMatrix& Other) const;
     // 유틸리티 함수
+    void SetOrigin(const FVector& NewOrigin);
+    void RemoveTranslation();
     static FMatrix Transpose(const FMatrix& Mat);
     static FMatrix Inverse(const FMatrix& Mat);
     static FMatrix CreateRotationMatrix(float roll, float pitch, float yaw);

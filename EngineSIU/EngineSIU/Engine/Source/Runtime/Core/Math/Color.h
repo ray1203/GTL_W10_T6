@@ -288,7 +288,10 @@ struct FLinearColor
     {
         return FMath::Min(R, FMath::Min(G, FMath::Min(B, A)));
     }
-
+    FORCEINLINE FVector ToVector3() const
+    {
+        return FVector(R, G, B);
+    }
     FString ToString() const;
     bool InitFromString(const FString& SourceString);
 };
