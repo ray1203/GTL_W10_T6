@@ -52,7 +52,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
     LevelEditor = new SLevelEditor();
     LuaScriptManager = new FLuaScriptManager();
-    LastWarGameUI = new LastWarUI();
+    
 
     UnrealEditor->Initialize();
     GraphicDevice.Initialize(AppWnd);
@@ -95,7 +95,6 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     GEngine = FObjectFactory::ConstructObject<UEditorEngine>(nullptr);
     GEngine->Init();
 
-    LastWarGameUI->Initialize();
     UpdateUI();
 
     return 0;
@@ -171,7 +170,7 @@ void FEngineLoop::Tick()
         Render();
         UIMgr->BeginFrame();
         UnrealEditor->Render();
-        LastWarGameUI->Render();
+
 
         Console::GetInstance().Draw();
         EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
@@ -218,7 +217,7 @@ void FEngineLoop::Exit()
     ResourceManager.Release(&Renderer);
     Renderer.Release();
     GraphicDevice.Release();
-    LastWarGameUI->Release();
+
     
     GEngine->Release();
 

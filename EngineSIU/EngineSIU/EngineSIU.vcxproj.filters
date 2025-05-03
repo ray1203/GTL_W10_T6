@@ -816,7 +816,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\FLoaderFBX.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1065,7 +1064,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\FLoaderFBX.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

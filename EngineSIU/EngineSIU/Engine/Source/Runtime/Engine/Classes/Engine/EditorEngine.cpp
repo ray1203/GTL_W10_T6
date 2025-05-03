@@ -189,8 +189,6 @@ void UEditorEngine::StartPIE()
     ACharacter* PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
-    // 3) 월드에 컨트롤러 등록
-    AudioManager::Get().PlayBgm(EAudioType::MainTheme);
 
     //PIEWorld->BeginPlay();
     PIEWorld->BeginPlay();
