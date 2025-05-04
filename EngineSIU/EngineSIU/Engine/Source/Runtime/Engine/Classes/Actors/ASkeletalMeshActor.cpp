@@ -6,6 +6,7 @@ ASkeletalMeshActor::ASkeletalMeshActor()
 {
     SkeletalMeshComponent = AddComponent<USkeletalMeshComponent>("SkeletalMeshComponent_0");
     SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
+   // SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
 }
 

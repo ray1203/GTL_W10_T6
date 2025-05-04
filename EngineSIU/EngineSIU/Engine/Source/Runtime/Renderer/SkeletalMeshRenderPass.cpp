@@ -164,7 +164,10 @@ void FSkeletalMeshRenderPass::PrepareRenderArr()
 {
     for (const auto iter : TObjectRange<USkeletalMeshComponent>())
     {
-        SkeletalMeshComponents.Add(iter);
+        if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
+        {
+            SkeletalMeshComponents.Add(iter);
+        }
     }
 }
 
@@ -339,7 +342,6 @@ void FSkeletalMeshRenderPass::RenderPrimitive(FBX::FSkeletalMeshRenderData* Rend
     }
 }
 
-
 void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport)
 {
     for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
@@ -354,6 +356,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         {
             continue;
         }
+
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
@@ -387,7 +390,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         }
     }
 }
-bool bPoseChanged;
+
 void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
 {
     //if (UPointLightComponent* PointLight = Cast<UPointLightComponent>(iter))
@@ -399,6 +402,8 @@ void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Vie
     ShadowManager->BindResourcesForSampling();
 
     PrepareRenderState(Viewport);
+
+
 
 
     RenderAllSkeletalMeshes(Viewport);

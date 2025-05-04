@@ -1,5 +1,50 @@
 {
-    "Actors": [],
+    "Actors": [
+        {
+            "ActorClass": "ASkeletalMeshActor",
+            "ActorID": "ASkeletalMeshActor_109",
+            "ActorLabel": "OBJ_Mutant_109",
+            "Components": [
+                {
+                    "ComponentClass": "USkeletalMeshComponent",
+                    "ComponentID": "SkeletalMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=149.101 Y=185.540 Z=36.305",
+                        "AABB_min": "X=-125.152 Y=-0.594 Z=-34.203",
+                        "AttachParentID": "nullptr",
+                        "ComponentClass": "USkeletalMeshComponent",
+                        "ComponentName": "SkeletalMeshComponent_0",
+                        "ComponentOwner": "ASkeletalMeshActor_109",
+                        "ComponentOwnerClass": "ASkeletalMeshActor",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=-0.000",
+                        "RelativeScale3D": "X=0.091 Y=0.140 Z=0.160",
+                        "SkeletalMeshPath": "MutantMesh",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": ""
+                    }
+                },
+                {
+                    "ComponentClass": "ULuaScriptComponent",
+                    "ComponentID": "LuaComponent_0",
+                    "Properties": {
+                        "ComponentClass": "ULuaScriptComponent",
+                        "ComponentName": "LuaComponent_0",
+                        "ComponentOwner": "ASkeletalMeshActor_109",
+                        "ComponentOwnerClass": "ASkeletalMeshActor",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                }
+            ],
+            "Properties": {
+                "bTickInEditor": "false",
+                "bUseScript": "true"
+            },
+            "RootComponentID": "SkeletalMeshComponent_0"
+        }
+    ],
     "NextUUID": 0,
     "Version": 1
 }

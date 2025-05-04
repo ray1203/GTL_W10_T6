@@ -39,15 +39,20 @@ namespace  FBX {
             FbxLayerElement::EMappingMode MappingMode = FbxLayerElement::eNone;
             FbxLayerElement::EReferenceMode ReferenceMode = FbxLayerElement::eDirect;
         };
+        
         AttributeData NormalData;
         AttributeData UVData;
+
         struct RawInfluence {
             FName BoneName;
             TArray<int32> ControlPointIndices;
             TArray<double> ControlPointWeights;
         };
+        
         TArray<RawInfluence> SkinningInfluences;
+        
         TArray<FName> MaterialNames;
+        
         struct MaterialMappingInfo {
             FbxLayerElement::EMappingMode MappingMode = FbxLayerElement::eNone;
             TArray<int32> IndexArray;
@@ -134,7 +139,7 @@ namespace  FBX {
         return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2])); // Example: Y-up -> Z-up LH
     }
     FVector2D ConvertFbxUV(const FbxVector2& Vector) {
-        return FVector2D(static_cast<float>(Vector[0]),1 - static_cast<float>(Vector[1]));
+        return FVector2D(static_cast<float>(Vector[0]), 1 - static_cast<float>(Vector[1]));
     }
     FLinearColor ConvertFbxColorToLinear(const FbxDouble3& Color) {
         return FLinearColor(static_cast<float>(Color[0]), static_cast<float>(Color[1]), static_cast<float>(Color[2]), 1.0f);
@@ -332,7 +337,8 @@ namespace  FBX {
 
             if (AttrData.ReferenceMode == FbxLayerElement::eIndexToDirect || AttrData.ReferenceMode == FbxLayerElement::eIndex) {
                 AttrData.IndexArray.Reserve(IdxCount);
-                for (int i = 0; i < IdxCount; ++i) AttrData.IndexArray.Add(IndexArray.GetAt(i));
+                for (int i = 0; i < IdxCount; ++i)
+                    AttrData.IndexArray.Add(IndexArray.GetAt(i));
             }
         }
         else if (ElementVec2) // FbxVector2 타입 (예: UV)
@@ -347,7 +353,8 @@ namespace  FBX {
 
             if (AttrData.ReferenceMode == FbxLayerElement::eIndexToDirect || AttrData.ReferenceMode == FbxLayerElement::eIndex) {
                 AttrData.IndexArray.Reserve(IdxCount);
-                for (int i = 0; i < IdxCount; ++i) AttrData.IndexArray.Add(IndexArray.GetAt(i));
+                for (int i = 0; i < IdxCount; ++i)
+                    AttrData.IndexArray.Add(IndexArray.GetAt(i));
             }
         }
         // else: 다른 타입의 Element가 있다면 여기에 추가 (예: FbxColor)
@@ -425,7 +432,8 @@ namespace  FBX {
         FbxLayerElementMaterial* MaterialElement = Mesh->GetLayer(0) ? Mesh->GetLayer(0)->GetMaterials() : nullptr;
         if (MaterialElement) {
             OutRawData.MaterialMapping.MappingMode = MaterialElement->GetMappingMode();
-            if (OutRawData.MaterialMapping.MappingMode == FbxLayerElement::eByPolygon) {
+            if (OutRawData.MaterialMapping.MappingMode == FbxLayerElement::eByPolygon) 
+            {
                 const auto& IndexArray = MaterialElement->GetIndexArray(); int IdxCount = IndexArray.GetCount();
                 if (IdxCount == PolygonCount) {
                     OutRawData.MaterialMapping.IndexArray.Reserve(IdxCount); for (int i = 0; i < IdxCount; ++i) OutRawData.MaterialMapping.IndexArray.Add(IndexArray.GetAt(i));
@@ -919,25 +927,41 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     }
 
     TMap<FbxNode*, FName> BoneNodeToNameMap; TArray<FbxNode*> AllBoneNodesTemp;
+    
     OutFBXInfo.SkeletonHierarchy.Empty(); OutFBXInfo.SkeletonRootBoneNames.Empty();
+
     for (int meshIdx = 0; meshIdx < Scene->GetSrcObjectCount<FbxMesh>(); ++meshIdx)
     {
-        FbxMesh* Mesh = Scene->GetSrcObject<FbxMesh>(meshIdx); if (!Mesh) continue;
+        FbxMesh* Mesh = Scene->GetSrcObject<FbxMesh>(meshIdx);
+        if (!Mesh) continue;
+
         int DeformerCount = Mesh->GetDeformerCount(FbxDeformer::eSkin);
+
         for (int deformerIdx = 0; deformerIdx < DeformerCount; ++deformerIdx)
         {
-            FbxSkin* Skin = static_cast<FbxSkin*>(Mesh->GetDeformer(deformerIdx, FbxDeformer::eSkin)); if (!Skin) continue;
+            FbxSkin* Skin = static_cast<FbxSkin*>(Mesh->GetDeformer(deformerIdx, FbxDeformer::eSkin));
+            if (!Skin) continue;
+
             int ClusterCount = Skin->GetClusterCount();
+
             for (int clusterIdx = 0; clusterIdx < ClusterCount; ++clusterIdx)
             {
-                FbxCluster* Cluster = Skin->GetCluster(clusterIdx); if (!Cluster) continue;
-                FbxNode* BoneNode = Cluster->GetLink(); if (BoneNode) AllBoneNodesTemp.AddUnique(BoneNode);
+                FbxCluster* Cluster = Skin->GetCluster(clusterIdx);
+
+                if (!Cluster)
+                    continue;
+
+                FbxNode* BoneNode = Cluster->GetLink();
+
+                if (BoneNode)
+                    AllBoneNodesTemp.AddUnique(BoneNode);
             }
         }
     }
     for (FbxNode* BoneNode : AllBoneNodesTemp)
     {
         FName BoneName(BoneNode->GetName()); BoneNodeToNameMap.Add(BoneNode, BoneName);
+
         if (!OutFBXInfo.SkeletonHierarchy.Contains(BoneName))
         {
             FBoneHierarchyNode HierarchyNode; HierarchyNode.BoneName = BoneName;
@@ -970,16 +994,32 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     }
 
     TArray<FName> CollectedBoneNames;
+
     OutFBXInfo.SkeletonHierarchy.GetKeys(CollectedBoneNames);
 
     for (const FName& BoneName : CollectedBoneNames)
     {
         FbxNode* CurrentFbxNode = nullptr;
-        for (auto It = BoneNodeToNameMap.begin(); It != BoneNodeToNameMap.end(); ++It) if (It->Value == BoneName) { CurrentFbxNode = It->Key; break; }
+        for (auto It = BoneNodeToNameMap.begin(); It != BoneNodeToNameMap.end(); ++It) 
+            if (It->Value == BoneName)
+            { 
+                CurrentFbxNode = It->Key; 
+                break; 
+            }
+        
         if (!CurrentFbxNode) continue;
+        
         FbxNode* ParentFbxNode = CurrentFbxNode->GetParent(); FName ParentName = NAME_None;
-        if (ParentFbxNode) { const FName* FoundParentName = BoneNodeToNameMap.Find(ParentFbxNode); if (FoundParentName && OutFBXInfo.SkeletonHierarchy.Contains(*FoundParentName)) ParentName = *FoundParentName; }
+
+        if (ParentFbxNode) 
+        { 
+            const FName* FoundParentName = BoneNodeToNameMap.Find(ParentFbxNode); 
+            if (FoundParentName && OutFBXInfo.SkeletonHierarchy.Contains(*FoundParentName))
+                ParentName = *FoundParentName;
+        }
+        
         OutFBXInfo.SkeletonHierarchy[BoneName].ParentName = ParentName;
+
         if (ParentName.IsNone()) OutFBXInfo.SkeletonRootBoneNames.AddUnique(BoneName);
     }
 
@@ -1011,7 +1051,12 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
     OutSkeletalMesh.Skeleton.Empty(); OutSkeletalMesh.BoneNameToIndexMap.Empty(); TMap<FName, int32> TempBoneNameMap;
     TArray<FName> RelevantBoneNames; for (const auto& influence : RawMeshData.SkinningInfluences) RelevantBoneNames.AddUnique(influence.BoneName);
     TArray<FName> BonesToInclude = RelevantBoneNames; int32 CheckIndex = 0;
-    while (CheckIndex < BonesToInclude.Num()) { FName CurrentBoneName = BonesToInclude[CheckIndex++]; const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(CurrentBoneName); if (HNode && !HNode->ParentName.IsNone() && FullFBXInfo.SkeletonHierarchy.Contains(HNode->ParentName)) BonesToInclude.AddUnique(HNode->ParentName); }
+    while (CheckIndex < BonesToInclude.Num()) 
+    { 
+        FName CurrentBoneName = BonesToInclude[CheckIndex++]; 
+        const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(CurrentBoneName); 
+        if (HNode && !HNode->ParentName.IsNone() && FullFBXInfo.SkeletonHierarchy.Contains(HNode->ParentName)) 
+            BonesToInclude.AddUnique(HNode->ParentName); }
     for (const FName& BoneName : BonesToInclude) { const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(BoneName); if (HNode && !TempBoneNameMap.Contains(BoneName)) { int32 NewIndex = OutSkeletalMesh.Skeleton.Emplace(); FBoneInfo& BoneInfo = OutSkeletalMesh.Skeleton[NewIndex]; BoneInfo.Name = BoneName; BoneInfo.ParentIndex = INDEX_NONE; BoneInfo.BindPoseMatrix = HNode->GlobalBindPose; BoneInfo.InverseBindPoseMatrix = FMatrix::Inverse(HNode->GlobalBindPose); if (FMath::Abs(BoneInfo.InverseBindPoseMatrix.Determinant()) < SMALL_NUMBER) BoneInfo.InverseBindPoseMatrix = FMatrix::Identity; BoneInfo.CurrentLocalMatrix = FMatrix::Identity; BoneInfo.CurrentWorldTransform = BoneInfo.BindPoseMatrix; OutSkeletalMesh.BoneNameToIndexMap.Add(BoneName, NewIndex); TempBoneNameMap.Add(BoneName, NewIndex); } }
     for (FBoneInfo& BoneInfo : OutSkeletalMesh.Skeleton) { const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(BoneInfo.Name); if (HNode && !HNode->ParentName.IsNone()) { const int32* PIdxPtr = TempBoneNameMap.Find(HNode->ParentName); if (PIdxPtr) BoneInfo.ParentIndex = *PIdxPtr; } }
 
@@ -1101,9 +1146,8 @@ UMaterial* FManagerFBX::CreateMaterial(const FBX::FFbxMaterialInfo& materialInfo
     FString MatKey = materialInfo.MaterialName.ToString();
     UMaterial** FoundMatPtr = materialMap.Find(MatKey); if (FoundMatPtr) return *FoundMatPtr;
     UMaterial* NewMat = FObjectFactory::ConstructObject<UMaterial>(nullptr); // Use your factory
-    if (NewMat) {
-
-
+    if (NewMat)
+    {
         FObjMaterialInfo objInfo;
 
         ConvertFbxMaterialToObjMaterial(materialInfo, objInfo);

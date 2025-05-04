@@ -22,7 +22,12 @@ public:
     uint32 GetMaterialIndex(FName MaterialSlotName) const;
     void GetUsedMaterials(TArray<UMaterial*>& Out) const;
     FBX::FSkeletalMeshRenderData* GetRenderData() const { return SkeletalMeshRenderData; }
-
+    int32 GetBoneIndexByName(const FName& BoneName) const;
+    FMatrix GetBoneLocalMatrix(uint32 BoneIndex) const;
+    bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
+    void UpdateWorldTransforms();
+    bool UpdateAndApplySkinning();
+    bool GetBoneNames(TArray<FName>& OutBoneNames) const;
     //ObjectName은 경로까지 포함
     FWString GetObjectName() const;
 

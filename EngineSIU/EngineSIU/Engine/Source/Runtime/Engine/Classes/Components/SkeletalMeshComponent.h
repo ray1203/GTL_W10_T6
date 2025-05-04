@@ -11,7 +11,7 @@ public:
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 
-    
+    virtual void TickComponent(float DeltaTime) override;
     void GetProperties(TMap<FString, FString>& OutProperties) const override;
     
     void SetProperties(const TMap<FString, FString>& InProperties) override;
@@ -29,7 +29,7 @@ public:
     
     USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
     void SetSkeletalMesh(USkeletalMesh* value);
-
+   
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     int selectedSubMeshIndex = -1;
