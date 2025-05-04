@@ -19,7 +19,7 @@
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDShaderManager.h"
 
-#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Engine/EditorEngine.h"
@@ -28,7 +28,7 @@
 #include "Components/Light/PointLightComponent.h"
 
 #include "FLoaderFBX.h"
-FSkeletalMeshRenderPass ::FSkeletalMeshRenderPass ()
+FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
     : VertexShader(nullptr)
     , PixelShader(nullptr)
     , InputLayout(nullptr)
@@ -38,12 +38,12 @@ FSkeletalMeshRenderPass ::FSkeletalMeshRenderPass ()
 {
 }
 
-FSkeletalMeshRenderPass ::~FSkeletalMeshRenderPass ()
+FSkeletalMeshRenderPass ::~FSkeletalMeshRenderPass()
 {
     ReleaseShader();
 }
 
-void FSkeletalMeshRenderPass ::CreateShader()
+void FSkeletalMeshRenderPass::CreateShader()
 {
     // Begin Debug Shaders
     HRESULT hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderDepth", L"Shaders/StaticMeshPixelShaderDepth.hlsl", "mainPS");
@@ -102,12 +102,12 @@ void FSkeletalMeshRenderPass ::CreateShader()
     DebugWorldNormalShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
 }
 
-void FSkeletalMeshRenderPass ::ReleaseShader()
+void FSkeletalMeshRenderPass::ReleaseShader()
 {
 
 }
 
-void FSkeletalMeshRenderPass ::ChangeViewMode(EViewModeIndex ViewModeIndex)
+void FSkeletalMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
 {
     switch (ViewModeIndex)
     {
@@ -136,7 +136,7 @@ void FSkeletalMeshRenderPass ::ChangeViewMode(EViewModeIndex ViewModeIndex)
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(0);
         break;
- 
+
     default:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
@@ -146,34 +146,29 @@ void FSkeletalMeshRenderPass ::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
 }
 
-void FSkeletalMeshRenderPass ::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
+void FSkeletalMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     BufferManager = InBufferManager;
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
 
-    FBXLoader = new FLoaderFBX();
-    FBXLoader->LoadFBXFile("Contents/Mutant.fbx", InGraphics->Device);
     CreateShader();
 }
 
-void FSkeletalMeshRenderPass ::InitializeShadowManager(class FShadowManager* InShadowManager)
+void FSkeletalMeshRenderPass::InitializeShadowManager(class FShadowManager* InShadowManager)
 {
     ShadowManager = InShadowManager;
 }
 
-void FSkeletalMeshRenderPass ::PrepareRenderArr()
+void FSkeletalMeshRenderPass::PrepareRenderArr()
 {
-    for (const auto iter : TObjectRange<UStaticMeshComponent>())
+    for (const auto iter : TObjectRange<USkeletalMeshComponent>())
     {
-        if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
-        {
-            SkeletalMeshComponents.Add(iter);
-        }
+        SkeletalMeshComponents.Add(iter);
     }
 }
 
-void FSkeletalMeshRenderPass ::PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport)
+void FSkeletalMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport)
 {
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
 
@@ -234,7 +229,7 @@ void FSkeletalMeshRenderPass ::PrepareRenderState(const std::shared_ptr<FViewpor
     }
 }
 
-void FSkeletalMeshRenderPass ::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
+void FSkeletalMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
 {
     FObjectConstantBuffer ObjectData = {};
     ObjectData.WorldMatrix = WorldMatrix;
@@ -245,65 +240,116 @@ void FSkeletalMeshRenderPass ::UpdateObjectConstant(const FMatrix& WorldMatrix, 
     BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
 }
 
-void FSkeletalMeshRenderPass ::UpdateLitUnlitConstant(int32 isLit) const
+void FSkeletalMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
 {
     FLitUnlitConstants Data;
     Data.bIsLit = isLit;
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FSkeletalMeshRenderPass ::RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FSkeletalMeshRenderPass::RenderPrimitive(FBX::FSkeletalMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
+    // 정점 스트라이드 변경: FStaticMeshVertex -> FBX::FSkeletalMeshVertex
+    UINT Stride = sizeof(FBX::FSkeletalMeshVertex);
     UINT Offset = 0;
 
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &RenderData->VertexBuffer, &Stride, &Offset);
+    // 버퍼 설정 (DynamicVertexBuffer 사용)
+    if (!RenderData || !RenderData->DynamicVertexBuffer) return; // 유효성 검사
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &RenderData->DynamicVertexBuffer, &Stride, &Offset);
 
+    // 인덱스 버퍼 설정
     if (RenderData->IndexBuffer)
     {
         Graphics->DeviceContext->IASetIndexBuffer(RenderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     }
-
-    if (RenderData->MaterialSubsets.Num() == 0)
+    else
     {
-        Graphics->DeviceContext->DrawIndexed(RenderData->Indices.Num(), 0, 0);
         return;
     }
 
-    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->MaterialSubsets.Num(); SubMeshIndex++)
+    if (RenderData->Subsets.IsEmpty())
     {
-        uint32 MaterialIndex = RenderData->MaterialSubsets[SubMeshIndex].MaterialIndex;
+        if (!RenderData->Indices.IsEmpty())
+        {
+            // 기본 재질 (예: 첫 번째 재질) 설정 시도 
+            UMaterial* MaterialToUse = nullptr;
+            if (OverrideMaterials.IsValidIndex(0) && OverrideMaterials[0] != nullptr)
+            {
+                MaterialToUse = OverrideMaterials[0];
+            }
+            else if (Materials.IsValidIndex(0) && Materials[0] != nullptr && Materials[0]->Material != nullptr)
+            {
+                MaterialToUse = Materials[0]->Material;
+            }
 
-        FSubMeshConstants SubMeshData = (SubMeshIndex == SelectedSubMeshIndex) ? FSubMeshConstants(true) : FSubMeshConstants(false);
+            if (MaterialToUse)
+            {
+                // UpdateMaterial은 FObjMaterialInfo를 받음
+                MaterialUtils::UpdateMaterial(BufferManager, Graphics, MaterialToUse->GetMaterialInfo());
+            }
+            else
+            {
+                // TODO: 기본 재질 처리 (예: 회색 재질)
+            }
+            // 전체 인덱스 그리기
+            Graphics->DeviceContext->DrawIndexed(RenderData->Indices.Num(), 0, 0);
+        }
+        return;
+    }
 
+    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->Subsets.Num(); ++SubMeshIndex)
+    {
+        // 서브셋 정보 접근 (RenderData->Subsets 사용)
+        const FBX::FMeshSubset& CurrentSubset = RenderData->Subsets[SubMeshIndex];
+        uint32 MaterialIndex = CurrentSubset.MaterialIndex; // 서브셋에 저장된 재질 인덱스
+
+        FSubMeshConstants SubMeshData;
+        SubMeshData.bIsSelectedSubMesh = (SubMeshIndex == SelectedSubMeshIndex) ? 1.0f : 0.0f; // bool -> float 변환
         BufferManager->UpdateConstantBuffer(TEXT("FSubMeshConstants"), SubMeshData);
 
-        if (OverrideMaterials[MaterialIndex] != nullptr)
+        // 사용할 재질 결정 (Override 우선)
+        UMaterial* MaterialToUse = nullptr;
+        if (OverrideMaterials.IsValidIndex(MaterialIndex) && OverrideMaterials[MaterialIndex] != nullptr)
         {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, OverrideMaterials[MaterialIndex]->GetMaterialInfo());
+            MaterialToUse = OverrideMaterials[MaterialIndex];
+        }
+        else if (Materials.IsValidIndex(MaterialIndex) && Materials[MaterialIndex] != nullptr && Materials[MaterialIndex]->Material != nullptr)
+        {
+            // Materials 배열은 FStaticMaterial* 배열이므로 -> 사용
+            MaterialToUse = Materials[MaterialIndex]->Material;
+        }
+
+        // 재질 상수 버퍼 업데이트 및 텍스처 바인딩
+        if (MaterialToUse)
+        {
+            MaterialUtils::UpdateMaterial(BufferManager, Graphics, MaterialToUse->GetMaterialInfo());
         }
         else
         {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, Materials[MaterialIndex]->Material->GetMaterialInfo());
+            // TODO: 유효한 재질이 없을 경우 기본 재질 처리
         }
 
-        uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
-        uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount;
-        Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+        // 현재 서브셋의 인덱스 범위만 그리기
+        uint32 StartIndex = CurrentSubset.IndexStart;
+        uint32 IndexCount = CurrentSubset.IndexCount;
+        if (IndexCount > 0)
+        {
+            Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+        }
     }
 }
 
 
-void FSkeletalMeshRenderPass::RenderAllSKeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport)
+void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport)
 {
-    for (UStaticMeshComponent* Comp : SkeletalMeshComponents)
+    for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
     {
-        if (!Comp || !Comp->GetStaticMesh())
+        if (!Comp || !Comp->GetSkeletalMesh())
         {
             continue;
         }
 
-        OBJ::FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        FBX::FSkeletalMeshRenderData* RenderData = Comp->GetSkeletalMesh()->GetRenderData();
         if (RenderData == nullptr)
         {
             continue;
@@ -333,7 +379,7 @@ void FSkeletalMeshRenderPass::RenderAllSKeletalMeshes(const std::shared_ptr<FVie
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
 
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+        RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
 
         if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
@@ -342,7 +388,7 @@ void FSkeletalMeshRenderPass::RenderAllSKeletalMeshes(const std::shared_ptr<FVie
     }
 }
 bool bPoseChanged;
-void FSkeletalMeshRenderPass ::Render(const std::shared_ptr<FViewportClient>& Viewport)
+void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
 {
     //if (UPointLightComponent* PointLight = Cast<UPointLightComponent>(iter))
     //{
@@ -354,45 +400,8 @@ void FSkeletalMeshRenderPass ::Render(const std::shared_ptr<FViewportClient>& Vi
 
     PrepareRenderState(Viewport);
 
-    TArray<FMatrix> FinalBoneTransforms;
 
-    FinalBoneTransforms.SetNum(FBXLoader->Bones.Num());
-    for (int32 i = 0; i < FBXLoader->Bones.Num(); ++i)
-    {
-        FinalBoneTransforms[i] = FBXLoader->Bones[i].BindPoseMatrix;
-    }
-
-    // 2. 스키닝 적용
-    TArray<FName> BoneNames = FBXLoader->GetBoneNames();
-    if (BoneNames.Num())
-    {
-        FName SelectedBoneFName = BoneNames[1];
-        int SelectedBoneIndex = FBXLoader->GetBoneIndexByName(SelectedBoneFName);
-
-        if (SelectedBoneIndex != INDEX_NONE)
-        {
-            float MoveSpeed = 10.0f; // 초당 이동 거리
-            FMatrix CurrentLocal = FBXLoader->GetBoneLocalMatrix(SelectedBoneIndex);
-            FMatrix DeltaMove = FMatrix::CreateTranslationMatrix(FVector(0, MoveSpeed * 0.016f, 0)); // 로컬 Y축 이동
-            FMatrix NewLocal = DeltaMove * CurrentLocal; // 현재 로컬 기준 이동 적용
-            FBXLoader->SetBoneLocalMatrix(SelectedBoneIndex, NewLocal);
-            bPoseChanged = true;
-        }
-        else
-        {
-            bPoseChanged = false;
-            SelectedBoneIndex = -1; // 선택 실패 처리
-        }
-        if (bPoseChanged)
-        {
-            FBXLoader->UpdateWorldTransforms();
-        }
-        FBXLoader->UpdateAndApplySkinning(Graphics->DeviceContext);
-        FBXLoader->Render(Graphics->DeviceContext);
-    }
-
-
-    //RenderAllStaticMeshes(Viewport);
+    RenderAllSkeletalMeshes(Viewport);
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
@@ -415,19 +424,19 @@ void FSkeletalMeshRenderPass ::Render(const std::shared_ptr<FViewportClient>& Vi
 
 }
 
-void FSkeletalMeshRenderPass ::ClearRenderArr()
+void FSkeletalMeshRenderPass::ClearRenderArr()
 {
     SkeletalMeshComponents.Empty();
 }
 
 
-void FSkeletalMeshRenderPass ::RenderAllStaticMeshesForPointLight(const std::shared_ptr<FViewportClient>& Viewport, UPointLightComponent*& PointLight)
+void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>&Viewport, UPointLightComponent * &PointLight)
 {
-    for (UStaticMeshComponent* Comp : SkeletalMeshComponents)
+    for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
     {
-        if (!Comp || !Comp->GetStaticMesh()) { continue; }
+        if (!Comp || !Comp->GetSkeletalMesh()) { continue; }
 
-        OBJ::FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        FBX::FSkeletalMeshRenderData * RenderData = Comp->GetSkeletalMesh()->GetRenderData();
         if (RenderData == nullptr) { continue; }
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
@@ -436,6 +445,6 @@ void FSkeletalMeshRenderPass ::RenderAllStaticMeshesForPointLight(const std::sha
 
         //ShadowRenderPass->UpdateCubeMapConstantBuffer(PointLight, WorldMatrix);
 
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+        RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
     }
 }

@@ -106,6 +106,7 @@ public:
 
 	/** Array의 Size를 Number로 설정합니다. */
 	void SetNum(SizeType Number);
+	void Empty(SizeType Number);
 
 	/** Array의 Capacity를 Number로 설정합니다. */
     void Reserve(SizeType Number);
@@ -330,6 +331,12 @@ template <typename T, typename Allocator>
 void TArray<T, Allocator>::SetNum(SizeType Number)
 {
 	ContainerPrivate.resize(Number);
+}
+template <typename T, typename Allocator>
+void TArray<T, Allocator>::Empty(SizeType Number)
+{
+    Empty();
+    ContainerPrivate.reserve(Number);
 }
 
 template <typename T, typename Allocator>

@@ -1,22 +1,26 @@
 #include "SkeletalMesh.h"
 #include "Engine/FLoaderOBJ.h"
 #include "UObject/Casts.h"
+#include "FLoaderFBX.h"
+#include "Container/String.h"
 #include "UObject/ObjectFactory.h"
 
 
 USkeletalMesh::~USkeletalMesh()
 {
-    if (staticMeshRenderData == nullptr) return;
+    if (SkeletalMeshRenderData == nullptr) return;
 
-    if (staticMeshRenderData->VertexBuffer) {
-        staticMeshRenderData->VertexBuffer->Release();
-        staticMeshRenderData->VertexBuffer = nullptr;
-    }
+     if (SkeletalMeshRenderData->DynamicVertexBuffer) 
+     {
+         SkeletalMeshRenderData->DynamicVertexBuffer->Release();
+         SkeletalMeshRenderData->DynamicVertexBuffer = nullptr;
+     }
 
-    if (staticMeshRenderData->IndexBuffer) {
-        staticMeshRenderData->IndexBuffer->Release();
-        staticMeshRenderData->IndexBuffer = nullptr;
-    }
+     if (SkeletalMeshRenderData->IndexBuffer) 
+     {
+         SkeletalMeshRenderData->IndexBuffer->Release();
+         SkeletalMeshRenderData->IndexBuffer = nullptr;
+     }
 }
 
 UObject* USkeletalMesh::Duplicate(UObject* InOuter)
@@ -44,24 +48,34 @@ void USkeletalMesh::GetUsedMaterials(TArray<UMaterial*>& Out) const
     }
 }
 
-void USkeletalMesh::SetData(OBJ::FStaticMeshRenderData* renderData)
+FWString USkeletalMesh::GetObjectName() const
 {
-    staticMeshRenderData = renderData;
+    if (SkeletalMeshRenderData)
+    {
+        return SkeletalMeshRenderData->MeshName.ToWideString();
+    }
+    return FWString();
+}
 
-    uint32 verticeNum = staticMeshRenderData->Vertices.Num();
+void USkeletalMesh::SetData(FBX::FSkeletalMeshRenderData* renderData)
+{
+    SkeletalMeshRenderData = renderData;
+
+    uint32 verticeNum = SkeletalMeshRenderData->BindPoseVertices.Num();
     if (verticeNum <= 0) return;
-    staticMeshRenderData->VertexBuffer = FEngineLoop::Renderer.CreateImmutableVertexBuffer(staticMeshRenderData->DisplayName, staticMeshRenderData->Vertices);
+    SkeletalMeshRenderData->DynamicVertexBuffer = FEngineLoop::Renderer.CreateDynamicVertexBuffer(SkeletalMeshRenderData->MeshName, SkeletalMeshRenderData->BindPoseVertices);
 
-    uint32 indexNum = staticMeshRenderData->Indices.Num();
+    uint32 indexNum = SkeletalMeshRenderData->Indices.Num();
     if (indexNum > 0)
-        staticMeshRenderData->IndexBuffer = FEngineLoop::Renderer.CreateImmutableIndexBuffer(staticMeshRenderData->DisplayName, staticMeshRenderData->Indices);
+        SkeletalMeshRenderData->IndexBuffer = FEngineLoop::Renderer.CreateImmutableIndexBuffer(SkeletalMeshRenderData->MeshName, SkeletalMeshRenderData->Indices);
 
-    for (int materialIndex = 0; materialIndex < staticMeshRenderData->Materials.Num(); materialIndex++) {
+    for (int materialIndex = 0; materialIndex < SkeletalMeshRenderData->Materials.Num(); materialIndex++)
+    {
         FStaticMaterial* newMaterialSlot = new FStaticMaterial();
-        UMaterial* newMaterial = FManagerOBJ::CreateMaterial(staticMeshRenderData->Materials[materialIndex]);
+        UMaterial* newMaterial = FManagerFBX::CreateMaterial(SkeletalMeshRenderData->Materials[materialIndex]);
 
         newMaterialSlot->Material = newMaterial;
-        newMaterialSlot->MaterialSlotName = staticMeshRenderData->Materials[materialIndex].MaterialName;
+        newMaterialSlot->MaterialSlotName = SkeletalMeshRenderData->Materials[materialIndex].MaterialName;
 
         materials.Add(newMaterialSlot);
     }

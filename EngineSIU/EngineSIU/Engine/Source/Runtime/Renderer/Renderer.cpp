@@ -87,7 +87,9 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     
     StaticMeshRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     StaticMeshRenderPass->InitializeShadowManager(ShadowManager);
+    
     SkeletalMeshRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
+    SkeletalMeshRenderPass->InitializeShadowManager(ShadowManager);
 
     WorldBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -240,6 +242,7 @@ void FRenderer::PrepareRender(FViewportResource* ViewportResource) const
 void FRenderer::PrepareRenderPass() const
 {
     StaticMeshRenderPass->PrepareRenderArr();
+    SkeletalMeshRenderPass->PrepareRenderArr();
     ShadowRenderPass->PrepareRenderArr();
     GizmoRenderPass->PrepareRenderArr();
     WorldBillboardRenderPass->PrepareRenderArr();
@@ -255,6 +258,7 @@ void FRenderer::PrepareRenderPass() const
 void FRenderer::ClearRenderArr() const
 {
     StaticMeshRenderPass->ClearRenderArr();
+    SkeletalMeshRenderPass->ClearRenderArr();
     ShadowRenderPass->ClearRenderArr();
     WorldBillboardRenderPass->ClearRenderArr();
     EditorBillboardRenderPass->ClearRenderArr();
@@ -436,6 +440,7 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FViewportClient>& Viewpor
             QUICK_SCOPE_CYCLE_COUNTER(StaticMeshPass_CPU)
             QUICK_GPU_SCOPE_CYCLE_COUNTER(StaticMeshPass_GPU, *GPUTimingManager)
             StaticMeshRenderPass->Render(Viewport);
+            SkeletalMeshRenderPass->Render(Viewport);
         }
     }
     

@@ -3,6 +3,10 @@
 #include "UObject/ObjectMacros.h"
 #include "Components/Material/Material.h"
 #include "Define.h"
+namespace FBX
+{
+    struct FSkeletalMeshRenderData;
+}
 
 class USkeletalMesh : public UObject
 {
@@ -17,17 +21,14 @@ public:
     const TArray<FStaticMaterial*>& GetMaterials() const { return materials; }
     uint32 GetMaterialIndex(FName MaterialSlotName) const;
     void GetUsedMaterials(TArray<UMaterial*>& Out) const;
-    OBJ::FStaticMeshRenderData* GetRenderData() const { return staticMeshRenderData; }
+    FBX::FSkeletalMeshRenderData* GetRenderData() const { return SkeletalMeshRenderData; }
 
     //ObjectName은 경로까지 포함
-    FWString GetOjbectName() const
-    {
-        return staticMeshRenderData->ObjectName;
-    }
+    FWString GetObjectName() const;
 
-    void SetData(OBJ::FStaticMeshRenderData* renderData);
+    void SetData(FBX::FSkeletalMeshRenderData* renderData);
 
 private:
-    OBJ::FStaticMeshRenderData* staticMeshRenderData = nullptr;
+    FBX::FSkeletalMeshRenderData* SkeletalMeshRenderData = nullptr;
     TArray<FStaticMaterial*> materials;
 };

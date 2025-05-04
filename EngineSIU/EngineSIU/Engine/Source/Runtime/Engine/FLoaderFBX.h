@@ -12,157 +12,292 @@
 
 #include <fbxsdk.h>
 
+#include <functional>
+#include <unordered_map> 
+
+// --- FBX 로딩 관련 네임스페이스 ---
+namespace FBX
+{
+    // --- 데이터 구조체 정의 ---
+
+    // 재질 정보 구조체
+    struct FFbxMaterialInfo
+    {
+        FName MaterialName = NAME_None;
+        FString UniqueID; // 필요 시 사용 (FBX Material Unique ID)
+
+        FLinearColor BaseColorFactor = FLinearColor::White;
+        FLinearColor EmissiveFactor = FLinearColor::Black;
+        FVector SpecularFactor = FVector(1.0f, 1.0f, 1.0f); // 전통적 Specular 값
+        float MetallicFactor = 0.0f;
+        float RoughnessFactor = 0.8f;
+        float SpecularPower = 32.0f; // 전통적 Shininess
+        float OpacityFactor = 1.0f;
+        // float IOR = 1.5f; // 필요 시 추가
+
+        FWString BaseColorTexturePath;
+        FWString NormalTexturePath;
+        FWString MetallicTexturePath;
+        FWString RoughnessTexturePath;
+        FWString SpecularTexturePath;
+        FWString EmissiveTexturePath;
+        FWString AmbientOcclusionTexturePath;
+        FWString OpacityTexturePath;
+
+        bool bHasBaseColorTexture = false;
+        bool bHasNormalTexture = false;
+        bool bHasMetallicTexture = false;
+        bool bHasRoughnessTexture = false;
+        bool bHasSpecularTexture = false;
+        bool bHasEmissiveTexture = false;
+        bool bHasAmbientOcclusionTexture = false;
+        bool bHasOpacityTexture = false;
+
+        bool bIsTransparent = false;
+        bool bUsePBRWorkflow = true; // 기본적으로 PBR 선호
+
+        FFbxMaterialInfo() = default;
+    };
+
+    // 스켈레탈 메시 정점 구조체
+    struct FSkeletalMeshVertex
+    {
+        FVector Position;
+        float R, G, B, A; // Color
+        FVector Normal;
+        float TangentX, TangentY, TangentZ; 
+        FVector2D TexCoord;
+        uint32 MaterialIndex;
+
+
+        // TODO: FVector Tangent; // 탄젠트 계산 활성화 시 주석 해제 및 CalculateTangent 구현 수정 필요
+        uint32 BoneIndices[MAX_BONE_INFLUENCES] = { 0 };
+        float BoneWeights[MAX_BONE_INFLUENCES] = { 0.0f };
+
+        // 비교 연산자 (정점 중복 제거용)
+        bool operator==(const FSkeletalMeshVertex& Other) const
+        {
+            if (Position != Other.Position ||
+                Normal != Other.Normal ||
+                TexCoord != Other.TexCoord) // || Tangent != Other.Tangent) // 탄젠트 추가 시 비교
+            {
+                return false;
+            }
+            for (int i = 0; i < MAX_BONE_INFLUENCES; ++i)
+            {
+                // 가중치는 부동소수점 비교 주의
+                if (BoneIndices[i] != Other.BoneIndices[i] || !FMath::IsNearlyEqual(BoneWeights[i], Other.BoneWeights[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        bool operator!=(const FSkeletalMeshVertex& Other) const
+        {
+            return !(*this == Other);
+        }
+    };
+
+    // 본 정보 구조체
+    struct FBoneInfo
+    {
+        FName Name = NAME_None;
+        int32 ParentIndex = INDEX_NONE;
+        FMatrix InverseBindPoseMatrix = FMatrix::Identity; // 역 바인드 포즈 (월드 공간 -> 본 공간)
+        FMatrix BindPoseMatrix = FMatrix::Identity;        // 바인드 포즈 (본 공간 -> 월드 공간)
+
+        // 애니메이션 적용용 현재 변환 행렬
+        FMatrix CurrentLocalMatrix = FMatrix::Identity;    // 부모 본 기준 로컬 변환
+        FMatrix CurrentWorldTransform = FMatrix::Identity; // 최종 월드 변환
+
+        FBoneInfo() = default;
+    };
+
+    // 재질 서브셋 구조체 (FMaterialSubset과 유사하게 정의)
+    struct FMeshSubset
+    {
+        uint32 IndexStart = 0;    // 이 서브셋에 해당하는 인덱스 버퍼 시작 위치
+        uint32 IndexCount = 0;    // 이 서브셋에 해당하는 인덱스 개수
+        uint32 MaterialIndex = 0; // FSkeletalMeshRenderData::Materials 배열 내 인덱스
+        // FString MaterialName; // 필요 시 추가 (디버깅용)
+    };
+
+    // 최종 렌더링 데이터 구조체
+    struct FSkeletalMeshRenderData
+    {
+        FString MeshName;
+        FString FilePath;
+
+        TArray<FSkeletalMeshVertex> BindPoseVertices; // 최종 고유 정점 배열 (바인드 포즈)
+        TArray<uint32> Indices;                       // 정점 인덱스 배열
+
+        TArray<FBoneInfo> Skeleton;                   // 이 메시에 관련된 본 정보 배열
+        TMap<FName, uint32> BoneNameToIndexMap;       // 본 이름 -> Skeleton 배열 인덱스 맵
+
+        TArray<FFbxMaterialInfo> Materials;           // 이 메시에 사용된 재질 정보 배열
+        TArray<FMeshSubset> Subsets;                  // 재질별 인덱스 범위 정보
+
+        // DirectX 버퍼 포인터 (생성 후 채워짐)
+        ID3D11Buffer* DynamicVertexBuffer = nullptr;
+        ID3D11Buffer* IndexBuffer = nullptr;
+
+        FBoundingBox Bounds;                          // 메시의 AABB
+
+        FSkeletalMeshRenderData() = default;
+        ~FSkeletalMeshRenderData() { ReleaseBuffers(); }
+
+        FSkeletalMeshRenderData(const FSkeletalMeshRenderData&) = delete;
+        FSkeletalMeshRenderData& operator=(const FSkeletalMeshRenderData&) = delete;
+
+        FSkeletalMeshRenderData(FSkeletalMeshRenderData&& Other) noexcept
+            : MeshName(std::move(Other.MeshName)), // std::move 사용
+            FilePath(std::move(Other.FilePath)),
+            BindPoseVertices(std::move(Other.BindPoseVertices)),
+            Indices(std::move(Other.Indices)),
+            Skeleton(std::move(Other.Skeleton)),
+            BoneNameToIndexMap(std::move(Other.BoneNameToIndexMap)),
+            Materials(std::move(Other.Materials)),
+            Subsets(std::move(Other.Subsets)), // Subsets 이동 추가
+            DynamicVertexBuffer(Other.DynamicVertexBuffer),
+            IndexBuffer(Other.IndexBuffer),
+            Bounds(Other.Bounds)
+        {
+            Other.DynamicVertexBuffer = nullptr;
+            Other.IndexBuffer = nullptr;
+        }
+
+        FSkeletalMeshRenderData& operator=(FSkeletalMeshRenderData&& Other) noexcept
+        {
+            if (this != &Other)
+            {
+                ReleaseBuffers();
+                MeshName = std::move(Other.MeshName);
+                FilePath = std::move(Other.FilePath);
+                BindPoseVertices = std::move(Other.BindPoseVertices);
+                Indices = std::move(Other.Indices);
+                Skeleton = std::move(Other.Skeleton);
+                BoneNameToIndexMap = std::move(Other.BoneNameToIndexMap);
+                Materials = std::move(Other.Materials);
+                Subsets = std::move(Other.Subsets); // Subsets 이동 추가
+                DynamicVertexBuffer = Other.DynamicVertexBuffer;
+                IndexBuffer = Other.IndexBuffer;
+                Bounds = Other.Bounds;
+                Other.DynamicVertexBuffer = nullptr;
+                Other.IndexBuffer = nullptr;
+            }
+            return *this;
+        }
+
+        void ReleaseBuffers()
+        {
+            if (DynamicVertexBuffer) { DynamicVertexBuffer->Release(); DynamicVertexBuffer = nullptr; }
+            if (IndexBuffer) { IndexBuffer->Release(); IndexBuffer = nullptr; }
+        }
+
+        void CalculateBounds()
+        {
+            if (BindPoseVertices.IsEmpty())
+            {
+                Bounds.min = FVector::ZeroVector;
+                Bounds.max = FVector::ZeroVector;
+                return;
+            }
+            Bounds.min = BindPoseVertices[0].Position;
+            Bounds.max = BindPoseVertices[0].Position;
+            for (int32 i = 1; i < BindPoseVertices.Num(); ++i)
+            {
+                Bounds.min = FVector::Min(Bounds.min, BindPoseVertices[i].Position);
+                Bounds.max = FVector::Max(Bounds.max, BindPoseVertices[i].Position);
+            }
+        }
+
+        // TODO: 본 변환 관련 함수들을 여기에 멤버 함수로 추가하는 것이 좋음
+        // void UpdateWorldTransforms();
+        // bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
+        // FMatrix GetBoneLocalMatrix(uint32 BoneIndex) const;
+        // ... etc ...
+    };
+
+
+    // --- 중간 데이터 구조체 (파싱 결과 임시 저장용) ---
+    // 이 구조체들은 FLoaderFBX 내부 구현 세부사항이므로 헤더에 노출할 필요는 없지만,
+    // FLoaderFBX의 static 메서드 시그니처에서 사용되므로 여기에 선언합니다.
+    struct FBXInfo;
+    struct MeshRawData;
+
+} // namespace FBX
+
 
 namespace std
 {
+    // hash_combine 함수 템플릿 정의 (헤더에 위치)
     template <class T>
     inline void hash_combine(std::size_t& seed, const T& v)
     {
-        std::hash<T> hasher; // T 타입에 대한 표준 해시 함수 객체
-        // 기존 시드 값과 새로운 해시 값을 조합 (Boost::hash_combine 방식)
+        std::hash<T> hasher;
         seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
 
-    template<> // 템플릿 특수화 선언
-    struct hash<FBX::FMeshVertex> // std::hash를 FBX::FMeshVertex 타입에 대해 특수화
+    // std::hash<FSkeletalMeshVertex> 특수화 *선언* (구현은 cpp 파일에)
+    template <>
+    struct hash<FBX::FSkeletalMeshVertex>
     {
-        // 함수 호출 연산자 오버로딩: 해시 계산 수행
-        size_t operator()(const FBX::FMeshVertex& Key) const noexcept
-        {
-            size_t seed = 0; // 해시 시드 초기화
-
-           
-            // Position (FVector)
-            hash_combine(seed, std::hash<float>()(Key.Position.X));
-            hash_combine(seed, std::hash<float>()(Key.Position.Y));
-            hash_combine(seed, std::hash<float>()(Key.Position.Z));
-
-            // Normal (FVector)
-            hash_combine(seed, std::hash<float>()(Key.Normal.X));
-            hash_combine(seed, std::hash<float>()(Key.Normal.Y));
-            hash_combine(seed, std::hash<float>()(Key.Normal.Z));
-
-            // TexCoord (FVector2D)
-            hash_combine(seed, std::hash<float>()(Key.TexCoord.X));
-            hash_combine(seed, std::hash<float>()(Key.TexCoord.Y));
-
-            // BoneIndices (array of uint32)
-            std::hash<uint32> uint_hasher; // 루프 밖에서 생성하여 효율성 증대
-            for (int i = 0; i < MAX_BONE_INFLUENCES; ++i)
-            {
-                hash_combine(seed, uint_hasher(Key.BoneIndices[i]));
-            }
-
-            // BoneWeights (array of float)
-            std::hash<float> float_hasher; // 루프 밖에서 생성
-            for (int i = 0; i < MAX_BONE_INFLUENCES; ++i)
-            {
-                hash_combine(seed, float_hasher(Key.BoneWeights[i]));
-            }
-
-            return seed; // 최종 조합된 해시 값 반환
-        }
+        // 함수 선언만 남기고 세미콜론으로 끝냅니다.
+        size_t operator()(const FBX::FSkeletalMeshVertex& Key) const noexcept;
     };
+
 }
 
 namespace FBX { struct FSkeletalMeshRenderData; }
 
-// --- FBX 로더 클래스 ---
-class FLoaderFBX
+
+
+
+struct FLoaderFBX
+{
+    static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
+
+    // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
+    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh);
+    static bool CreateTextureFromFile(const FWString& Filename);
+
+    static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
+
+private:
+    static void CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2);
+};
+
+struct FManagerFBX
 {
 public:
-    ~FLoaderFBX();
+    static FBX::FSkeletalMeshRenderData* LoadFBXSkeletalMeshAsset(const FString& PathFileName);
 
-    static USkeletalMesh* CreateSkeletalMesh(const FString& Path);
-    // FBX 파일 로드
-    bool LoadFBXFile(const FString& Filepath, ID3D11Device* Device);
+    static void CombineMaterialIndex(FBX::FSkeletalMeshRenderData& OutFSkeletalMesh);
 
-    // 스키닝 업데이트 및 적용 (CPU 스키닝)
-    bool UpdateAndApplySkinning(ID3D11DeviceContext* DeviceContext);
-    // 렌더링
-    void Render(ID3D11DeviceContext* DeviceContext);
-    FBX::FSkeletalMeshRenderData* LoadSkeletalMeshAsset(const FString& PathFileName, ID3D11Device* Device);
-    FBX::FSkeletalMeshRenderData* GetSkeletalMesh(const FString& PathFileName);
-    void ClearAll();
+    static bool SaveSkeletalMeshToBinary(const FWString& FilePath, const FBX::FSkeletalMeshRenderData& SkeletalMesh);
 
-    // --- 데이터 접근자 (필요시 추가) ---
-    const TArray<FBX::FMeshVertex>& GetVertices() const { return BindPoseVertices; }
-    const TArray<uint32>& GetIndices() const { return FinalIndices; }
-    const TArray<FBX::FBoneInfo>& GetBones() const { return Bones; }
-    int32 GetBoneIndex(const FName& BoneName) const;
-    const FBX::FBoneInfo* GetBoneInfo(int32 BoneIndex) const;
+    static bool LoadSkeletalMeshFromBinary(const FWString& FilePath, FBX::FSkeletalMeshRenderData& OutSkeletalMesh);
 
-    void UpdateWorldTransforms();
+    static UMaterial* CreateMaterial(const FBX::FFbxMaterialInfo& materialInfo);
 
+    static TMap<FString, UMaterial*>& GetMaterials() { return materialMap; }
 
-public:
-    TArray<FName> GetBoneNames() const;
-    bool SetBoneLocalMatrix(uint32_t BoneIndex, const FMatrix& NewLocalMatrix);
-    FMatrix GetBoneLocalMatrix(uint32_t BoneIndex) const;
-    bool SetBoneWorldMatrix(uint32_t BoneIndex, const FMatrix& NewWorldMatrix);
-    FMatrix GetBoneWorldMatrix(uint32_t BoneIndex) const;
-    uint32_t GetBoneIndexByName(const FName& BoneName) const;
-    FBX::FFbxMaterialInfo  ProcessMaterial(FbxSurfaceMaterial* FbxMaterial);
+    static UMaterial* GetMaterial(const FString& name);
+
+    static int GetMaterialNum() { return materialMap.Num(); }
+
+    static USkeletalMesh* CreateSkeletalMesh(const FString& filePath);
+
+    static const TMap<FWString, USkeletalMesh*>& GetSkeletalMeshes();
+
+    static USkeletalMesh* GetSkeletalMesh(const FWString& name);
+
+    static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
+
+ 
 private:
-    void CalculateInitialLocalTransforms();
-
-    // --- 초기화 및 해제 ---
-    bool InitializeFBXSDK();
-    void ShutdownFBXSDK();
-    bool CreateBuffers(ID3D11Device* Device);
-    void ReleaseBuffers();
-
-    // --- FBX 처리 ---
-    bool ProcessScene();
-    void ProcessNodeRecursive(FbxNode* Node);
-    bool ProcessMesh(FbxMesh* Mesh);
-    bool ProcessSkeletonHierarchy(FbxNode* RootNode);
-    void ProcessSkeletonNodeRecursive(FbxNode* Node, int32 CurrentParentBoneIndex);
-    void ExtractSkinningData(FbxMesh* Mesh, TArray<struct FControlPointSkinningData>& OutCpSkinData);
-    void FinalizeVertexData(
-        const TArray<FVector>& ControlPointPositions,
-        const TArray<int32>& PolygonIndices,
-        const TArray<FVector>& ControlPointNormals,
-        const TArray<FVector>& PolygonVertexNormals,
-        const FbxGeometryElementNormal* NormalElement,
-        const TArray<FVector2D>& ControlPointUVs,
-        const TArray<FVector2D>& PolygonVertexUVs,
-        const FbxGeometryElementUV* UVElement,
-        const TArray<struct FControlPointSkinningData>& CpSkinData
-    );
-
-    // --- 데이터 추출 헬퍼 ---
-    template<typename TElementType, typename TDataType> // TDataType: FVector or FVector2D
-    bool GetElementData(
-        FbxMesh* Mesh,
-        TElementType* Element,
-        int32 ControlPointCount,
-        int32 PolygonVertexCount,
-        const TArray<int32>& PolygonIndices,
-        TArray<TDataType>& OutControlPointData,
-        TArray<TDataType>& OutPolygonVertexData);
-
-    // --- 좌표계 변환 헬퍼 ---
-    FVector ConvertFbxPosition(const FbxVector4& Vector);
-    FVector ConvertFbxNormal(const FbxVector4& Vector);
-    FVector2D ConvertFbxUV(const FbxVector2& Vector);
-    // FMatrix::ConvertFbxAMatrixToFMatrix 사용
-    FWString ProcessTexturePath(FbxFileTexture* Texture);
-    // --- 멤버 변수 ---
-    // FBX SDK
-    FbxManager* SdkManager = nullptr;
-    FbxScene* Scene = nullptr;
-
-    ID3D11Buffer* DynamicVertexBuffer = nullptr;
-    ID3D11Buffer* IndexBuffer = nullptr;
-  
-    TArray<FBX::FFbxMaterialInfo> Materials;
-    TMap<FbxSurfaceMaterial*, int32> MaterialToIndexMap;
-    FString LoadedFBXFilePath;
-    FWString LoadedFBXFileDirectory;
-public:
-    TArray<FBX::FMeshVertex> BindPoseVertices; // 바인드 포즈 상태의 최종 정점 데이터
-    TArray<uint32> FinalIndices;          // 최종 인덱스 데이터
-    TArray<FBX::FBoneInfo> Bones;              // 스켈레톤 뼈 정보
-    TMap<FName, int32> BoneNameToIndexMap; // 뼈 이름 -> 인덱스 맵
+    inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
+    inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
+    inline static TMap<FString, UMaterial*> materialMap;
 };

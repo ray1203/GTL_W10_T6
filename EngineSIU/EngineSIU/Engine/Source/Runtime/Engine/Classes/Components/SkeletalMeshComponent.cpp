@@ -22,11 +22,11 @@ void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties
     Super::GetProperties(OutProperties);
     
     //StaticMesh 경로 저장
-    USkeletalMesh* CurrentMesh = GetStaticMesh();
+    USkeletalMesh* CurrentMesh = GetSkeletalMesh();
     if (CurrentMesh != nullptr) {
 
         // 1. std::wstring 경로 얻기
-        std::wstring PathWString = CurrentMesh->GetOjbectName(); // 이 함수가 std::wstring 반환 가정
+        std::wstring PathWString = CurrentMesh->GetObjectName();
 
         // 2. std::wstring을 FString으로 변환
         FString PathFString(PathWString.c_str()); // c_str()로 const wchar_t* 얻어서 FString 생성
@@ -35,10 +35,10 @@ void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties
         FWString PathWString2 = PathFString.ToWideString();
 
         
-        OutProperties.Add(TEXT("StaticMeshPath"), PathFString);
+        OutProperties.Add(TEXT("SkeletalMeshPath"), PathFString);
     } else
     {
-        OutProperties.Add(TEXT("StaticMeshPath"), TEXT("None")); // 메시 없음 명시
+        OutProperties.Add(TEXT("SkeletalMeshPath"), TEXT("None")); // 메시 없음 명시
     }
 }
 
@@ -56,7 +56,7 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         {
             // 경로 문자열로 UStaticMesh 에셋 로드 시도
            
-            if (USkeletalMesh* MeshToSet = FLoaderFBX::CreateSkeletalMesh(*TempStr))
+            if (USkeletalMesh* MeshToSet = FManagerFBX::CreateSkeletalMesh(*TempStr))
             {
                 SetSkeletalMesh(MeshToSet); // 성공 시 메시 설정
                 UE_LOG(LogLevel::Display, TEXT("Set StaticMesh '%s' for %s"), **TempStr, *GetName());
@@ -155,8 +155,8 @@ int USkeletalMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, con
 
     int IntersectionNum = 0;
 
-    OBJ::FStaticMeshRenderData* RenderData = SkeletalMesh->GetRenderData();
-    const TArray<FStaticMeshVertex>& Vertices = RenderData->Vertices;
+    FBX::FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetRenderData();
+    const TArray<FBX::FSkeletalMeshVertex>& Vertices = RenderData->BindPoseVertices;
     const int32 VertexNum = Vertices.Num();
     if (VertexNum == 0)
     {
@@ -182,9 +182,9 @@ int USkeletalMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, con
         }
 
         // 각 삼각형의 버텍스 위치를 FVector로 불러옵니다.
-        FVector v0 = FVector(Vertices[Idx0].X, Vertices[Idx0].Y, Vertices[Idx0].Z);
-        FVector v1 = FVector(Vertices[Idx1].X, Vertices[Idx1].Y, Vertices[Idx1].Z);
-        FVector v2 = FVector(Vertices[Idx2].X, Vertices[Idx2].Y, Vertices[Idx2].Z);
+        FVector v0 = FVector(Vertices[Idx0].Position.X, Vertices[Idx0].Position.Y, Vertices[Idx0].Position.Z);
+        FVector v1 = FVector(Vertices[Idx1].Position.X, Vertices[Idx1].Position.Y, Vertices[Idx1].Position.Z);
+        FVector v2 = FVector(Vertices[Idx2].Position.X, Vertices[Idx2].Position.Y, Vertices[Idx2].Position.Z);
 
         float HitDistance = FLT_MAX;
         if (IntersectRayTriangle(InRayOrigin, InRayDirection, v0, v1, v2, HitDistance))
@@ -195,4 +195,19 @@ int USkeletalMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, con
 
     }
     return IntersectionNum;
+}
+
+void USkeletalMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
+{
+    SkeletalMesh = value;
+    if (SkeletalMesh == nullptr)
+    {
+        OverrideMaterials.SetNum(0);
+        AABB = FBoundingBox(FVector::ZeroVector, FVector::ZeroVector);
+    }
+    else
+    {
+        OverrideMaterials.SetNum(value->GetMaterials().Num());
+        AABB = FBoundingBox(SkeletalMesh->GetRenderData()->Bounds.min, SkeletalMesh->GetRenderData()->Bounds.max);
+    }
 }

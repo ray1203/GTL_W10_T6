@@ -25,7 +25,7 @@
 #include "Actors/DirectionalLightActor.h"
 #include "Actors/SpotLightActor.h"
 #include "Actors/AmbientLightActor.h"
-
+#include "Actors/ASkeletalMeshActor.h"
 #include "Games/LastWar/Core/Spawner.h"
 #include "ImGUI/imgui.h"
 
@@ -300,7 +300,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label= "Text",      .OBJ= OBJ_TEXT },
             { .Label= "Fireball",  .OBJ = OBJ_FIREBALL},
             { .Label= "Fog",       .OBJ= OBJ_FOG },
-            { .Label = "Spawner",  .OBJ = OBJ_Spawner}
+            { .Label = "Spawner",  .OBJ = OBJ_Spawner},
+            { .Label= "Mutant",    .OBJ= OBJ_Mutant }
         };
 
         for (const auto& primitive : primitives)
@@ -374,7 +375,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     TextComponent->SetTexture(L"Assets/Texture/font.png");
                     TextComponent->SetRowColumnCount(106, 106);
                     TextComponent->SetText(L"안녕하세요 Jungle 1");
-                    
+
                     break;
                 }
                 case OBJ_FIREBALL:
@@ -394,6 +395,12 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 {
                     SpawnedActor = World->SpawnActor<ASpawnerActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Spawner"));
+                    break;
+                }
+                case OBJ_Mutant:
+                {
+                    SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Mutant"));
                 }
                 case OBJ_TRIANGLE:
                 case OBJ_CAMERA:

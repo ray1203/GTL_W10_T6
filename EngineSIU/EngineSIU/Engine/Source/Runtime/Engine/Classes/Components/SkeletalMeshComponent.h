@@ -27,21 +27,8 @@ public:
 
     virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
     
-    USkeletalMesh* GetStaticMesh() const { return SkeletalMesh; }
-    void SetSkeletalMesh(USkeletalMesh* value)
-    { 
-        SkeletalMesh = value;
-        if (SkeletalMesh == nullptr)
-        {
-            OverrideMaterials.SetNum(0);
-            AABB = FBoundingBox(FVector::ZeroVector, FVector::ZeroVector);
-        }
-        else
-        {
-            OverrideMaterials.SetNum(value->GetMaterials().Num());
-            AABB = FBoundingBox(SkeletalMesh->GetRenderData()->BoundingBoxMin, SkeletalMesh->GetRenderData()->BoundingBoxMax);
-        }
-    }
+    USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
+    void SetSkeletalMesh(USkeletalMesh* value);
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
