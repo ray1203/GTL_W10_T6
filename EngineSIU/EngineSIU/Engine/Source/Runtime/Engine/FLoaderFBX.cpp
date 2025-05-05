@@ -925,7 +925,7 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     if (!Importer->Initialize(FilepathStdString.c_str(), -1, SdkManager->GetIOSettings())) return false;
     if (!Importer->Import(Scene)) return false;
 
-    FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
+    FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
 
     if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem) 
         TargetAxisSystem.ConvertScene(Scene);
