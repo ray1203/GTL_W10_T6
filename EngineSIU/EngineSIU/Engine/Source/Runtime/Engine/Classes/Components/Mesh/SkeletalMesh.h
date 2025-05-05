@@ -2,6 +2,7 @@
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 #include "Components/Material/Material.h"
+#include "Engine/Animation/Skeleton.h"
 #include "Define.h"
 namespace FBX
 {
@@ -13,8 +14,10 @@ class USkeletalMesh : public UObject
     DECLARE_CLASS(USkeletalMesh, UObject)
 
 public:
-    USkeletalMesh() = default;
+    USkeletalMesh();
     virtual ~USkeletalMesh() override;
+
+    USkeleton* Skeleton;
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 
