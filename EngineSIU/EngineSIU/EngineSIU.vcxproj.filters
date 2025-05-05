@@ -817,6 +817,11 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\FLoaderFBX.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshViewerRenderPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1066,6 +1071,11 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FLoaderFBX.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshViewerRenderPass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
