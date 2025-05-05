@@ -213,11 +213,7 @@ bool UBillboardComponent::CheckPickingOnNDC(const TArray<FVector>& quadVertices,
 
     for (const FVector& v : quadVertices)
     {
-        FVector4 clipPos = FMatrix::TransformVector(FVector4(v, 1.0f), MVP);
-        if (clipPos.W != 0.0f)
-        {
-            clipPos = clipPos / clipPos.W;
-        }
+        FVector clipPos = MVP.TransformPosition(v);
         minX = FMath::Min(minX, clipPos.X);
         maxX = FMath::Max(maxX, clipPos.X);
         minY = FMath::Min(minY, clipPos.Y);

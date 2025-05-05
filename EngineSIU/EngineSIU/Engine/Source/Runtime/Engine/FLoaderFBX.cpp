@@ -925,10 +925,14 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     if (!Importer->Initialize(FilepathStdString.c_str(), -1, SdkManager->GetIOSettings())) return false;
     if (!Importer->Import(Scene)) return false;
 
-    FbxAxisSystem TargetAxisSystem = FbxAxisSystem::DirectX; // TODO: Set your target system
-    if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem) TargetAxisSystem.ConvertScene(Scene);
+    FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
+
+    if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem) 
+        TargetAxisSystem.ConvertScene(Scene);
+    
     FbxSystemUnit::cm.ConvertScene(Scene);
-    FbxGeometryConverter GeometryConverter(SdkManager); GeometryConverter.Triangulate(Scene, true);
+    FbxGeometryConverter GeometryConverter(SdkManager);
+    GeometryConverter.Triangulate(Scene, true);
 
     OutFBXInfo.FilePath = FBXFilePath; std::filesystem::path fsPath(FBXFilePath.ToWideString()); OutFBXInfo.FileDirectory = fsPath.parent_path().wstring().c_str();
     FbxNode* RootNode = Scene->GetRootNode(); if (!RootNode) return false;
