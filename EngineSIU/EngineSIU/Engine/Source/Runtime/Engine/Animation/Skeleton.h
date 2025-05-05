@@ -6,7 +6,6 @@ struct FBoneNode
 {
     FName Name;
     int32 ParentIndex;
-    // 여기에 저장할 필요 없을 것 같음
     FMatrix BindTransform; // Bind pose transform (로컬 바인드 포즈)
 
     // 리타겟팅 모드 - Animation 주차에 필요 시 사용
@@ -51,12 +50,7 @@ struct FAnimationPoseData
     // 스키닝 행렬 (애니메이션 행렬 * 인버스 바인드 포즈 행렬)
     TArray<FMatrix> SkinningMatrices;
 
-    void Resize(int32 NumBones)
-    {
-        LocalTransforms.SetNum(NumBones);
-        GlobalTransforms.SetNum(NumBones);
-        SkinningMatrices.SetNum(NumBones);
-    }
+    void Resize(int32 NumBones);
 };
 
 class USkeleton : public UObject
@@ -77,143 +71,43 @@ public:
     TArray<FSkeletonToMeshLinkup> LinkupCache;
 
     // 현재 애니메이션 포즈 데이터 - Unreal기준 USkeleton에 없으나 임시 사용
+    // 본 변형으로 자세가 변경된 경우 여기서 참조
     FAnimationPoseData CurrentPose;
 
 public:
     USkeleton();
     ~USkeleton() = default;
 
-    // 본 추가
-    void AddBone(const FName Name, int32 ParentIdx, const FMatrix BindTransform)
-    {
-        BoneNameToIndex[Name] = (int)BoneTree.Num();
+    // 본 추가 (인덱스 기반)
+    void AddBone(const FName Name, int32 ParentIdx, const FMatrix BindTransform);
 
-        FBoneNode NewBone;
-        NewBone.Name = Name;
-        NewBone.ParentIndex = ParentIdx;
-        NewBone.BindTransform = BindTransform;
-
-        BoneTree.Add(NewBone);
-
-        // 참조 스켈레톤 업데이트
-        ReferenceSkeleton.BoneInfo.Add(NewBone);
-        ReferenceSkeleton.NameToIndexMap.Add(Name, ReferenceSkeleton.BoneInfo.Num() - 1);
-
-        // 글로벌 바인드 포즈 계산 및 추가
-        // 현재 바로 GlobalBindTransform을 넣어주고 있어 주석, 로컬로 받도록 하려면 활성화
-        //FMatrix GlobalBindTransform = CalculateGlobalBindTransform(BoneTree.Num() - 1);
-        ReferenceSkeleton.RefBonePose.Add(BindTransform);
-
-        // 현재 포즈 크기 조정
-        CurrentPose.Resize(BoneTree.Num());
-    }
-
-    // ParentName을 받는 버전 -> Map만들어서 index로 변환
-    void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform)
-    {
-        int32 ParentIdx = INDEX_NONE;
-
-        // 부모 이름이 유효하면 해당 인덱스 찾기
-        if (!ParentName.IsNone())
-        {
-            const uint32* ParentIdxPtr = BoneNameToIndex.Find(ParentName);
-            if (ParentIdxPtr)
-            {
-                ParentIdx = static_cast<int32>(*ParentIdxPtr);
-            }
-        }
-
-        // 부모 관계 맵에 저장
-        BoneParentMap.Add(Name, ParentName);
-
-        // 기존 AddBone 호출
-        AddBone(Name, ParentIdx, BindTransform);
-    }
+    // 본 추가 (이름 기반)
+    void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform);
 
     // 본 이름으로 인덱스 가져오기
-    uint32 GetBoneIndex(const FName Name) const
-    {
-        const uint32* it = BoneNameToIndex.Find(Name);
-        return (it != nullptr) ? *it : INDEX_NONE;
-    }
+    uint32 GetBoneIndex(const FName Name) const;
 
     // 글로벌 바인드 트랜스폼 계산
-    FMatrix GetGlobalBindTransform(int32 BoneIdx) const
-    {
-        if (ReferenceSkeleton.RefBonePose.IsValidIndex(BoneIdx))
-        {
-            return ReferenceSkeleton.RefBonePose[BoneIdx];
-        }
-
-        return CalculateGlobalBindTransform(BoneIdx);
-    }
+    FMatrix GetGlobalBindTransform(int32 BoneIdx) const;
 
     // 글로벌 바인드 트랜스폼 계산 (내부 함수)
-    FMatrix CalculateGlobalBindTransform(int32 BoneIdx) const
-    {
-        FMatrix Global = BoneTree[BoneIdx].BindTransform;
-        int32 Parent = BoneTree[BoneIdx].ParentIndex;
-        while (Parent >= 0)
-        {
-            Global = BoneTree[Parent].BindTransform * Global;
-            Parent = BoneTree[Parent].ParentIndex;
-        }
-
-        return Global;
-    }
+    FMatrix CalculateGlobalBindTransform(int32 BoneIdx) const;
 
     // 인버스 바인드 포즈 행렬 가져오기
-    FMatrix GetInverseBindTransform(int32 BoneIdx) const
-    {
-        return FMatrix::Inverse(GetGlobalBindTransform(BoneIdx));
-    }
+    FMatrix GetInverseBindTransform(int32 BoneIdx) const;
 
     // 스키닝 행렬 계산 (애니메이션 행렬 * 인버스 바인드 포즈 행렬)
-    FMatrix CalculateSkinningMatrix(int32 BoneIdx, const FMatrix& AnimationMatrix) const
-    {
-        return  GetInverseBindTransform(BoneIdx) * AnimationMatrix;
-    }
+    FMatrix CalculateSkinningMatrix(int32 BoneIdx, const FMatrix& AnimationMatrix) const;
 
     // 현재 애니메이션 포즈 업데이트
-    void UpdateCurrentPose(const TArray<FMatrix>& LocalAnimationTransforms)
-    {
-        // 로컬 변환 저장
-        for (int32 i = 0; i < FMath::Min(LocalAnimationTransforms.Num(), CurrentPose.LocalTransforms.Num()); ++i)
-        {
-            CurrentPose.LocalTransforms[i] = LocalAnimationTransforms[i];
-        }
-
-        // 글로벌 변환 계산
-        for (int32 i = 0; i < CurrentPose.LocalTransforms.Num(); ++i)
-        {
-            if (BoneTree[i].ParentIndex == INDEX_NONE)
-            {
-                CurrentPose.GlobalTransforms[i] = CurrentPose.LocalTransforms[i];
-            }
-            else
-            {
-                CurrentPose.GlobalTransforms[i] = CurrentPose.GlobalTransforms[BoneTree[i].ParentIndex] * CurrentPose.LocalTransforms[i];
-            }
-
-            // 스키닝 행렬 계산
-            CurrentPose.SkinningMatrices[i] = CalculateSkinningMatrix(i, CurrentPose.GlobalTransforms[i]);
-        }
-    }
+    void UpdateCurrentPose(const TArray<FMatrix>& LocalAnimationTransforms);
 
     // 메시-스켈레톤 링크업 데이터 찾기 또는 추가 
-    /*const FSkeletonToMeshLinkup& FindOrAddMeshLinkupData(const UObject* InMesh)
-    {
-    }*/
+    /*const FSkeletonToMeshLinkup& FindOrAddMeshLinkupData(const UObject* InMesh);*/
 
     // 메시 본 인덱스 → 스켈레톤 본 인덱스 변환
-    //int32 GetSkeletonBoneIndexFromMeshBoneIndex(const UObject* InMesh, int32 MeshBoneIndex)
-    //{
-    //    return MeshBoneIndex;
-    //}
+    /*int32 GetSkeletonBoneIndexFromMeshBoneIndex(const UObject* InMesh, int32 MeshBoneIndex);*/
 
-    //// 스켈레톤 본 인덱스 → 메시 본 인덱스 변환
-    //int32 GetMeshBoneIndexFromSkeletonBoneIndex(const UObject* InMesh, int32 SkeletonBoneIndex)
-    //{
-    //    return SkeletonBoneIndex;
-    //}
+    // 스켈레톤 본 인덱스 → 메시 본 인덱스 변환
+    /*int32 GetMeshBoneIndexFromSkeletonBoneIndex(const UObject* InMesh, int32 SkeletonBoneIndex);*/
 };
