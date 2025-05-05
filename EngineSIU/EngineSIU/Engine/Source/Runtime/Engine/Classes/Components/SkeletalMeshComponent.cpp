@@ -29,6 +29,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     TArray< FName> BoneName;
     SkeletalMesh->GetBoneNames(BoneName);
     // 1. 움직일 본 찾기
+    if (BoneName.IsEmpty()) return;
     int32 BoneIndex = SkeletalMesh->GetBoneIndexByName(BoneName[1]);
 
     if (BoneIndex != INDEX_NONE)
@@ -37,7 +38,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
         FMatrix CurrentLocalMatrix = SkeletalMesh->GetBoneLocalMatrix(BoneIndex);
 
         AngleRad += FMath::DegreesToRadians(2 * DeltaTime);
-        FMatrix DeltaRotation = FMatrix::CreateRotationMatrix(0.0f, 0.0f, AngleRad); // Z축 회전 (Yaw)
+        FMatrix DeltaRotation = FMatrix::CreateRotationMatrix(0.0f, AngleRad, 0); // Z축 회전 (Yaw)
 
         // 4. 새로운 로컬 변환 계산 (현재 로컬 변환에 델타 회전 적용)
         // 중요: 회전 순서에 따라 결과가 달라짐 (Delta * Current 또는 Current * Delta)
