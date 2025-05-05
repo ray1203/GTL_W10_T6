@@ -6,6 +6,7 @@ struct FBoneNode
 {
     FName Name;
     int32 ParentIndex;
+    // 여기에 저장할 필요 없을 것 같음
     FMatrix BindTransform; // Bind pose transform (로컬 바인드 포즈)
 
     // 리타겟팅 모드 - Animation 주차에 필요 시 사용
@@ -99,6 +100,7 @@ public:
         ReferenceSkeleton.NameToIndexMap.Add(Name, ReferenceSkeleton.BoneInfo.Num() - 1);
 
         // 글로벌 바인드 포즈 계산 및 추가
+        // 현재 바로 GlobalBindTransform을 넣어주고 있어 주석, 로컬로 받도록 하려면 활성화
         //FMatrix GlobalBindTransform = CalculateGlobalBindTransform(BoneTree.Num() - 1);
         ReferenceSkeleton.RefBonePose.Add(BindTransform);
 
@@ -106,6 +108,7 @@ public:
         CurrentPose.Resize(BoneTree.Num());
     }
 
+    // ParentName을 받는 버전 -> Map만들어서 index로 변환
     void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform)
     {
         int32 ParentIdx = INDEX_NONE;

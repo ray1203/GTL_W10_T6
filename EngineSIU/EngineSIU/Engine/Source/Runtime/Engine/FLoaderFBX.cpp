@@ -1078,10 +1078,6 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
     OutSkeletalMeshRenderData.MeshName = RawMeshData.NodeName.ToString();
     OutSkeletalMeshRenderData.FilePath = FullFBXInfo.FilePath;
 
-    // 1. Build Skeleton - USkeleton 사용
-    //InSkeletalMesh->Skeleton->BoneTree.Empty();
-    //InSkeletalMesh->Skeleton->BoneNameToIndex.Empty();
-
     // 관련 본 이름 수집
     TArray<FName> RelevantBoneNames;
     for (const auto& influence : RawMeshData.SkinningInfluences)
@@ -1098,7 +1094,7 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
             BonesToInclude.AddUnique(HNode->ParentName);
     }
 
-    // 첫 번째 패스: 모든 본 추가 (부모 인덱스는 임시로 -1)
+    // USkeleton 데이터 채우기
     TMap<FName, int32> TempBoneNameMap;
     for (const FName& BoneName : BonesToInclude)
     {

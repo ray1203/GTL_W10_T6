@@ -98,21 +98,6 @@ namespace FBX
         }
     };
 
-    // 본 정보 구조체
-    struct FBoneInfo
-    {
-        FName Name = NAME_None;
-        int32 ParentIndex = INDEX_NONE;
-        FMatrix InverseBindPoseMatrix = FMatrix::Identity; // 역 바인드 포즈 (월드 공간 -> 본 공간)
-        FMatrix BindPoseMatrix = FMatrix::Identity;        // 바인드 포즈 (본 공간 -> 월드 공간)
-
-        // 애니메이션 적용용 현재 변환 행렬
-        FMatrix CurrentLocalMatrix = FMatrix::Identity;    // 부모 본 기준 로컬 변환
-        FMatrix CurrentWorldTransform = FMatrix::Identity; // 최종 월드 변환
-
-        FBoneInfo() = default;
-    };
-
     // 재질 서브셋 구조체 (FMaterialSubset과 유사하게 정의)
     struct FMeshSubset
     {
@@ -130,9 +115,6 @@ namespace FBX
 
         TArray<FSkeletalMeshVertex> BindPoseVertices; // 최종 고유 정점 배열 (바인드 포즈)
         TArray<uint32> Indices;                       // 정점 인덱스 배열
-
-        //TArray<FBoneInfo> Skeleton;                   // 이 메시에 관련된 본 정보 배열
-        //TMap<FName, uint32> BoneNameToIndexMap;       // 본 이름 -> Skeleton 배열 인덱스 맵
 
         TArray<FFbxMaterialInfo> Materials;           // 이 메시에 사용된 재질 정보 배열
         TArray<FMeshSubset> Subsets;                  // 재질별 인덱스 범위 정보
@@ -154,8 +136,6 @@ namespace FBX
             FilePath(std::move(Other.FilePath)),
             BindPoseVertices(std::move(Other.BindPoseVertices)),
             Indices(std::move(Other.Indices)),
-            //Skeleton(std::move(Other.Skeleton)),
-            //BoneNameToIndexMap(std::move(Other.BoneNameToIndexMap)),
             Materials(std::move(Other.Materials)),
             Subsets(std::move(Other.Subsets)), // Subsets 이동 추가
             DynamicVertexBuffer(Other.DynamicVertexBuffer),
@@ -175,8 +155,6 @@ namespace FBX
                 FilePath = std::move(Other.FilePath);
                 BindPoseVertices = std::move(Other.BindPoseVertices);
                 Indices = std::move(Other.Indices);
-                //Skeleton = std::move(Other.Skeleton);
-                //BoneNameToIndexMap = std::move(Other.BoneNameToIndexMap);
                 Materials = std::move(Other.Materials);
                 Subsets = std::move(Other.Subsets); // Subsets 이동 추가
                 DynamicVertexBuffer = Other.DynamicVertexBuffer;
@@ -210,21 +188,13 @@ namespace FBX
                 Bounds.max = FVector::Max(Bounds.max, BindPoseVertices[i].Position);
             }
         }
-
-        // TODO: 본 변환 관련 함수들을 여기에 멤버 함수로 추가하는 것이 좋음
-        // void UpdateWorldTransforms();
-        // bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
-        // FMatrix GetBoneLocalMatrix(uint32 BoneIndex) const;
-        // ... etc ...
     };
-
 
     // --- 중간 데이터 구조체 (파싱 결과 임시 저장용) ---
     // 이 구조체들은 FLoaderFBX 내부 구현 세부사항이므로 헤더에 노출할 필요는 없지만,
     // FLoaderFBX의 static 메서드 시그니처에서 사용되므로 여기에 선언합니다.
     struct FBXInfo;
     struct MeshRawData;
-
 } // namespace FBX
 
 
@@ -250,15 +220,13 @@ namespace std
 
 namespace FBX { struct FSkeletalMeshRenderData; }
 
-
-
-
 struct FLoaderFBX
 {
     static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
 
     // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
     static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, const USkeletalMesh* InSkeletalMesh);
+    
     static bool CreateTextureFromFile(const FWString& Filename);
 
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
@@ -294,7 +262,6 @@ public:
 
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
- 
 private:
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
