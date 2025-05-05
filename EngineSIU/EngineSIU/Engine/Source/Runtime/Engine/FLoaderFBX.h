@@ -19,7 +19,6 @@
 namespace FBX
 {
     // --- 데이터 구조체 정의 ---
-
     // 재질 정보 구조체
     struct FFbxMaterialInfo
     {
@@ -132,8 +131,8 @@ namespace FBX
         TArray<FSkeletalMeshVertex> BindPoseVertices; // 최종 고유 정점 배열 (바인드 포즈)
         TArray<uint32> Indices;                       // 정점 인덱스 배열
 
-        TArray<FBoneInfo> Skeleton;                   // 이 메시에 관련된 본 정보 배열
-        TMap<FName, uint32> BoneNameToIndexMap;       // 본 이름 -> Skeleton 배열 인덱스 맵
+        //TArray<FBoneInfo> Skeleton;                   // 이 메시에 관련된 본 정보 배열
+        //TMap<FName, uint32> BoneNameToIndexMap;       // 본 이름 -> Skeleton 배열 인덱스 맵
 
         TArray<FFbxMaterialInfo> Materials;           // 이 메시에 사용된 재질 정보 배열
         TArray<FMeshSubset> Subsets;                  // 재질별 인덱스 범위 정보
@@ -155,8 +154,8 @@ namespace FBX
             FilePath(std::move(Other.FilePath)),
             BindPoseVertices(std::move(Other.BindPoseVertices)),
             Indices(std::move(Other.Indices)),
-            Skeleton(std::move(Other.Skeleton)),
-            BoneNameToIndexMap(std::move(Other.BoneNameToIndexMap)),
+            //Skeleton(std::move(Other.Skeleton)),
+            //BoneNameToIndexMap(std::move(Other.BoneNameToIndexMap)),
             Materials(std::move(Other.Materials)),
             Subsets(std::move(Other.Subsets)), // Subsets 이동 추가
             DynamicVertexBuffer(Other.DynamicVertexBuffer),
@@ -176,8 +175,8 @@ namespace FBX
                 FilePath = std::move(Other.FilePath);
                 BindPoseVertices = std::move(Other.BindPoseVertices);
                 Indices = std::move(Other.Indices);
-                Skeleton = std::move(Other.Skeleton);
-                BoneNameToIndexMap = std::move(Other.BoneNameToIndexMap);
+                //Skeleton = std::move(Other.Skeleton);
+                //BoneNameToIndexMap = std::move(Other.BoneNameToIndexMap);
                 Materials = std::move(Other.Materials);
                 Subsets = std::move(Other.Subsets); // Subsets 이동 추가
                 DynamicVertexBuffer = Other.DynamicVertexBuffer;
@@ -259,7 +258,7 @@ struct FLoaderFBX
     static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
 
     // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
-    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh);
+    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, const USkeletalMesh* InSkeletalMesh);
     static bool CreateTextureFromFile(const FWString& Filename);
 
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
@@ -271,7 +270,7 @@ private:
 struct FManagerFBX
 {
 public:
-    static FBX::FSkeletalMeshRenderData* LoadFBXSkeletalMeshAsset(const FString& PathFileName);
+    static FBX::FSkeletalMeshRenderData* LoadFBXSkeletalMeshAsset(const FString& PathFileName, const USkeletalMesh* InSkeletalMesh);
 
     static void CombineMaterialIndex(FBX::FSkeletalMeshRenderData& OutFSkeletalMesh);
 
