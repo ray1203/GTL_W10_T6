@@ -85,29 +85,9 @@ void ViewerControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont*
     if (bOpenMenu)
     {
         ImGui::SetNextWindowPos(ImVec2(10, 55), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(135, 170), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(135, 80), ImGuiCond_Always);
 
         ImGui::Begin("Menu", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-        if (ImGui::MenuItem("Load Level"))
-        {
-            char const* lFilterPatterns[1] = { "*.scene" };
-            const char* FileName = tinyfd_openFileDialog("Open Scene File", "", 1, lFilterPatterns, "Scene(.scene) file", 0);
-
-            if (FileName == nullptr)
-            {
-                tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
-                ImGui::End();
-                return;
-            }
-            if (UEditorEngine* EditorEngine = Cast<UEditorEngine>(GEngine))
-            {
-                EditorEngine->NewLevel();
-                EditorEngine->LoadLevel(FileName);
-            }
-        }
-
-        ImGui::Separator();
 
         if (ImGui::BeginMenu("Import"))
         {
