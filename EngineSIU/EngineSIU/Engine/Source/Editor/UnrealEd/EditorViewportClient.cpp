@@ -421,45 +421,41 @@ void FEditorViewportClient::MouseMove(const FPointerEvent& InMouseEvent)
         bool bRight = (GetKeyState(VK_RBUTTON) & 0x8000);
         if (bRight)
         {
-            // 회전 각도 증가
+            // 현재 회전값 업데이트
             FVector CurRot = PerspectiveCamera.GetRotation();
             CurRot.Z += DeltaX * 0.15f; // Yaw
             CurRot.Y = FMath::Clamp(CurRot.Y + DeltaY * 0.15f, -89.0f, 89.0f); // Pitch
             PerspectiveCamera.SetRotation(CurRot);
 
-            // LookAt 기준 공전 위치 재계산
+            // 중심점 가져오기
             FVector LookAt = FVector::ZeroVector;
 
-            UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-            USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
-            AActor* SelectedActor = Engine->GetSelectedActor();
-
-            if (SelectedComponent)
+            if (UEditorEngine* Engine = Cast<UEditorEngine>(GEngine))
             {
-                if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SelectedComponent))
+                if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Engine->GetSelectedComponent()))
                 {
-                    LookAt = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+                    LookAt = (Prim->GetBoundingBox().min + Prim->GetBoundingBox().max) * 0.5f;
+                }
+                else if (AActor* Selected = Engine->GetSelectedActor())
+                {
+                    if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Selected->GetRootComponent()))
+                    {
+                        LookAt = (Prim->GetBoundingBox().min + Prim->GetBoundingBox().max) * 0.5f;
+                    }
                 }
             }
-            else if (SelectedActor)
-            {
-                if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SelectedActor->GetRootComponent()))
-                {
-                    LookAt = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
-                }
-            }
-            else
-            {
-                LookAt = PerspectiveCamera.GetLookAt(); // fallback
-            }
 
+            // 현재 거리 계산
             float Distance = (PerspectiveCamera.GetLocation() - LookAt).Length();
+
+            // 회전된 위치 계산 (Z축 기준 Yaw, Y축 기준 Pitch)
             FVector Offset = JungleMath::FVectorRotate(FVector(-Distance, 0, 0), CurRot);
             PerspectiveCamera.SetLocation(LookAt + Offset);
         }
     }
     else
     {
+        // 기존 에디터 회전 로직 유지
         if (IsPerspective())
         {
             CameraRotateYaw(DeltaX * 0.1f);
@@ -472,6 +468,7 @@ void FEditorViewportClient::MouseMove(const FPointerEvent& InMouseEvent)
         }
     }
 }
+
 
 
 

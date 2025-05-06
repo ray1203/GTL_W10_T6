@@ -107,6 +107,24 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
     SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
     Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
+	if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
+	{
+		FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+		FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
+		float Radius = Extents.Length();
+
+		float FOV = 90.0f; // 기본 시야각
+		float VerticalFOV = FMath::DegreesToRadians(FOV);
+		float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+		if (std::shared_ptr<FEditorViewportClient> ViewClient = GetLevelEditor()->GetActiveViewportClient())
+		{
+			FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
+			FVector Forward = Cam.GetForwardVector();
+			Cam.SetLocation(Center - Forward * Distance);
+		}
+	}
+
 #endif
 
     UpdateUI();
