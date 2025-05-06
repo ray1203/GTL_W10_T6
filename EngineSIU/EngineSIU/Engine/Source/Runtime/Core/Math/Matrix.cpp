@@ -432,3 +432,19 @@ void FMatrix::RemoveScaling(float Tolerance)
     M[2][1] *= Scale2;
     M[2][2] *= Scale2;
 }
+FMatrix FMatrix::CreateRotationFromZ(const FVector& Direction)
+{
+    FVector Z = Direction.GetSafeNormal();
+    FVector Up = FVector::UpVector;
+    if (FMath::Abs(Z.Dot(Up)) > 0.99f)
+        Up = FVector::RightVector;
+    FVector X = Up.Cross(Z).GetSafeNormal();
+    FVector Y = Z.Cross(X);
+
+    return FMatrix{
+        X.X, Y.X, Z.X, 0.0f,
+        X.Y, Y.Y, Z.Y, 0.0f,
+        X.Z, Y.Z, Z.Z, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+}

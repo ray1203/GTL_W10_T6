@@ -1366,59 +1366,40 @@ void FSkeletalMeshDebugger::DrawSkeleton(const USkeletalMeshComponent* SkelMeshC
         return;
     }
 
-    USkeleton* Skeleton = SkelMeshComp->GetSkeletalMesh()->Skeleton;
+    const USkeleton* Skeleton = SkelMeshComp->GetSkeletalMesh()->Skeleton;
     const FAnimationPoseData& Pose = Skeleton->CurrentPose;
+    const TArray<FBoneNode>& BoneTree = Skeleton->BoneTree;
     const int32 NumBones = Pose.GlobalTransforms.Num();
+
+    if (NumBones == 0 || BoneTree.Num() != NumBones)
+    {
+        UE_LOG(LogLevel::Warning, TEXT("Bone count mismatch or empty pose"));
+        return;
+    }
 
     UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
 
-    const FVector4 BoneColor = FVector4(1.0f, 0.7f, 0.2f, 1.0f);
-    constexpr int32 ConeSegments = 8;
-    constexpr float ConeRadius = 0.2f;
     constexpr float ScaleFactor = 0.01f;
+    constexpr int ConeSegments = 12;
+    const FVector4 ConeColor = FVector4(0.2f, 1.0f, 0.2f, 1.0f); // 연녹색
 
-    const FMatrix ComponentTransform = SkelMeshComp->GetWorldMatrix();
+    const FMatrix CompTransform = SkelMeshComp->GetRotationMatrix() * SkelMeshComp->GetScaleMatrix() * SkelMeshComp->GetTranslationMatrix();
+    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, -90.f);
+    const FMatrix WorldMatrix = ToXFront * CompTransform;
 
-    for (int32 ChildIndex = 0; ChildIndex < NumBones; ++ChildIndex)
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
     {
-        int32 ParentIndex = Skeleton->BoneTree[ChildIndex].ParentIndex;
-        if (ParentIndex < 0 || ParentIndex >= NumBones) continue;
+        int32 ParentIndex = BoneTree[BoneIndex].ParentIndex;
+        if (ParentIndex < 0 || ParentIndex >= NumBones)
+            continue;
 
-        // 본 위치 추출
-        FVector ParentPos = Pose.GlobalTransforms[ParentIndex].GetTranslationVector() * ScaleFactor;
-        FVector ChildPos = Pose.GlobalTransforms[ChildIndex].GetTranslationVector() * ScaleFactor;
+        FVector PosChild = WorldMatrix.TransformPosition(Pose.GlobalTransforms[BoneIndex].GetTranslationVector() * ScaleFactor);
+        FVector PosParent = WorldMatrix.TransformPosition(Pose.GlobalTransforms[ParentIndex].GetTranslationVector() * ScaleFactor);
 
-        ParentPos = ComponentTransform.TransformPosition(ParentPos);
-        ChildPos = ComponentTransform.TransformPosition(ChildPos);
+        float Distance = (PosParent - PosChild).Length();
+        float ConeRadius = Distance * 0.1f;
 
-        FVector Direction = (ChildPos - ParentPos);
-        float Length = Direction.Length();
-        if (Length < KINDA_SMALL_NUMBER) continue;
-
-        FVector Forward = Direction.GetSafeNormal();
-        FVector Up = FVector::UpVector;
-        if (FMath::Abs(Forward.Dot(Up)) > 0.99f)
-            Up = FVector::RightVector; // 방향이 너무 수직이면 보조 벡터 변경
-
-        FVector Right = Up.Cross(Forward).GetSafeNormal();
-        Up = Forward.Cross(Right); // 재정의된 Up
-
-        FMatrix Orientation = FMatrix{
-            Right.X, Forward.X, Up.X, 0,
-            Right.Y, Forward.Y, Up.Y, 0,
-            Right.Z, Forward.Z, Up.Z, 0,
-            0,       0,         0,    1
-        };
-        Orientation.SetOrigin(ParentPos);
-
-        DrawBatch->AddConeToBatch(
-            ParentPos,
-            ConeRadius,
-            Length,
-            ConeSegments,
-            BoneColor,
-            Orientation
-        );
+        DrawBatch->AddConeToBatch(PosChild, PosParent, ConeRadius, ConeSegments, ConeColor);
     }
 }
 void FSkeletalMeshDebugger::DrawSkeletonAABBs(const USkeletalMeshComponent* SkelMeshComp)
