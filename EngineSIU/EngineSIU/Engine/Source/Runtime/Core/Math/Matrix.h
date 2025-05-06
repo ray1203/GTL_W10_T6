@@ -87,6 +87,10 @@ public:
 
         return M[0][0] * Det3x3_00 - M[0][1] * Det3x3_01 + M[0][2] * Det3x3_02 - M[0][3] * Det3x3_03;
     }
+    FVector GetAxisX() const { return FVector(M[0][0], M[1][0], M[2][0]); }
+    FVector GetAxisY() const { return FVector(M[0][1], M[1][1], M[2][1]); }
+    FVector GetAxisZ() const { return FVector(M[0][2], M[1][2], M[2][2]); }
+
 };
 
 inline FArchive& operator<<(FArchive& Ar, FMatrix& M)

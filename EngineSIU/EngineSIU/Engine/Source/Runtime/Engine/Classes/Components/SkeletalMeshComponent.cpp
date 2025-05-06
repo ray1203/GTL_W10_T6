@@ -26,7 +26,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     {
         return;
     }
-    TArray< FName> BoneName;
+    /*TArray< FName> BoneName;
     SkeletalMesh->GetBoneNames(BoneName);
     // 1. 움직일 본 찾기
     if (BoneName.IsEmpty()) return;
@@ -53,7 +53,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 
             SkeletalMesh->UpdateAndApplySkinning();
         }
-    }
+    }*/
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const

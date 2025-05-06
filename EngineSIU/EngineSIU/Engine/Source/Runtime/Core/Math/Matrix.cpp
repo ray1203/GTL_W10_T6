@@ -103,6 +103,14 @@ void FMatrix::SetOrigin(const FVector& NewOrigin)
     M[3][2] = NewOrigin.Z;
     M[3][3] = 1.0f;
 }
+/*void FMatrix::SetOrigin(const FVector& NewOrigin)
+{
+    M[0][3] = NewOrigin.X;
+    M[1][3] = NewOrigin.Y;
+    M[2][3] = NewOrigin.Z;
+    M[3][3] = 1.0f;
+}*/
+
 void FMatrix::RemoveTranslation()
 {
     // Set the translation part to zero
