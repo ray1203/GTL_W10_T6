@@ -42,6 +42,34 @@ PS_Input mainVS(uint VertexID : SV_VertexID)
     return Output;
 }
 
+/*float4 mainPS(PS_Input Input) : SV_TARGET
+{
+    float4 Scene = SceneTexture.Sample(CompositingSampler, Input.UV);
+    float4 PostProcess = PP_PostProcessTexture.Sample(CompositingSampler, Input.UV);
+    float4 Editor = EditorTexture.Sample(CompositingSampler, Input.UV);
+    float4 Debug = DebugTexture.Sample(CompositingSampler, Input.UV);
+
+    float4 FinalColor = float4(0, 0, 0, 1);
+
+    if (ViewMode == 7)
+    {
+        FinalColor = lerp(Scene, Debug, 0.5f);
+    }
+    else
+    {
+        FinalColor = lerp(Scene, PostProcess, PostProcess.a);
+    }
+
+    // EditorTexture가 완전히 Scene 위에 올라오도록 강제 덮어쓰기
+    FinalColor.rgb = lerp(FinalColor.rgb, Editor.rgb, step(0.001f, Editor.a));
+    //FinalColor.rgb = Scene.rgb;
+    //FinalColor.rgb = Editor.rgb;
+    FinalColor.rgb = Scene.rgb;
+    return FinalColor;
+}*/
+
+
+
 float4 mainPS(PS_Input Input) : SV_TARGET
 {
     float4 Scene = SceneTexture.Sample(CompositingSampler, Input.UV);
@@ -61,6 +89,7 @@ float4 mainPS(PS_Input Input) : SV_TARGET
         FinalColor = lerp(FinalColor, Editor, Editor.a);
 
     }
-
     return FinalColor;
 }
+
+

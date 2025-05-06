@@ -155,6 +155,21 @@ namespace  FBX {
         // Result = Result * CoordChange;
         return Result;
     }
+    FbxAMatrix ConvertFMatrixToFbxAMatrix(const FMatrix& InMatrix)
+    {
+        FbxAMatrix OutMatrix;
+
+        for (int Row = 0; Row < 4; ++Row)
+        {
+            for (int Col = 0; Col < 4; ++Col)
+            {
+                OutMatrix.mData[Row][Col] = static_cast<double>(InMatrix.M[Row][Col]);
+            }
+        }
+
+        return OutMatrix;
+    }
+
 
     FWString ProcessTexturePathInternal(FbxFileTexture* Texture, const FWString& BaseDirectory)
     {
@@ -905,6 +920,17 @@ namespace std
 }
 
 // --- FLoaderFBX Static Method Implementations ---
+FString FbxTransformToString(const FbxAMatrix& Matrix)
+{
+    FbxVector4 T = Matrix.GetT(); // Translation
+    FbxVector4 R = Matrix.GetR(); // Rotation (Euler)
+    FbxVector4 S = Matrix.GetS(); // Scaling
+
+    return FString::Printf(TEXT("T(%.2f, %.2f, %.2f) | R(%.2f, %.2f, %.2f) | S(%.2f, %.2f, %.2f)"),
+        T[0], T[1], T[2],
+        R[0], R[1], R[2],
+        S[0], S[1], S[2]);
+}
 
 bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
 {
@@ -1068,7 +1094,13 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
             for (int i = 0; i < CurrentNode->GetChildCount(); ++i) ProcessNodeRecursive(CurrentNode->GetChild(i));
         };
     ProcessNodeRecursive(RootNode);
-
+    for (auto& Pair : OutFBXInfo.SkeletonHierarchy)
+    {
+        const FName& BoneName = Pair.Key;
+        const FBoneHierarchyNode& BoneNode = Pair.Value;
+        FString BoneInfo = FbxTransformToString(ConvertFMatrixToFbxAMatrix(BoneNode.GlobalBindPose));
+        UE_LOG(LogLevel::Display, TEXT("[%s] %s"), *BoneName.ToString(), *BoneInfo);
+    }
     return true;
 }
 
@@ -1336,44 +1368,95 @@ void FSkeletalMeshDebugger::DrawSkeleton(const USkeletalMeshComponent* SkelMeshC
 
     USkeleton* Skeleton = SkelMeshComp->GetSkeletalMesh()->Skeleton;
     const FAnimationPoseData& Pose = Skeleton->CurrentPose;
+    const int32 NumBones = Pose.GlobalTransforms.Num();
 
     UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
 
-    constexpr float BaseConeRadius = 0.5f;
-    constexpr float BaseConeHeight = 2.0f;
+    const FVector4 BoneColor = FVector4(1.0f, 0.7f, 0.2f, 1.0f);
     constexpr int32 ConeSegments = 8;
-    const FVector4 BoneColor = FVector4(1.0f, 0.7f, 0.2f, 1.0f); // 주황색
-
-    const int32 NumBones = Pose.GlobalTransforms.Num();
+    constexpr float ConeRadius = 0.2f;
     constexpr float ScaleFactor = 0.01f;
 
-    // 메쉬의 전체 변환 (스케일, 회전, 위치 포함)
-    const FMatrix CompRot = SkelMeshComp->GetRotationMatrix();
-    const FMatrix CompScale = SkelMeshComp->GetScaleMatrix();
-    const FMatrix CompTrans = SkelMeshComp->GetTranslationMatrix();
-    const FMatrix CompTransform = CompRot * CompScale * CompTrans;
+    const FMatrix ComponentTransform = SkelMeshComp->GetWorldMatrix();
 
-    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, -90.f); // YFront → XFront
+    for (int32 ChildIndex = 0; ChildIndex < NumBones; ++ChildIndex)
+    {
+        int32 ParentIndex = Skeleton->BoneTree[ChildIndex].ParentIndex;
+        if (ParentIndex < 0 || ParentIndex >= NumBones) continue;
+
+        // 본 위치 추출
+        FVector ParentPos = Pose.GlobalTransforms[ParentIndex].GetTranslationVector() * ScaleFactor;
+        FVector ChildPos = Pose.GlobalTransforms[ChildIndex].GetTranslationVector() * ScaleFactor;
+
+        ParentPos = ComponentTransform.TransformPosition(ParentPos);
+        ChildPos = ComponentTransform.TransformPosition(ChildPos);
+
+        FVector Direction = (ChildPos - ParentPos);
+        float Length = Direction.Length();
+        if (Length < KINDA_SMALL_NUMBER) continue;
+
+        FVector Forward = Direction.GetSafeNormal();
+        FVector Up = FVector::UpVector;
+        if (FMath::Abs(Forward.Dot(Up)) > 0.99f)
+            Up = FVector::RightVector; // 방향이 너무 수직이면 보조 벡터 변경
+
+        FVector Right = Up.Cross(Forward).GetSafeNormal();
+        Up = Forward.Cross(Right); // 재정의된 Up
+
+        FMatrix Orientation = FMatrix{
+            Right.X, Forward.X, Up.X, 0,
+            Right.Y, Forward.Y, Up.Y, 0,
+            Right.Z, Forward.Z, Up.Z, 0,
+            0,       0,         0,    1
+        };
+        Orientation.SetOrigin(ParentPos);
+
+        DrawBatch->AddConeToBatch(
+            ParentPos,
+            ConeRadius,
+            Length,
+            ConeSegments,
+            BoneColor,
+            Orientation
+        );
+    }
+}
+void FSkeletalMeshDebugger::DrawSkeletonAABBs(const USkeletalMeshComponent* SkelMeshComp)
+{
+    if (!SkelMeshComp || !SkelMeshComp->GetSkeletalMesh() || !SkelMeshComp->GetSkeletalMesh()->Skeleton)
+    {
+        UE_LOG(LogLevel::Error, TEXT("Invalid SkeletalMeshComponent or missing Skeleton"));
+        return;
+    }
+
+    const USkeleton* Skeleton = SkelMeshComp->GetSkeletalMesh()->Skeleton;
+    const FAnimationPoseData& Pose = Skeleton->CurrentPose;
+    const int32 NumBones = Pose.GlobalTransforms.Num();
+
+    if (NumBones == 0)
+    {
+        UE_LOG(LogLevel::Warning, TEXT("Empty pose"));
+        return;
+    }
+
+    UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
+
+    constexpr float ScaleFactor = 0.01f;
+    const FVector4 BoxColor = FVector4(1.0f, 0.2f, 0.2f, 1.0f);
+    const float HalfExtent = 0.1f;
+
+    const FMatrix CompTransform = SkelMeshComp->GetRotationMatrix() * SkelMeshComp->GetScaleMatrix() * SkelMeshComp->GetTranslationMatrix();
+    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, -90.f);
+    const FMatrix WorldMatrix = ToXFront * CompTransform;
 
     for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
     {
-        const FMatrix& BoneMatrix = Pose.GlobalTransforms[BoneIndex];
+        FVector Position = WorldMatrix.TransformPosition(Pose.GlobalTransforms[BoneIndex].GetTranslationVector() * ScaleFactor);
 
-        // 위치만 추출해서 처리
-        FVector ScaledPosition = BoneMatrix.GetTranslationVector() * ScaleFactor;
-        FVector WorldPosition = (ToXFront * CompTransform).TransformPosition(ScaledPosition);
+        FBoundingBox LocalBox;
+        LocalBox.min = FVector(-HalfExtent);
+        LocalBox.max = FVector(HalfExtent);
 
-        // 기본 단위 회전 행렬 사용 (회전 없음)
-        FMatrix IdentityRotation = FMatrix::Identity;
-        IdentityRotation.SetOrigin(WorldPosition);
-
-        DrawBatch->AddConeToBatch(
-            WorldPosition,
-            BaseConeRadius,
-            BaseConeHeight,
-            ConeSegments,
-            BoneColor,
-            IdentityRotation
-        );
+        DrawBatch->AddAABBToBatch(LocalBox, Position, FMatrix::Identity);
     }
 }

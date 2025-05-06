@@ -238,20 +238,26 @@ void UPrimitiveDrawBatch::AddAABBToBatch(const FBoundingBox& LocalAABB, const FV
     };
 
     FVector WorldVertices[8];
-    WorldVertices[0] = ModelMatrix.TransformPosition(LocalVertices[0]);
+    FVector TranslatedCenter = ModelMatrix.TransformPosition(Center);
 
-    FVector Min = WorldVertices[0], Max = WorldVertices[0];
+    for (int i = 0; i < 8; ++i)
+    {
+        WorldVertices[i] = ModelMatrix.TransformPosition(LocalVertices[i] + Center);
+    }
+
+    FVector Min = WorldVertices[0];
+    FVector Max = WorldVertices[0];
 
     for (int i = 1; i < 8; ++i)
     {
-        WorldVertices[i] = ModelMatrix.TransformPosition(LocalVertices[i]);
-        Min.X = (WorldVertices[i].X < Min.X) ? WorldVertices[i].X : Min.X;
-        Min.Y = (WorldVertices[i].Y < Min.Y) ? WorldVertices[i].Y : Min.Y;
-        Min.Z = (WorldVertices[i].Z < Min.Z) ? WorldVertices[i].Z : Min.Z;
-        Max.X = (WorldVertices[i].X > Max.X) ? WorldVertices[i].X : Max.X;
-        Max.Y = (WorldVertices[i].Y > Max.Y) ? WorldVertices[i].Y : Max.Y;
-        Max.Z = (WorldVertices[i].Z > Max.Z) ? WorldVertices[i].Z : Max.Z;
+        Min.X = FMath::Min(Min.X, WorldVertices[i].X);
+        Min.Y = FMath::Min(Min.Y, WorldVertices[i].Y);
+        Min.Z = FMath::Min(Min.Z, WorldVertices[i].Z);
+        Max.X = FMath::Max(Max.X, WorldVertices[i].X);
+        Max.Y = FMath::Max(Max.Y, WorldVertices[i].Y);
+        Max.Z = FMath::Max(Max.Z, WorldVertices[i].Z);
     }
+
     FBoundingBox BoundingBox;
     BoundingBox.min = Min;
     BoundingBox.max = Max;

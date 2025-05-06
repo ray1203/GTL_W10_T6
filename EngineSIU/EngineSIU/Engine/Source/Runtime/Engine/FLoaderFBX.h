@@ -272,6 +272,8 @@ private:
 };
 struct FSkeletalMeshDebugger
 {
+    static void DrawSkeletonAABBs(const USkeletalMeshComponent* SkelMeshComp);
+
     static void DrawSkeleton(const USkeletalMeshComponent* SkelMeshComp);
     static void DrawBoneNames(const FBX::FSkeletalMeshRenderData& Mesh);
     static void DrawBoneAxes(const FBX::FSkeletalMeshRenderData& Mesh);
