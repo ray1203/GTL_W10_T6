@@ -15,9 +15,12 @@
 #include <functional>
 #include <unordered_map> 
 
+class USkeletalMeshComponent;
+
 // --- FBX 로딩 관련 네임스페이스 ---
 namespace FBX
 {
+    struct FBoneHierarchyNode;
     // --- 데이터 구조체 정의 ---
     // 재질 정보 구조체
     struct FFbxMaterialInfo
@@ -266,4 +269,11 @@ private:
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
+};
+struct FSkeletalMeshDebugger
+{
+    static void DrawSkeleton(const USkeletalMeshComponent* SkelMeshComp);
+    static void DrawBoneNames(const FBX::FSkeletalMeshRenderData& Mesh);
+    static void DrawBoneAxes(const FBX::FSkeletalMeshRenderData& Mesh);
+    static void DrawBoneHierarchy(const FBX::FSkeletalMeshRenderData& Mesh);
 };

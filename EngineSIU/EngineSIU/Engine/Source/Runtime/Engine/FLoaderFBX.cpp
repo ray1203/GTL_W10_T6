@@ -20,6 +20,7 @@
 #include "Components/Material/Material.h" // UMaterial, FFbxMaterialInfo (또는 FObjMaterialInfo) 정의
 // #include "UserInterface/Console.h"    // Console 클래스 (로깅 제거됨)
 // #include "Launch/EngineLoop.h"        // EngineLoop::GraphicDevice 접근용 (필요 시)
+#include "Components/SkeletalMeshComponent.h"
 #include "UObject/ObjectFactory.h"    // FManagerFBX 에서 사용
 
 
@@ -925,10 +926,10 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     if (!Importer->Initialize(FilepathStdString.c_str(), -1, SdkManager->GetIOSettings())) return false;
     if (!Importer->Import(Scene)) return false;
 
-    FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
-
+    //FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
+    FbxAxisSystem TargetAxisSystem = FbxAxisSystem::DirectX;
     if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem) 
-        TargetAxisSystem.ConvertScene(Scene);
+        TargetAxisSystem.DeepConvertScene(Scene);
     
     FbxSystemUnit::cm.ConvertScene(Scene);
     FbxGeometryConverter GeometryConverter(SdkManager);
@@ -1323,4 +1324,43 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
         return SkeletalMeshMap[name];
 
     return CreateSkeletalMesh(FString(name.c_str()));
+}
+
+void FSkeletalMeshDebugger::DrawSkeleton(const USkeletalMeshComponent* SkelMeshComp)
+{
+    if (!SkelMeshComp || !SkelMeshComp->GetSkeletalMesh() || !SkelMeshComp->GetSkeletalMesh()->Skeleton)
+    {
+        UE_LOG(LogLevel::Error, TEXT("Invalid SkeletalMeshComponent or missing Skeleton"));
+        return;
+    }
+
+    USkeleton* Skeleton = SkelMeshComp->GetSkeletalMesh()->Skeleton;
+    const FAnimationPoseData& Pose = Skeleton->CurrentPose;
+
+    UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
+
+    constexpr float ConeRadius = 0.5f;
+    constexpr float ConeHeight = 2.0f;
+    constexpr int32 ConeSegments = 8;
+    const FVector4 BoneColor = FVector4(1.0f, 0.7f, 0.2f, 1.0f); // 주황색
+
+    const int32 NumBones = Pose.GlobalTransforms.Num();
+
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        const FMatrix& BoneMatrix = Pose.GlobalTransforms[BoneIndex];
+        const FVector BonePosition = BoneMatrix.GetTranslationVector();
+
+        FMatrix ModelMatrix = FMatrix::Identity;
+        ModelMatrix.SetOrigin(BonePosition);
+
+        DrawBatch->AddConeToBatch(
+            BonePosition,
+            ConeRadius,
+            ConeHeight,
+            ConeSegments,
+            BoneColor,
+            ModelMatrix
+        );
+    }
 }

@@ -98,3 +98,28 @@ inline FArchive& operator<<(FArchive& Ar, FMatrix& M)
     return Ar;
 }
 
+static FMatrix LookAtMatrixAutoUp(const FVector& Eye, const FVector& Target)
+{
+    FVector Forward = (Target - Eye).GetSafeNormal();
+    FVector DefaultUp = FVector::UpVector;
+
+    // 방향과 Up이 너무 일치하면 다른 축 사용
+    if (FMath::Abs(Forward.Dot(DefaultUp)) > 0.99f)
+    {
+        DefaultUp = FVector::RightVector;
+    }
+
+    FVector Right = DefaultUp.Cross(Forward).GetSafeNormal();
+    FVector Up = Forward.Cross(Right);
+
+    float DX = -Right.Dot(Eye);
+    float DY = -Up.Dot(Eye);
+    float DZ = -Forward.Dot(Eye);
+
+    return FMatrix{ {
+        {Right.X, Up.X, Forward.X, 0.0f},
+        {Right.Y, Up.Y, Forward.Y, 0.0f},
+        {Right.Z, Up.Z, Forward.Z, 0.0f},
+        {DX,      DY,   DZ,        1.0f}
+    } };
+}

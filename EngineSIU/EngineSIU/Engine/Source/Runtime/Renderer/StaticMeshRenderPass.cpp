@@ -422,3 +422,4 @@ void FStaticMeshRenderPass::RenderAllStaticMeshesForPointLight(const std::shared
         RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
     }
 }
+ 

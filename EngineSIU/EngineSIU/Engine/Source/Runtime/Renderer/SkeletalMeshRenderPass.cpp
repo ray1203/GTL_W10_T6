@@ -356,7 +356,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         {
             continue;
         }
-
+        FSkeletalMeshDebugger::DrawSkeleton(Comp);
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
