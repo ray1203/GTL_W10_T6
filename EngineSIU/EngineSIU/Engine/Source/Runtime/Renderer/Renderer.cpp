@@ -461,6 +461,10 @@ void FRenderer::RenderViewer(const std::shared_ptr<FViewportClient>& Viewport)
     }*/
 
     RenderWorldScene(Viewport);
+
+	QUICK_SCOPE_CYCLE_COUNTER(LinePass_CPU)
+	QUICK_GPU_SCOPE_CYCLE_COUNTER(LinePass_GPU, *GPUTimingManager)
+	LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
     //RenderPostProcess(Viewport);
     //RenderEditorOverlay(Viewport);
 
@@ -498,12 +502,17 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FViewportClient>& Viewpor
             QUICK_GPU_SCOPE_CYCLE_COUNTER(UpdateLightBufferPass_GPU, *GPUTimingManager)
             UpdateLightBufferPass->Render(Viewport);
         }
-        {
-            QUICK_SCOPE_CYCLE_COUNTER(StaticMeshPass_CPU)
-            QUICK_GPU_SCOPE_CYCLE_COUNTER(StaticMeshPass_GPU, *GPUTimingManager)
-            StaticMeshRenderPass->Render(Viewport);
-            SkeletalMeshRenderPass->Render(Viewport);
-        }
+		{
+			QUICK_SCOPE_CYCLE_COUNTER(StaticMeshPass_CPU)
+			QUICK_GPU_SCOPE_CYCLE_COUNTER(StaticMeshPass_GPU, *GPUTimingManager)
+			StaticMeshRenderPass->Render(Viewport);
+		}
+		if (ShowFlag & EEngineShowFlags::SF_SkeletalMesh) 
+		{
+			{
+				SkeletalMeshRenderPass->Render(Viewport);
+			}
+		}
     }
     
     // Render World Billboard

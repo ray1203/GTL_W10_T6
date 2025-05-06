@@ -201,7 +201,7 @@ void ViewerControlEditorPanel::CreateFlagButton()
         ImGui::OpenPopup("ShowFlags");
     }
 
-    const char* Items[] = {"Primitives", "Shadow", "Bone"};
+    const char* Items[] = {"Primitives", "Shadow", "Bone", "SkeletalMesh", "Debug"};
     const uint64 CurFlag = ActiveViewport->GetShowFlag();
 
     if (ImGui::BeginPopup("ShowFlags"))
@@ -211,6 +211,8 @@ void ViewerControlEditorPanel::CreateFlagButton()
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_Primitives),
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_Shadow),
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_Bone),
+            static_cast<bool>(CurFlag & EEngineShowFlags::SF_SkeletalMesh),
+            static_cast<bool>(CurFlag & EEngineShowFlags::SF_AABB),
         };
 
         for (int i = 0; i < IM_ARRAYSIZE(Items); i++)
@@ -305,6 +307,14 @@ uint64 ViewerControlEditorPanel::ConvertSelectionToFlags(const bool Selected[])
     if (Selected[2])
     {
         Flags |= static_cast<uint64>(EEngineShowFlags::SF_Bone);
+    }
+    if (Selected[3])
+    {
+        Flags |= static_cast<uint64>(EEngineShowFlags::SF_SkeletalMesh);
+    }
+    if (Selected[4])
+    {
+        Flags |= static_cast<uint64>(EEngineShowFlags::SF_AABB);
     }
 
     return Flags;
