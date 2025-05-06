@@ -67,7 +67,11 @@ void UPrimitiveDrawBatch::ReleaseResources()
 void UPrimitiveDrawBatch::InitializeGrid(float Spacing, int GridCount)
 {
     GridParameters.GridSpacing = Spacing;
+#ifdef _DEBUG_VIEWER
+    GridParameters.NumGridLines = 0;
+#else
     GridParameters.NumGridLines = GridCount;
+#endif
     GridParameters.GridOrigin = { 0, 0, 0 };
 }
 

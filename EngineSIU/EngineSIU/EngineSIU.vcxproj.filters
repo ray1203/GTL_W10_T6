@@ -821,7 +821,11 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Renderer\SkeletalMeshViewerRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkinnedMeshComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\Skeleton.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\SkinWeightVertexBuffer.cpp" />
+    <ClCompile Include="Engine\Source\Editor\UnrealEd\ViewerEd.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
@@ -1075,7 +1079,12 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshRenderPass.h" />
-    <ClInclude Include="Engine\Source\Runtime\Renderer\SkeletalMeshViewerRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkinnedMeshComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\Skeleton.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\SkinWeightVertexBuffer.h" />
+    <ClInclude Include="Engine\Source\Editor\UnrealEd\ViewerEd.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
@@ -1165,5 +1174,16 @@
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodL.a" />
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudio.a" />
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudioL.a" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
+    <Image Include="..\Icon.ico" />
+    <Image Include="icon2.ico" />
+    <Image Include="icon3.ico" />
+    <Image Include="..\ICon.png" />
+    <Image Include="Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="EngineSIU.rc" />
   </ItemGroup>
 </Project>

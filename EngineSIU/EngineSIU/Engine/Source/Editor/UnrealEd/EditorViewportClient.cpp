@@ -15,9 +15,8 @@
 #include "Engine/Engine.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "SlateCore/Input/Events.h"
-
 #include "GameFramework/PlayerController.h"
-
+#include "Components/PrimitiveComponent.h"
 
 FEditorViewportClient::FEditorViewportClient() : FViewportClient()
 {
@@ -40,8 +39,8 @@ void FEditorViewportClient::Initialize(EViewScreenLocation InViewportIndex, cons
 void FEditorViewportClient::Tick(const float DeltaTime)
 {
     FViewportClient::Tick(DeltaTime);
-    
-    if(GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
     {
         UpdateEditorCameraMovement(DeltaTime);
         GizmoActor->Tick(DeltaTime);
@@ -50,6 +49,7 @@ void FEditorViewportClient::Tick(const float DeltaTime)
     UpdateViewMatrix();
     UpdateProjectionMatrix();
 }
+
 
 void FEditorViewportClient::UpdateEditorCameraMovement(const float DeltaTime)
 {
@@ -154,6 +154,52 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
         }
     }
     // 에디터 모드
+    else if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer)
+    {
+        switch (InKeyEvent.GetCharacter())
+        {
+        case 'A':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::A);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::A);
+            break;
+        case 'D':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::D);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::D);
+            break;
+        case 'W':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::W);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::W);
+            break;
+        case 'S':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::S);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::S);
+            break;
+        case 'Q':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::Q);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::Q);
+            break;
+        case 'E':
+            if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                PressedKeys.Add(EKeys::E);
+            else if (InKeyEvent.GetInputEvent() == IE_Released)
+                PressedKeys.Remove(EKeys::E);
+            break;
+        default:
+            break;
+        }
+        return;
+    }
+
     else
     {
         // TODO: 나중에 InKeyEvent.GetKey();로 가져오는걸로 수정하기
@@ -263,8 +309,6 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
             }
             PressedKeys.Empty();
         }
-
-
         // 일반적인 단일 키 이벤트
         if (InKeyEvent.GetInputEvent() == IE_Pressed)
         {
@@ -287,14 +331,25 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
                     TargetComponent = SelectedActor->GetRootComponent();
                 }
 
-                if (TargetComponent)
+                if (UPrimitiveComponent* primitive = Cast<UPrimitiveComponent>(TargetComponent))
                 {
                     FViewportCamera& ViewTransform = PerspectiveCamera;
-                    ViewTransform.SetLocation(
-                        // TODO: 10.0f 대신, 정점의 min, max의 거리를 구해서 하면 좋을 듯
-                        TargetComponent->GetWorldLocation() - (ViewTransform.GetForwardVector() * 10.0f)
-                    );
+                    float fov = FieldOfView;
+
+                    // AABB 중심 및 크기
+                    FBoundingBox Box = primitive->GetBoundingBox();
+                    FVector Center = (Box.min + Box.max) * 0.5f;
+                    FVector Extents = (Box.max - Box.min) * 0.5f;
+                    float Radius = Extents.Length();
+
+                    // FOV 기반 카메라 거리 계산
+                    float VerticalFOV = FMath::DegreesToRadians(fov);
+                    float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+                    // 위치 이동
+                    ViewTransform.SetLocation(Center - ViewTransform.GetForwardVector() * Distance);
                 }
+
                 break;
             }
             case 'M':
@@ -361,18 +416,61 @@ void FEditorViewportClient::MouseMove(const FPointerEvent& InMouseEvent)
 {
     const auto& [DeltaX, DeltaY] = InMouseEvent.GetCursorDelta();
 
-    // Yaw(좌우 회전) 및 Pitch(상하 회전) 값 변경
-    if (IsPerspective())
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer)
     {
-        CameraRotateYaw(DeltaX * 0.1f);  // X 이동에 따라 좌우 회전
-        CameraRotatePitch(DeltaY * 0.1f);  // Y 이동에 따라 상하 회전
+        bool bRight = (GetKeyState(VK_RBUTTON) & 0x8000);
+        if (bRight)
+        {
+            // 현재 회전값 업데이트
+            FVector CurRot = PerspectiveCamera.GetRotation();
+            CurRot.Z += DeltaX * 0.15f; // Yaw
+            CurRot.Y = FMath::Clamp(CurRot.Y + DeltaY * 0.15f, -89.0f, 89.0f); // Pitch
+            PerspectiveCamera.SetRotation(CurRot);
+
+            // 중심점 가져오기
+            FVector LookAt = FVector::ZeroVector;
+
+            if (UEditorEngine* Engine = Cast<UEditorEngine>(GEngine))
+            {
+                if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Engine->GetSelectedComponent()))
+                {
+                    LookAt = (Prim->GetBoundingBox().min + Prim->GetBoundingBox().max) * 0.5f;
+                }
+                else if (AActor* Selected = Engine->GetSelectedActor())
+                {
+                    if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Selected->GetRootComponent()))
+                    {
+                        LookAt = (Prim->GetBoundingBox().min + Prim->GetBoundingBox().max) * 0.5f;
+                    }
+                }
+            }
+
+            // 현재 거리 계산
+            float Distance = (PerspectiveCamera.GetLocation() - LookAt).Length();
+
+            // 회전된 위치 계산 (Z축 기준 Yaw, Y축 기준 Pitch)
+            FVector Offset = JungleMath::FVectorRotate(FVector(-Distance, 0, 0), CurRot);
+            PerspectiveCamera.SetLocation(LookAt + Offset);
+        }
     }
     else
     {
-        PivotMoveRight(DeltaX);
-        PivotMoveUp(DeltaY);
+        // 기존 에디터 회전 로직 유지
+        if (IsPerspective())
+        {
+            CameraRotateYaw(DeltaX * 0.1f);
+            CameraRotatePitch(DeltaY * 0.1f);
+        }
+        else
+        {
+            PivotMoveRight(DeltaX);
+            PivotMoveUp(DeltaY);
+        }
     }
 }
+
+
+
 
 void FEditorViewportClient::ResizeViewport(FRect Top, FRect Bottom, FRect Left, FRect Right)
 {

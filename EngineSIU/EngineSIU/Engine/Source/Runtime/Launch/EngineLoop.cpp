@@ -9,15 +9,19 @@
 #include "Slate/Widgets/Layout/SSplitter.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
+#include "UnrealEd/ViewerEd.h"
 #include "World/World.h"
 #include "Renderer/TileLightCullingPass.h"
 #include "Engine/Lua/LuaScriptManager.h" 
 #include "UnrealEd/EditorConfigManager.h"
 #include "Games/LastWar/UI/LastWarUI.h"
-
-
+#include "GameFramework/Actor.h"
+#include "Classes/Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "FLoaderFBX.h"
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+extern FWString GViewerFilePath;
 FGraphicsDevice FEngineLoop::GraphicDevice;
 FRenderer FEngineLoop::Renderer;
 UPrimitiveDrawBatch FEngineLoop::PrimitiveDrawBatch;
@@ -30,6 +34,7 @@ FEngineLoop::FEngineLoop()
     , UIMgr(nullptr)
     , LevelEditor(nullptr)
     , UnrealEditor(nullptr)
+    , ViewerEditor(nullptr)
     , BufferManager(nullptr)
 {
 }
@@ -47,6 +52,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     WindowInit(hInstance);
 
     UnrealEditor = new UnrealEd();
+    ViewerEditor = new ViewerEd();
     BufferManager = new FDXDBufferManager();
     UIMgr = new UImGuiManager;
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
@@ -55,6 +61,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     
 
     UnrealEditor->Initialize();
+    ViewerEditor->Initialize();
     GraphicDevice.Initialize(AppWnd);
     AudioManager::Get().Initialize();
 
@@ -94,6 +101,31 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
 
     GEngine = FObjectFactory::ConstructObject<UEditorEngine>(nullptr);
     GEngine->Init();
+    
+#ifdef _DEBUG_VIEWER
+    Cast<UEditorEngine>(GEngine)->StartViewer();
+    ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
+    SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
+    Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
+	if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
+	{
+		FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+		FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
+		float Radius = Extents.Length();
+
+		float FOV = 90.0f; // 기본 시야각
+		float VerticalFOV = FMath::DegreesToRadians(FOV);
+		float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+		if (std::shared_ptr<FEditorViewportClient> ViewClient = GetLevelEditor()->GetActiveViewportClient())
+		{
+			FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
+			FVector Forward = Cam.GetForwardVector();
+			Cam.SetLocation(Center - Forward * Distance);
+		}
+	}
+
+#endif
 
     UpdateUI();
 
@@ -110,7 +142,11 @@ void FEngineLoop::Render() const
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetActiveViewportClient(i);
+#ifdef _DEBUG_VIEWER
+            Renderer.RenderViewer(LevelEditor->GetActiveViewportClient());
+#else 
             Renderer.Render(LevelEditor->GetActiveViewportClient());
+#endif
         }
         
         for (int i = 0; i < 4; ++i)
@@ -122,8 +158,11 @@ void FEngineLoop::Render() const
     }
     else
     {
-        Renderer.Render(ActiveViewportCache);
-        
+#ifdef _DEBUG_VIEWER
+        Renderer.RenderViewer(LevelEditor->GetActiveViewportClient());
+#else 
+        Renderer.Render(LevelEditor->GetActiveViewportClient());
+#endif
         Renderer.RenderViewport(ActiveViewportCache);
     }
     
@@ -167,8 +206,17 @@ void FEngineLoop::Tick()
         AudioManager::Get().Tick();
         GEngine->Tick(DeltaTime);
         LevelEditor->Tick(DeltaTime);
+
         Render();
+#ifdef _DEBUG_VIEWER
         UIMgr->BeginFrame();
+        //UnrealEditor->Render();
+        ViewerEditor->Render();
+        //EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
+        UIMgr->EndFrame();
+#else
+        UIMgr->BeginFrame();
+
         UnrealEditor->Render();
 
 
@@ -189,6 +237,7 @@ void FEngineLoop::Tick()
         {
             LuaScriptManager->HotReloadLuaScript();
         }
+#endif
 
         GraphicDevice.SwapBuffer();
         do

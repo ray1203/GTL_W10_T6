@@ -118,7 +118,7 @@ FMatrix JungleMath::CreateOrthographicOffCenter( float left, float right, float 
     return Projection;
 }
 
-FVector JungleMath::FVectorRotate(FVector& origin, const FVector& InRotation)
+FVector JungleMath::FVectorRotate(const FVector& origin, const FVector& InRotation)
 {
     FQuat quaternion = JungleMath::EulerToQuaternion(InRotation);
     // 쿼터니언을 이용해 벡터 회전 적용

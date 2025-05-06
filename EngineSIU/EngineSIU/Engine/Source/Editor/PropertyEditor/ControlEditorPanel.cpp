@@ -26,8 +26,11 @@
 #include "Actors/SpotLightActor.h"
 #include "Actors/AmbientLightActor.h"
 #include "Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Games/LastWar/Core/Spawner.h"
 #include "ImGUI/imgui.h"
+#include "UObject/Casts.h"
+#include "FLoaderFBX.h"
 
 void ControlEditorPanel::Render()
 {
@@ -400,6 +403,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                 case OBJ_Mutant:
                 {
                     SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
+                    //Cast<ASkeletalMeshActor>(SpawnedActor)->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Mutant"));
                 }
                 case OBJ_TRIANGLE:
@@ -493,7 +497,7 @@ void ControlEditorPanel::CreateFlagButton()
         ImGui::OpenPopup("ShowFlags");
     }
 
-    const char* Items[] = { "AABB", "Primitives", "BillBoardText", "UUID", "Fog", "LightWireframe", "LightWireframeSelectedOnly", "Shadow", "Collision", "CollisionSelectedOnly" };
+    const char* Items[] = { "AABB", "Primitives", "BillBoardText", "UUID", "Fog", "LightWireframe", "LightWireframeSelectedOnly", "Shadow", "Collision", "CollisionSelectedOnly", "Bone", "SkeletalMesh"};
     const uint64 CurFlag = ActiveViewport->GetShowFlag();
 
     if (ImGui::BeginPopup("ShowFlags"))
@@ -510,6 +514,8 @@ void ControlEditorPanel::CreateFlagButton()
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_Shadow),
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_Collision),
             static_cast<bool>(CurFlag & EEngineShowFlags::SF_CollisionSelectedOnly),
+            static_cast<bool>(CurFlag & EEngineShowFlags::SF_Bone),
+            static_cast<bool>(CurFlag & EEngineShowFlags::SF_SkeletalMesh),
         }; // 각 항목의 체크 상태 저장
 
         for (int i = 0; i < IM_ARRAYSIZE(Items); i++)
@@ -710,11 +716,18 @@ uint64 ControlEditorPanel::ConvertSelectionToFlags(const bool Selected[])
     {
         Flags |= static_cast<uint64>(EEngineShowFlags::SF_Collision);
     }
-    
     if (Selected[9])
     {
         Flags |= static_cast<uint64>(EEngineShowFlags::SF_Collision);
         Flags |= static_cast<uint64>(EEngineShowFlags::SF_CollisionSelectedOnly);
+    }
+    if (Selected[10])
+    {
+        Flags |= static_cast<uint64>(EEngineShowFlags::SF_Bone);
+    }
+    if (Selected[11])
+    {
+        Flags |= static_cast<uint64>(EEngineShowFlags::SF_SkeletalMesh);
     }
 
     return Flags;
