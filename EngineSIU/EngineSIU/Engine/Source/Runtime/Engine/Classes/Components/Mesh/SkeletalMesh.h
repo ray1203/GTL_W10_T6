@@ -27,6 +27,7 @@ public:
     FBX::FSkeletalMeshRenderData* GetRenderData() const { return SkeletalMeshRenderData; }
     int32 GetBoneIndexByName(const FName& BoneName) const;
     FMatrix GetBoneLocalMatrix(uint32 BoneIndex) const;
+    FMatrix GetBoneBindLocalMatrix(uint32 BoneIndex) const;
     bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
     void UpdateWorldTransforms();
     bool UpdateAndApplySkinning();

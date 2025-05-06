@@ -7,6 +7,7 @@ struct FBoneNode
     FName Name;
     int32 ParentIndex;
     FMatrix BindTransform; // Bind pose transform (로컬 바인드 포즈)
+    FMatrix InverseBindTransform; // Bind pose transform (로컬 바인드 포즈)
 
     // 리타겟팅 모드 - Animation 주차에 필요 시 사용
     // TEnumAsByte<EBoneTranslationRetargetingMode::Type> TranslationRetargetingMode;
@@ -14,6 +15,7 @@ struct FBoneNode
     FBoneNode()
         : ParentIndex(INDEX_NONE)
         , BindTransform(FMatrix::Identity)
+        , InverseBindTransform(FMatrix::Identity)
         // , TranslationRetargetingMode(EBoneTranslationRetargetingMode::Animation)
     {
     }
@@ -77,9 +79,15 @@ public:
 public:
     USkeleton();
     ~USkeleton() = default;
-
+    void Clear()
+    {
+        BoneTree.Empty();
+        LinkupCache.Empty();
+        BoneParentMap.Empty();
+        BoneNameToIndex.Empty();
+    }
     // 본 추가 (인덱스 기반)
-    void AddBone(const FName Name, int32 ParentIdx, const FMatrix BindTransform);
+    void AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlobalBindPose);
 
     // 본 추가 (이름 기반)
     void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform);

@@ -11,39 +11,40 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
 
-   // NewComponent->SkeletalMesh = SkeletalMesh;
+    // NewComponent->SkeletalMesh = SkeletalMesh;
     NewComponent->selectedSubMeshIndex = selectedSubMeshIndex;
     NewComponent->SkeletalMesh = SkeletalMesh;
     return NewComponent;
 }
 float AngleRad;
+bool t = false;
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime); // 부모 클래스 Tick 호출 (필요 시)
-
     // 스켈레탈 메시가 없거나 애니메이션 비활성화 시 중단
+   // return;
     if (!SkeletalMesh)
     {
         return;
     }
-    /*TArray< FName> BoneName;
+    TArray< FName> BoneName;
     SkeletalMesh->GetBoneNames(BoneName);
     // 1. 움직일 본 찾기
     if (BoneName.IsEmpty()) return;
-    int32 BoneIndex = SkeletalMesh->GetBoneIndexByName(BoneName[0]);
-
+    int32 BoneIndex = SkeletalMesh->GetBoneIndexByName(BoneName[2]);
+    if (t) return;
     if (BoneIndex != INDEX_NONE)
     {
+        t = false;
         // 2. 현재 로컬 변환 가져오기
         FMatrix CurrentLocalMatrix = SkeletalMesh->GetBoneLocalMatrix(BoneIndex);
-
-        AngleRad += FMath::DegreesToRadians(2 * DeltaTime);
-        FMatrix DeltaRotation = FMatrix::CreateRotationMatrix(0, AngleRad, 0); // Z축 회전 (Yaw)
+     
+        FMatrix DeltaRotation = FMatrix::CreateRotationMatrix(0, 0,10); // Z축 회전 (Yaw)
 
         // 4. 새로운 로컬 변환 계산 (현재 로컬 변환에 델타 회전 적용)
         // 중요: 회전 순서에 따라 결과가 달라짐 (Delta * Current 또는 Current * Delta)
         // 여기서는 현재 로컬 변환 이후에 추가 회전을 적용하는 것으로 가정 (Delta * Current)
-        FMatrix NewLocalMatrix =  CurrentLocalMatrix * DeltaRotation;
+        FMatrix NewLocalMatrix = CurrentLocalMatrix * DeltaRotation;
 
         // 5. 새로운 로컬 변환 설정
         if (SkeletalMesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix))
@@ -53,13 +54,13 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 
             SkeletalMesh->UpdateAndApplySkinning();
         }
-    }*/
+    }
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
 {
     Super::GetProperties(OutProperties);
-    
+
     //StaticMesh 경로 저장
     USkeletalMesh* CurrentMesh = GetSkeletalMesh();
     if (CurrentMesh != nullptr) {
@@ -69,13 +70,14 @@ void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties
 
         // 2. std::wstring을 FString으로 변환
         FString PathFString(PathWString.c_str()); // c_str()로 const wchar_t* 얻어서 FString 생성
-       // PathFString = CurrentMesh->ConvertToRelativePathFromAssets(PathFString);
+        // PathFString = CurrentMesh->ConvertToRelativePathFromAssets(PathFString);
 
         FWString PathWString2 = PathFString.ToWideString();
 
-        
+
         OutProperties.Add(TEXT("SkeletalMeshPath"), PathFString);
-    } else
+    }
+    else
     {
         OutProperties.Add(TEXT("SkeletalMeshPath"), TEXT("None")); // 메시 없음 명시
     }
@@ -86,7 +88,7 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
     Super::SetProperties(InProperties);
     const FString* TempStr = nullptr;
 
-    
+
     // --- StaticMesh 설정 ---
     TempStr = InProperties.Find(TEXT("SkeletalMeshPath"));
     if (TempStr) // 키가 존재하는지 확인
@@ -94,7 +96,7 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         if (*TempStr != TEXT("None")) // 값이 "None"이 아닌지 확인
         {
             // 경로 문자열로 UStaticMesh 에셋 로드 시도
-           
+
             if (USkeletalMesh* MeshToSet = FManagerFBX::CreateSkeletalMesh(*TempStr))
             {
                 SetSkeletalMesh(MeshToSet); // 성공 시 메시 설정

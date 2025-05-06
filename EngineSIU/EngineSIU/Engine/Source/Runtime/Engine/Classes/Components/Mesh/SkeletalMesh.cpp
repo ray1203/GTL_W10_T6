@@ -68,7 +68,14 @@ FMatrix USkeletalMesh::GetBoneLocalMatrix(uint32 BoneIndex) const
     }
     return Skeleton->CurrentPose.LocalTransforms[BoneIndex];
 }
-
+FMatrix USkeletalMesh::GetBoneBindLocalMatrix(uint32 BoneIndex) const
+{
+    if (!Skeleton || !Skeleton->BoneTree.IsValidIndex(BoneIndex))
+    {
+        return FMatrix::Identity;
+    }
+    return Skeleton->BoneTree[BoneIndex].BindTransform;
+}
 bool USkeletalMesh::SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix)
 {
     if (!Skeleton || !Skeleton->BoneTree.IsValidIndex(BoneIndex))
@@ -76,7 +83,7 @@ bool USkeletalMesh::SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocal
         return false;
     }
     Skeleton->CurrentPose.LocalTransforms[BoneIndex] = NewLocalMatrix;
-    // MarkRenderStateDirty(); // 상태 변경 플래그 설정 (렌더 스레드 알림용)
+
     return true;
 }
 
@@ -124,6 +131,10 @@ void USkeletalMesh::UpdateWorldTransforms()
             Skeleton->CurrentPose.GlobalTransforms[BoneIndex] =
                 Skeleton->CurrentPose.LocalTransforms[BoneIndex] *
                 Skeleton->CurrentPose.GlobalTransforms[ParentIdx];
+
+            // Skeleton->CurrentPose.[BoneIndex] =
+            //     Skeleton->CurrentPose.GlobalTransforms[ParentIdx] *
+            //     Skeleton->CurrentPose.LocalTransforms[BoneIndex];
         }
         else
         {
@@ -186,19 +197,24 @@ bool USkeletalMesh::UpdateAndApplySkinning()
         for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
         {
             float Weight = BindVertex.BoneWeights[j];
+
             if (Weight <= KINDA_SMALL_NUMBER) continue;
 
             int32 BoneIndex = static_cast<int32>(BindVertex.BoneIndices[j]);
+
             if (!Skeleton->BoneTree.IsValidIndex(BoneIndex)) continue;
 
             const FMatrix& SkinMatrix = Skeleton->CurrentPose.SkinningMatrices[BoneIndex];
 
             SkinnedPosition += SkinMatrix.TransformPosition(BindPositionVec) * Weight;
-            FMatrix NormalMatrix = SkinMatrix; NormalMatrix.RemoveTranslation(); // 이동 제거
+
+            FMatrix NormalMatrix = SkinMatrix;
+            NormalMatrix.RemoveTranslation();
 
             if (FMath::Abs(NormalMatrix.Determinant()) > SMALL_NUMBER)
             {
                 FMatrix InvTranspose = FMatrix::Transpose(FMatrix::Inverse(NormalMatrix));
+
                 SkinnedNormal += InvTranspose.TransformPosition(BindNormalVec) * Weight;
             }
             else { SkinnedNormal += BindNormalVec * Weight; }

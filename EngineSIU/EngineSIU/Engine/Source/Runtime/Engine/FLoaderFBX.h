@@ -228,7 +228,7 @@ struct FLoaderFBX
     static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
 
     // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
-    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, const USkeletalMesh* InSkeletalMesh);
+    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, USkeleton* OutSkeleton);
     
     static bool CreateTextureFromFile(const FWString& Filename);
 
@@ -241,7 +241,7 @@ private:
 struct FManagerFBX
 {
 public:
-    static FBX::FSkeletalMeshRenderData* LoadFBXSkeletalMeshAsset(const FString& PathFileName, const USkeletalMesh* InSkeletalMesh);
+    static FBX::FSkeletalMeshRenderData* LoadFBXSkeletalMeshAsset(const FString& PathFileName, USkeleton* OutSkeleton);
 
     static void CombineMaterialIndex(FBX::FSkeletalMeshRenderData& OutFSkeletalMesh);
 

@@ -38,7 +38,7 @@ namespace  FBX {
             FbxLayerElement::EMappingMode MappingMode = FbxLayerElement::eNone;
             FbxLayerElement::EReferenceMode ReferenceMode = FbxLayerElement::eDirect;
         };
-        
+
         AttributeData NormalData;
         AttributeData UVData;
 
@@ -47,11 +47,11 @@ namespace  FBX {
             TArray<int32> ControlPointIndices;
             TArray<double> ControlPointWeights;
         };
-        
+
         TArray<RawInfluence> SkinningInfluences;
-        
+
         TArray<FName> MaterialNames;
-        
+
         struct MaterialMappingInfo {
             FbxLayerElement::EMappingMode MappingMode = FbxLayerElement::eNone;
             TArray<int32> IndexArray;
@@ -132,10 +132,10 @@ namespace  FBX {
 
     // TODO: Verify coordinate system conversions for YOUR engine!
     FVector ConvertFbxPosition(const FbxVector4& Vector) {
-        return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2])); // Example: Y-up -> Z-up LH
+        return FVector(static_cast<float>(Vector[0]), -static_cast<float>(Vector[2]), static_cast<float>(Vector[1])); // Example: Y-up -> Z-up LH
     }
     FVector ConvertFbxNormal(const FbxVector4& Vector) {
-        return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2])); // Example: Y-up -> Z-up LH
+        return FVector(static_cast<float>(Vector[0]), -static_cast<float>(Vector[2]), static_cast<float>(Vector[1])); // Example: Y-up -> Z-up LH
     }
     FVector2D ConvertFbxUV(const FbxVector2& Vector) {
         return FVector2D(static_cast<float>(Vector[0]), 1 - static_cast<float>(Vector[1]));
@@ -148,11 +148,10 @@ namespace  FBX {
         FMatrix Result;
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
-                Result.M[i][j] = static_cast<float>(FbxMatrix.Get(i, j)); // Assuming FMatrix is Row-Major
+                Result.M[i][j] = static_cast<float>(FbxMatrix.Get(i, j));
             }
         }
-        // FMatrix CoordChange = ...; // Apply coordinate system change if needed
-        // Result = Result * CoordChange;
+
         return Result;
     }
     FbxAMatrix ConvertFMatrixToFbxAMatrix(const FMatrix& InMatrix)
@@ -447,7 +446,7 @@ namespace  FBX {
         FbxLayerElementMaterial* MaterialElement = Mesh->GetLayer(0) ? Mesh->GetLayer(0)->GetMaterials() : nullptr;
         if (MaterialElement) {
             OutRawData.MaterialMapping.MappingMode = MaterialElement->GetMappingMode();
-            if (OutRawData.MaterialMapping.MappingMode == FbxLayerElement::eByPolygon) 
+            if (OutRawData.MaterialMapping.MappingMode == FbxLayerElement::eByPolygon)
             {
                 const auto& IndexArray = MaterialElement->GetIndexArray(); int IdxCount = IndexArray.GetCount();
                 if (IdxCount == PolygonCount) {
@@ -699,7 +698,7 @@ namespace  FBX {
         return bSuccess;
 
     }
-    
+
     void CalculateInitialLocalTransformsInternal(USkeleton* OutSkeleton)
     {
         if (OutSkeleton->BoneTree.IsEmpty()) return;
@@ -752,35 +751,32 @@ namespace  FBX {
         for (int32 BoneIndex : ProcessingOrder)
         {
             const FBoneNode& CurrentBone = OutSkeleton->BoneTree[BoneIndex];
-            const FMatrix& WorldBindPose = CurrentBone.BindTransform;
+            const FMatrix& LocalBindPose = CurrentBone.BindTransform;
             int32 ParentIdx = CurrentBone.ParentIndex;
 
-            if (ParentIdx != INDEX_NONE && OutSkeleton->BoneTree.IsValidIndex(ParentIdx))
+            // 1. 현재 포즈의 로컬 변환을 로컬 바인드 포즈로 초기화 (모든 본에 대해 수행)
+            OutSkeleton->CurrentPose.LocalTransforms[BoneIndex] = LocalBindPose;
+
+            // 2. 현재 포즈의 글로벌 변환 계산
+            if (ParentIdx != INDEX_NONE) // 자식 본인 경우
             {
-                const FBoneNode& ParentBone = OutSkeleton->BoneTree[ParentIdx];
-                const FMatrix& ParentWorldBindPose = ParentBone.BindTransform;
-
-                // 부모의 역행렬 계산
-                FMatrix ParentInverseBindPose = FMatrix::Inverse(ParentWorldBindPose);
-                if (FMath::Abs(ParentInverseBindPose.Determinant()) < SMALL_NUMBER)
-                    ParentInverseBindPose = FMatrix::Identity;
-
-                // 로컬 변환 = 글로벌 변환 * 부모의 역행렬
-                OutSkeleton->CurrentPose.LocalTransforms[BoneIndex] = WorldBindPose * ParentInverseBindPose;
-
-                // 글로벌 변환 = 로컬 변환 * 부모의 글로벌 변환
-                OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex] =
-                    OutSkeleton->CurrentPose.LocalTransforms[BoneIndex] *
-                    OutSkeleton->CurrentPose.GlobalTransforms[ParentIdx];
+                if (OutSkeleton->CurrentPose.GlobalTransforms.IsValidIndex(ParentIdx))
+                {
+                    const FMatrix& ParentGlobalTransform = OutSkeleton->CurrentPose.GlobalTransforms[ParentIdx];
+                    OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalBindPose * ParentGlobalTransform;
+                }
+                else
+                {
+                    OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalBindPose; // 오류상황 : 임시 처리
+                }
             }
-            else
+            else // 루트 본인 경우
             {
-                // 루트 본의 경우 로컬 변환 = 글로벌 변환
-                OutSkeleton->CurrentPose.LocalTransforms[BoneIndex] = WorldBindPose;
-                OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex] = WorldBindPose;
+                // 루트 글로벌 = 루트 로컬
+                OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalBindPose;
             }
 
-            // 스키닝 행렬 계산 (애니메이션 행렬 * 인버스 바인드 포즈 행렬)
+            // 3. 현재 포즈의 스키닝 행렬 계산 (모든 본에 대해 루프 끝에서 한 번만)
             OutSkeleton->CurrentPose.SkinningMatrices[BoneIndex] =
                 OutSkeleton->CalculateSkinningMatrix(BoneIndex, OutSkeleton->CurrentPose.GlobalTransforms[BoneIndex]);
         }
@@ -953,16 +949,17 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     if (!Importer->Import(Scene)) return false;
 
     FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
-    //FbxAxisSystem TargetAxisSystem;/* = FbxAxisSystem::DirectX;*/
-    if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem) 
+    //FbxAxisSystem TargetAxisSystem = FbxAxisSystem::DirectX;/* = FbxAxisSystem::DirectX;*/
+    if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem)
         TargetAxisSystem.DeepConvertScene(Scene);
-    
-    FbxSystemUnit::cm.ConvertScene(Scene);
+
+    FbxSystemUnit::m.ConvertScene(Scene);
     FbxGeometryConverter GeometryConverter(SdkManager);
     GeometryConverter.Triangulate(Scene, true);
 
     OutFBXInfo.FilePath = FBXFilePath; std::filesystem::path fsPath(FBXFilePath.ToWideString()); OutFBXInfo.FileDirectory = fsPath.parent_path().wstring().c_str();
-    FbxNode* RootNode = Scene->GetRootNode(); if (!RootNode) return false;
+    FbxNode* RootNode = Scene->GetRootNode();
+    if (!RootNode) return false;
 
     TMap<FbxSurfaceMaterial*, FName> MaterialPtrToNameMap; OutFBXInfo.Materials.Empty();
     int NumTotalNodes = Scene->GetNodeCount();
@@ -983,8 +980,9 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         }
     }
 
-    TMap<FbxNode*, FName> BoneNodeToNameMap; TArray<FbxNode*> AllBoneNodesTemp;
-    
+    TMap<FbxNode*, FName> BoneNodeToNameMap;
+    TArray<FbxNode*> AllBoneNodesTemp;
+
     OutFBXInfo.SkeletonHierarchy.Empty(); OutFBXInfo.SkeletonRootBoneNames.Empty();
 
     for (int meshIdx = 0; meshIdx < Scene->GetSrcObjectCount<FbxMesh>(); ++meshIdx)
@@ -1057,29 +1055,37 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     for (const FName& BoneName : CollectedBoneNames)
     {
         FbxNode* CurrentFbxNode = nullptr;
-        for (auto It = BoneNodeToNameMap.begin(); It != BoneNodeToNameMap.end(); ++It) 
-            if (It->Value == BoneName)
-            { 
-                CurrentFbxNode = It->Key; 
-                break; 
-            }
-        
-        if (!CurrentFbxNode) continue;
-        
-        FbxNode* ParentFbxNode = CurrentFbxNode->GetParent(); FName ParentName = NAME_None;
-
-        if (ParentFbxNode) 
-        { 
-            const FName* FoundParentName = BoneNodeToNameMap.Find(ParentFbxNode); 
-            if (FoundParentName && OutFBXInfo.SkeletonHierarchy.Contains(*FoundParentName))
-                ParentName = *FoundParentName;
+        for (auto It = BoneNodeToNameMap.begin(); It != BoneNodeToNameMap.end(); ++It)
+        {
+            if (It->Value == BoneName) { CurrentFbxNode = It->Key; break; }
         }
-        
+
+        if (!CurrentFbxNode) continue;
+
+        FbxNode* ParentFbxNode = CurrentFbxNode->GetParent();
+        FName ParentName = NAME_None;
+        // Traverse upwards to find the nearest *bone* parent
+        while (ParentFbxNode)
+        {
+            const FName* FoundParentName = BoneNodeToNameMap.Find(ParentFbxNode); // Is parent a known bone?
+            if (FoundParentName)
+            {
+                // Ensure the found parent is actually part of the hierarchy we built
+                if (OutFBXInfo.SkeletonHierarchy.Contains(*FoundParentName))
+                {
+                    ParentName = *FoundParentName;
+                    break; // Found the nearest valid bone parent
+                }
+            }
+            ParentFbxNode = ParentFbxNode->GetParent(); // Keep going up
+        }
         OutFBXInfo.SkeletonHierarchy[BoneName].ParentName = ParentName;
 
-        if (ParentName.IsNone()) OutFBXInfo.SkeletonRootBoneNames.AddUnique(BoneName);
+        if (ParentName.IsNone())
+            OutFBXInfo.SkeletonRootBoneNames.AddUnique(BoneName);
     }
 
+    // Pass 3: Mesh Data
     OutFBXInfo.Meshes.Empty();
     std::function<void(FbxNode*)> ProcessNodeRecursive = // Use std::function
         [&](FbxNode* CurrentNode)
@@ -1104,19 +1110,22 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     return true;
 }
 
-bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMeshRenderData, const USkeletalMesh* InSkeletalMesh)
+bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMeshRenderData, USkeleton* OutSkeleton)
 {
-    using namespace ::FBX; // Use helpers from anonymous namespace
+    using namespace ::FBX;
+
+    if (!OutSkeleton) return false;
 
     OutSkeletalMeshRenderData.MeshName = RawMeshData.NodeName.ToString();
     OutSkeletalMeshRenderData.FilePath = FullFBXInfo.FilePath;
 
-    // 관련 본 이름 수집
+    OutSkeleton->Clear(); // USkeleton 초기화
+
+    // 1. 스키닝에 관련된 모든 본 및 그 부모 본들 수집 (BonesToInclude)
     TArray<FName> RelevantBoneNames;
     for (const auto& influence : RawMeshData.SkinningInfluences)
         RelevantBoneNames.AddUnique(influence.BoneName);
 
-    // 계층 구조를 포함하는 본 목록 구성
     TArray<FName> BonesToInclude = RelevantBoneNames;
     int32 CheckIndex = 0;
     while (CheckIndex < BonesToInclude.Num())
@@ -1127,22 +1136,77 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
             BonesToInclude.AddUnique(HNode->ParentName);
     }
 
-    // USkeleton 데이터 채우기
-    TMap<FName, int32> TempBoneNameMap;
+    // 2. 루트 본 식별 및 자식 관계 맵핑 (USkeleton에 아직 추가 안 함)
+    TMap<FName, TArray<FName>> BoneChildrenMap;
+    TArray<FName> RootBoneNamesForSorting;
     for (const FName& BoneName : BonesToInclude)
     {
         const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(BoneName);
-        if (HNode && !TempBoneNameMap.Contains(BoneName))
+        if (HNode)
         {
-            // USkeleton에 본 추가
-            if (HNode && !HNode->ParentName.IsNone()) 
+            if (HNode->ParentName.IsNone() || !BonesToInclude.Contains(HNode->ParentName))
             {
-                InSkeletalMesh->Skeleton->AddBone(BoneName, HNode->ParentName, HNode->GlobalBindPose);
+                RootBoneNamesForSorting.AddUnique(BoneName);
             }
-            else 
+            else
             {
-                InSkeletalMesh->Skeleton->AddBone(BoneName, INDEX_NONE, HNode->GlobalBindPose);
+                BoneChildrenMap.FindOrAdd(HNode->ParentName).Add(BoneName);
             }
+        }
+    }
+
+    // 3. 본들을 위상 정렬 (부모가 항상 자식보다 먼저 오도록)
+    TArray<FName> SortedBoneNames; SortedBoneNames.Reserve(BonesToInclude.Num());
+    TArray<FName> ProcessingQueue = RootBoneNamesForSorting;
+    TMap<FName, bool> ProcessedBones;
+    int32 Head = 0;
+    while (Head < ProcessingQueue.Num()) // Use index based queue to avoid frequent RemoveAt(0)
+    {
+        FName CurrentBoneName = ProcessingQueue[Head++];
+
+        if (ProcessedBones.Contains(CurrentBoneName)) continue;
+
+        SortedBoneNames.Add(CurrentBoneName);
+        ProcessedBones.Add(CurrentBoneName, true);
+
+        if (BoneChildrenMap.Contains(CurrentBoneName))
+        {
+            for (const FName& ChildBoneName : BoneChildrenMap[CurrentBoneName])
+            {
+                if (!ProcessedBones.Contains(ChildBoneName))
+                {
+                    ProcessingQueue.Add(ChildBoneName);
+                }
+            }
+        }
+    }
+    if (SortedBoneNames.Num() != BonesToInclude.Num())
+    {
+        // 누락된 본 추가 (순서 보장 안 될 수 있음)
+        for (const FName& BoneName : BonesToInclude) {
+            if (!ProcessedBones.Contains(BoneName)) {
+                SortedBoneNames.Add(BoneName);
+            }
+        }
+    }
+
+    // 4. 정렬된 순서대로 USkeleton에 본 추가 (단일 호출 지점)
+    for (const FName& BoneName : SortedBoneNames)
+    {
+        const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(BoneName);
+        if (HNode)
+        {
+            int32 ParentIndexInSkeleton = INDEX_NONE;
+            if (!HNode->ParentName.IsNone())
+            {
+                const uint32* FoundParentIndexPtr = OutSkeleton->BoneNameToIndex.Find(HNode->ParentName);
+                if (FoundParentIndexPtr)
+                {
+                    ParentIndexInSkeleton = static_cast<int32>(*FoundParentIndexPtr);
+                }
+
+            }
+            OutSkeleton->AddBone(BoneName, ParentIndexInSkeleton, HNode->GlobalBindPose);
         }
     }
 
@@ -1152,10 +1216,10 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
 
     for (const auto& influence : RawMeshData.SkinningInfluences)
     {
-        const uint32* BoneIndexPtr = InSkeletalMesh->Skeleton->BoneNameToIndex.Find(influence.BoneName);
+        const uint32* BoneIndexPtr = OutSkeleton->BoneNameToIndex.Find(influence.BoneName);
         if (!BoneIndexPtr) continue;
 
-        int32 BoneIndex = *BoneIndexPtr;
+        int32 BoneIndex = static_cast<int32>(*BoneIndexPtr);
         for (int i = 0; i < influence.ControlPointIndices.Num(); ++i)
         {
             int32 CPIndex = influence.ControlPointIndices[i];
@@ -1165,22 +1229,20 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
         }
     }
 
-    for (int32 i = 0; i < CpSkinData.Num(); ++i)
-        CpSkinData[i].NormalizeWeights(MAX_BONE_INFLUENCES);
+    TArray<FVector> CPNormals, PVNormals; TArray<FVector2D> CPUVs, PVUVs;
+    if (!ReconstructVertexAttributes(RawMeshData, CPNormals, PVNormals, CPUVs, PVUVs)) return false;
 
-    // 3. Reconstruct Vertex Attributes
-    TArray<FVector> CPNormals, PVNormals;
-    TArray<FVector2D> CPUVs, PVUVs;
-    if (!ReconstructVertexAttributes(RawMeshData, CPNormals, PVNormals, CPUVs, PVUVs))
-        return false;
 
-    // 4. Finalize Vertex Data
     if (!FinalizeVertexDataInternal(RawMeshData.ControlPoints, RawMeshData.PolygonVertexIndices,
-        CPNormals, PVNormals, CPUVs, PVUVs, CpSkinData, OutSkeletalMeshRenderData))
+        CPNormals, PVNormals, CPUVs, PVUVs, CpSkinData,
+        OutSkeletalMeshRenderData))
+    {
         return false;
-
+    }
     if (OutSkeletalMeshRenderData.BindPoseVertices.IsEmpty() || OutSkeletalMeshRenderData.Indices.IsEmpty())
+    {
         return false;
+    }
 
     // 5. Populate Materials
     OutSkeletalMeshRenderData.Materials.Empty();
@@ -1217,7 +1279,6 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
         MatNameToIndexMap.Add(NAME_None, 0);
     }
 
-    // 6. Create Material Subsets
     if (!CreateMaterialSubsetsInternal(RawMeshData, MatNameToIndexMap, OutSkeletalMeshRenderData))
     {
         if (!OutSkeletalMeshRenderData.Indices.IsEmpty() && !OutSkeletalMeshRenderData.Materials.IsEmpty())
@@ -1234,16 +1295,14 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
             return false;
         }
     }
-
     uint32 TotalSubIdx = 0;
     for (const auto& sub : OutSkeletalMeshRenderData.Subsets)
         TotalSubIdx += sub.IndexCount;
-
     if (TotalSubIdx != OutSkeletalMeshRenderData.Indices.Num())
         return false;
 
     // 7. Calculate Initial Local Transforms
-    CalculateInitialLocalTransformsInternal(InSkeletalMesh->Skeleton);
+    CalculateInitialLocalTransformsInternal(OutSkeleton);
 
     // 8. TODO: Calculate Tangents (Requires Tangent member in FSkeletalMeshVertex and averaging logic)
 
@@ -1270,10 +1329,19 @@ bool FLoaderFBX::CreateTextureFromFile(const FWString& Filename)
     return true;
 }
 
-void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector) {
-    if (InVertices.IsEmpty()) { OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector; return; }
-    OutMinVector = InVertices[0].Position; OutMaxVector = InVertices[0].Position;
-    for (int32 i = 1; i < InVertices.Num(); ++i) { OutMinVector = FVector::Min(OutMinVector, InVertices[i].Position); OutMaxVector = FVector::Max(OutMaxVector, InVertices[i].Position); }
+void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector)
+{
+    if (InVertices.IsEmpty())
+    {
+        OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector; return;
+    }
+    OutMinVector = InVertices[0].Position;
+    OutMaxVector = InVertices[0].Position;
+    for (int32 i = 1; i < InVertices.Num(); ++i)
+    {
+        OutMinVector = FVector::Min(OutMinVector, InVertices[i].Position);
+        OutMaxVector = FVector::Max(OutMaxVector, InVertices[i].Position);
+    }
 }
 
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }
@@ -1281,17 +1349,32 @@ void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const F
 
 // --- FManagerFBX Static Method Implementations ---
 
-FBX::FSkeletalMeshRenderData* FManagerFBX::LoadFBXSkeletalMeshAsset(const FString& PathFileName, const USkeletalMesh* InSkeletalMesh)
+FBX::FSkeletalMeshRenderData* FManagerFBX::LoadFBXSkeletalMeshAsset(const FString& PathFileName, USkeleton* OutSkeleton)
 {
     using namespace FBX;
-    FSkeletalMeshRenderData** FoundDataPtr = FBXSkeletalMeshMap.Find(PathFileName); if (FoundDataPtr) return *FoundDataPtr;
-    // TODO: Binary Cache Check
-    FBXInfo ParsedInfo; if (!FLoaderFBX::ParseFBX(PathFileName, ParsedInfo)) return nullptr;
+    if (!OutSkeleton) return nullptr; // USkeleton 객체 필요
+
+    FSkeletalMeshRenderData** FoundDataPtr = FBXSkeletalMeshMap.Find(PathFileName);
+
+    if (FoundDataPtr)
+    {
+        // 캐시된 RenderData가 있으면, USkeleton 정보만 채워야 할 수도 있음
+        // TODO: 캐시된 RenderData와 함께 USkeleton을 어떻게 처리할지 정책 결정 필요
+        //       간단하게는 캐시 히트 시에도 파싱/변환을 다시 수행하거나,
+        //       캐시된 RenderData에서 스켈레톤 정보를 읽어 OutSkeleton을 채우는 로직 추가
+        // 여기서는 일단 캐시 히트 시 바로 반환 (USkeleton 채우는 로직 누락 가능성)
+        return *FoundDataPtr;
+    }
+
+    FBXInfo ParsedInfo;
+    if (!FLoaderFBX::ParseFBX(PathFileName, ParsedInfo)) return nullptr;
     if (ParsedInfo.Meshes.IsEmpty()) return nullptr;
     FSkeletalMeshRenderData* NewRenderData = new FSkeletalMeshRenderData();
-    if (!FLoaderFBX::ConvertToSkeletalMesh(ParsedInfo.Meshes[0], ParsedInfo, *NewRenderData, InSkeletalMesh)) { delete NewRenderData; return nullptr; }
-    // TODO: Create DirectX Buffers
-    // TODO: Save to Binary Cache
+    if (!FLoaderFBX::ConvertToSkeletalMesh(ParsedInfo.Meshes[0], ParsedInfo, *NewRenderData, OutSkeleton))
+    {
+        delete NewRenderData;
+        return nullptr;
+    }
     FBXSkeletalMeshMap.Add(PathFileName, NewRenderData);
     return NewRenderData;
 }
@@ -1330,22 +1413,30 @@ UMaterial* FManagerFBX::CreateMaterial(const FBX::FFbxMaterialInfo& materialInfo
 
 UMaterial* FManagerFBX::GetMaterial(const FString& name) { UMaterial** Ptr = materialMap.Find(name); return Ptr ? *Ptr : nullptr; }
 
-USkeletalMesh* FManagerFBX::CreateSkeletalMesh(const FString& filePath) {
-    USkeletalMesh* NewMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
-
-    FBX::FSkeletalMeshRenderData* RenderData = LoadFBXSkeletalMeshAsset(filePath, NewMesh);
-    if (!RenderData) return nullptr;
-
+USkeletalMesh* FManagerFBX::CreateSkeletalMesh(const FString& filePath)
+{
     FWString MeshKey = filePath.ToWideString();
+
 
     if (SkeletalMeshMap.Contains(MeshKey))
         return SkeletalMeshMap[MeshKey];
 
-    if (NewMesh)
+    USkeletalMesh* NewMesh = FObjectFactory::ConstructObject<USkeletalMesh>(nullptr);
+    NewMesh->Skeleton = FObjectFactory::ConstructObject<USkeleton>(NewMesh); // Outer를 NewMesh로 설정 예시
+    if (!NewMesh->Skeleton)
     {
-        NewMesh->SetData(RenderData); // Call the provided SetData method
-        SkeletalMeshMap.Add(MeshKey, NewMesh);
+        return nullptr;
     }
+
+    FBX::FSkeletalMeshRenderData* RenderData = LoadFBXSkeletalMeshAsset(filePath, NewMesh->Skeleton);
+    if (!RenderData)
+    {
+        return nullptr;
+    }
+
+    NewMesh->SetData(RenderData);
+
+    SkeletalMeshMap.Add(MeshKey, NewMesh);
     return NewMesh;
 }
 
@@ -1379,12 +1470,12 @@ void FSkeletalMeshDebugger::DrawSkeleton(const USkeletalMeshComponent* SkelMeshC
 
     UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
 
-    constexpr float ScaleFactor = 0.01f;
+    constexpr float ScaleFactor = 1.f;
     constexpr int ConeSegments = 12;
     const FVector4 ConeColor = FVector4(0.2f, 1.0f, 0.2f, 1.0f); // 연녹색
 
     const FMatrix CompTransform = SkelMeshComp->GetRotationMatrix() * SkelMeshComp->GetScaleMatrix() * SkelMeshComp->GetTranslationMatrix();
-    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, -90.f);
+    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, 0.f);
     const FMatrix WorldMatrix = ToXFront * CompTransform;
 
     for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
@@ -1422,12 +1513,12 @@ void FSkeletalMeshDebugger::DrawSkeletonAABBs(const USkeletalMeshComponent* Skel
 
     UPrimitiveDrawBatch* DrawBatch = &GEngineLoop.PrimitiveDrawBatch;
 
-    constexpr float ScaleFactor = 0.01f;
+    constexpr float ScaleFactor = 1.f;
     const FVector4 BoxColor = FVector4(1.0f, 0.2f, 0.2f, 1.0f);
     const float HalfExtent = 0.1f;
 
     const FMatrix CompTransform = SkelMeshComp->GetRotationMatrix() * SkelMeshComp->GetScaleMatrix() * SkelMeshComp->GetTranslationMatrix();
-    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, -90.f);
+    const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, 0.f);
     const FMatrix WorldMatrix = ToXFront * CompTransform;
 
     for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
