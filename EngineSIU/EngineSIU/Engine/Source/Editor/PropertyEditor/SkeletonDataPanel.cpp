@@ -5,7 +5,7 @@
 #include "Components/Mesh/SkeletalMesh.h"
 #include "Engine/EditorEngine.h"
 #include <functional>
-
+#include "Core/Math/Quat.h"
 #include "ImGUI/imgui.h"
 
 void SkeletonDataPanel::Render()
@@ -63,7 +63,7 @@ void SkeletonDataPanel::Render()
         return;
     };
 
-    USkeleton* Skeleton = SkeletalMesh->Skeleton;
+    Skeleton = SkeletalMesh->Skeleton;
 
     if (!Skeleton)
     {
@@ -93,7 +93,7 @@ void SkeletonDataPanel::Render()
     // 재귀적 본 트리 생성 함수
     std::function<void(int32)> DrawBoneTree = [&](int32 BoneIndex)
         {
-            const FBoneNode& Bone = RefSkeleton.BoneInfo[BoneIndex];
+            const FBoneNode* Bone = &RefSkeleton.BoneInfo[BoneIndex];
             const TArray<int32> Children = *ParentToChildren.Find(BoneIndex);
 
             ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
@@ -104,13 +104,13 @@ void SkeletonDataPanel::Render()
             };
 
             bool isOpen = ImGui::TreeNodeEx(
-                (*Bone.Name.ToString()),
+                (*Bone->Name.ToString()),
                 nodeFlags
             );
 
             if (ImGui::IsItemClicked())
             {
-                //Engine->SelectBone(Bone.Name);
+                Engine->SelectBone(Bone);
             }
 
             if (isOpen)
@@ -132,6 +132,8 @@ void SkeletonDataPanel::Render()
 
     ImGui::EndChild();
     ImGui::End();
+
+    DrawBoneTransformPanel();
 }
 
 void SkeletonDataPanel::OnResize(HWND hWnd)
@@ -140,4 +142,77 @@ void SkeletonDataPanel::OnResize(HWND hWnd)
     GetClientRect(hWnd, &clientRect);
     Width = clientRect.right - clientRect.left;
     Height = clientRect.bottom - clientRect.top;
+}
+
+void SkeletonDataPanel::DrawBoneTransformPanel() const
+{
+    // 패널 위치/크기 설정
+    const float panelWidth = 500.0f;
+    const float panelHeight = 300.0f;
+
+    ImGui::SetNextWindowPos(ImVec2(
+        500,
+        0
+    ), ImGuiCond_Always);
+
+    ImGui::SetNextWindowSize(ImVec2(
+        panelWidth,
+        panelHeight
+    ), ImGuiCond_Always);
+
+    ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoCollapse;
+
+    ImGui::Begin("Bone Properties", nullptr, flags);
+
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+
+    // 선택된 본 정보 가져오기
+    const FBoneNode* SelectedBone = Engine->GetSelectedBone();
+
+    if (SelectedBone)
+    {
+        int BoneIndex = Skeleton->BoneNameToIndex[SelectedBone->Name];
+        // 1. 본 기본 정보 표시
+        ImGui::Text("Bone Name: %s", (*SelectedBone->Name.ToString()));
+        ImGui::Separator();
+
+        // 2. 트랜스폼 편집
+        FMatrix LocalTransform = Skeleton->CurrentPose.LocalTransforms[BoneIndex];
+        FMatrix GlobalTransform = Skeleton->CurrentPose.GlobalTransforms[BoneIndex];
+
+        FVector LocalPos = LocalTransform.GetTranslationVector();
+        FRotator LocalRot = LocalTransform.ToQuat().Rotator(); // 쿼터니언 → 로테이터
+        FVector LocalScale = LocalTransform.GetScaleVector();
+
+        FVector GlobalPos = GlobalTransform.GetTranslationVector();
+        FRotator GlobalRot = GlobalTransform.ToQuat().Rotator();
+        FVector GlobalScale = GlobalTransform.GetScaleVector();
+
+        // 3. 디버그 정보 표시
+        /* 로컬 변환 편집 */
+        ImGui::TextColored(ImVec4(1, 1, 0, 1), "[Local Transform]");
+        ImGui::InputFloat3("Position##Local", &LocalPos.X);
+        ImGui::InputFloat3("Rotation##Local", &LocalRot.Pitch);
+        ImGui::InputFloat3("Scale##Local", &LocalScale.X);
+
+        /* 글로벌 변환 표시 */
+        ImGui::TextColored(ImVec4(1, 0, 1, 1), "[Global Transform]");
+        ImGui::Text("Position: %.2f, %.2f, %.2f", GlobalPos.X, GlobalPos.Y, GlobalPos.Z);
+        ImGui::Text("Rotation: P=%.1f Y=%.1f R=%.1f", GlobalRot.Pitch, GlobalRot.Yaw, GlobalRot.Roll);
+        ImGui::Text("Scale: %.2f, %.2f, %.2f", GlobalScale.X, GlobalScale.Y, GlobalScale.Z);
+        // 3. 변경 사항 적용
+        //if (ImGui::Button("Apply Transform"))
+        //{
+        //    const_cast<FBoneNode*>(SelectedBone)->BindTransform = LocalTransform;
+        //    //Skeleton->MarkPackageDirty();
+        //}
+    }
+    else
+    {
+        ImGui::Text("No Bone Selected");
+    }
+
+    ImGui::End();
 }

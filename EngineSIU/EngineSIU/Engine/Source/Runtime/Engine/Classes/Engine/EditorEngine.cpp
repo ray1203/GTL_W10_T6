@@ -15,6 +15,7 @@
 #include "Games/LastWar/Characters/Wall.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Audio/AudioManager.h"
+#include "Engine/Animation/Skeleton.h"
 
 namespace PrivateEditorSelection
 {
@@ -23,6 +24,8 @@ namespace PrivateEditorSelection
 
     static USceneComponent* GComponentSelected = nullptr;
     static USceneComponent* GComponentHovered = nullptr;
+
+    static const FBoneNode* GBoneNodeSelected = nullptr;
 }
 
 void UEditorEngine::Init()
@@ -256,6 +259,14 @@ void UEditorEngine::SelectActor(AActor* InActor)
     }
 }
 
+void UEditorEngine::SelectBone(const FBoneNode* InBone)
+{
+    if (InBone) 
+    {
+        PrivateEditorSelection::GBoneNodeSelected = InBone;
+    }
+}
+
 void UEditorEngine::DeselectActor(AActor* InActor)
 {
     if (PrivateEditorSelection::GActorSelected == InActor && InActor)
@@ -278,6 +289,11 @@ bool UEditorEngine::CanSelectActor(const AActor* InActor) const
 AActor* UEditorEngine::GetSelectedActor() const
 {
     return PrivateEditorSelection::GActorSelected;
+}
+
+const FBoneNode* UEditorEngine::GetSelectedBone() const
+{
+    return PrivateEditorSelection::GBoneNodeSelected;
 }
 
 void UEditorEngine::HoverActor(AActor* InActor)

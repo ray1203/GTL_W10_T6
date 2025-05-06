@@ -10,6 +10,7 @@
 
 class AActor;
 class USceneComponent;
+struct FBoneNode;
 
 class UEditorEngine : public UEngine
 {
@@ -41,12 +42,16 @@ public:
 public:
     void SelectActor(AActor* InActor);
 
+    void SelectBone(const FBoneNode* InBone);
+
     // 전달된 액터가 선택된 컴포넌트와 같다면 해제 
     void DeselectActor(AActor* InActor);
     void ClearActorSelection(); 
     
     bool CanSelectActor(const AActor* InActor) const;
     AActor* GetSelectedActor() const;
+
+    const FBoneNode* GetSelectedBone() const;
 
     void HoverActor(AActor* InActor);
 
