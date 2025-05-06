@@ -58,7 +58,7 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     AppMessageHandler = std::make_unique<FSlateAppMessageHandler>();
     LevelEditor = new SLevelEditor();
     LuaScriptManager = new FLuaScriptManager();
-    
+
 
     UnrealEditor->Initialize();
     ViewerEditor->Initialize();
@@ -101,29 +101,30 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
 
     GEngine = FObjectFactory::ConstructObject<UEditorEngine>(nullptr);
     GEngine->Init();
-    
+
 #ifdef _DEBUG_VIEWER
-    Cast<UEditorEngine>(GEngine)->StartViewer();
     ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
     SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
     Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
-	if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
-	{
-		FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
-		FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
-		float Radius = Extents.Length();
+    GEngine->ActiveWorld->GetActiveLevel()->Actors.Add(SkeletalMeshActor);
 
-		float FOV = 90.0f; // 기본 시야각
-		float VerticalFOV = FMath::DegreesToRadians(FOV);
-		float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
+    {
+        FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+        FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
+        float Radius = Extents.Length();
 
-		if (std::shared_ptr<FEditorViewportClient> ViewClient = GetLevelEditor()->GetActiveViewportClient())
-		{
-			FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
-			FVector Forward = Cam.GetForwardVector();
-			Cam.SetLocation(Center - Forward * Distance);
-		}
-	}
+        float FOV = 90.0f; // 기본 시야각
+        float VerticalFOV = FMath::DegreesToRadians(FOV);
+        float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+        if (std::shared_ptr<FEditorViewportClient> ViewClient = GetLevelEditor()->GetActiveViewportClient())
+        {
+            FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
+            FVector Forward = Cam.GetForwardVector();
+            Cam.SetLocation(Center - Forward * Distance);
+        }
+    }
 
 #endif
 
@@ -148,7 +149,7 @@ void FEngineLoop::Render() const
             Renderer.Render(LevelEditor->GetActiveViewportClient());
 #endif
         }
-        
+
         for (int i = 0; i < 4; ++i)
         {
             LevelEditor->SetActiveViewportClient(i);
@@ -165,7 +166,7 @@ void FEngineLoop::Render() const
 #endif
         Renderer.RenderViewport(ActiveViewportCache);
     }
-    
+
 }
 
 void FEngineLoop::Tick()
@@ -253,7 +254,7 @@ void FEngineLoop::GetClientSize(uint32& OutWidth, uint32& OutHeight) const
 {
     RECT ClientRect = {};
     GetClientRect(AppWnd, &ClientRect);
-            
+
     OutWidth = ClientRect.right - ClientRect.left;
     OutHeight = ClientRect.bottom - ClientRect.top;
 }
@@ -267,7 +268,7 @@ void FEngineLoop::Exit()
     Renderer.Release();
     GraphicDevice.Release();
 
-    
+
     GEngine->Release();
 
     delete UnrealEditor;
@@ -317,7 +318,7 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
                 {
                     EditorEngine->SaveLevel();
                 }
-                
+
                 FEditorConfigManager::GetInstance().Clear();
                 EditorEngine->SaveConfig();
                 if (auto LevelEditor = GEngineLoop.GetLevelEditor())
@@ -342,7 +343,7 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
             {
                 FEngineLoop::GraphicDevice.Resize(hWnd);
                 // FEngineLoop::Renderer.DepthPrePass->ResizeDepthStencil();
-                
+
                 uint32 ClientWidth = 0;
                 uint32 ClientHeight = 0;
                 GEngineLoop.GetClientSize(ClientWidth, ClientHeight);
@@ -350,7 +351,7 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
                 std::shared_ptr<FEditorViewportClient> ViewportClient = LevelEditor->GetActiveViewportClient();
                 LevelEditor->ResizeEditor(ClientWidth, ClientHeight);
                 FEngineLoop::Renderer.TileLightCullingPass->ResizeViewBuffers(
-                  static_cast<uint32>(ViewportClient->GetD3DViewport().Width),
+                    static_cast<uint32>(ViewportClient->GetD3DViewport().Width),
                     static_cast<uint32>(ViewportClient->GetD3DViewport().Height)
                 );
             }

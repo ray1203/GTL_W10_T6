@@ -35,13 +35,15 @@ void UEditorEngine::Init()
     // Initialize the engine
     GEngine = this;
 
-    FWorldContext& EditorWorldContext = CreateNewWorldContext(EWorldType::Editor);
 
+#ifdef _DEBUG_VIEWER
+    StartViewer();
+#else
     EditorWorld = UWorld::CreateWorld(this, EWorldType::Editor, FString("EditorWorld"));
-
+    FWorldContext& EditorWorldContext = CreateNewWorldContext(EWorldType::Editor);
     EditorWorldContext.SetCurrentWorld(EditorWorld);
     ActiveWorld = EditorWorld;
-
+#endif
     EditorPlayer = FObjectFactory::ConstructObject<UEditorPlayer>(this);
     EditorPlayer->Initialize();
 
@@ -52,10 +54,10 @@ void UEditorEngine::Init()
         AssetManager->InitAssetManager();
     }
 
-    
+
     TMap<FString, FString> Config = FEditorConfigManager::GetInstance().Read();
     FString ScenePath = FEditorConfigManager::GetValueFromConfig<std::string>(Config, "ScenePath", "Saved/DefaultLevel.scene");
-    
+
 #ifndef _DEBUG_VIEWER
     LoadLevel(ScenePath);
 #endif // DEBUG_VIEWER
@@ -91,7 +93,7 @@ bool UEditorEngine::TryQuit(bool& OutbIsSave)
     }
 
     OutbIsSave = false;
-    return true;   
+    return true;
 }
 
 void UEditorEngine::Release()
@@ -166,6 +168,26 @@ void UEditorEngine::Tick(float DeltaTime)
                 }
             }
         }
+        else if(WorldContext->WorldType == EWorldType::Viewer)
+        {
+            if (UWorld* World = WorldContext->World())
+            {
+                // TODO: World에서 EditorPlayer 제거 후 Tick 호출 제거 필요.
+                World->Tick(DeltaTime);
+                ULevel* Level = World->GetActiveLevel();
+                TArray CachedActors = Level->Actors;
+                if (Level)
+                {
+                    for (AActor* Actor : CachedActors)
+                    {
+                        if (Actor && Actor->IsActorTickInEditor())
+                        {
+                            Actor->Tick(DeltaTime);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -213,10 +235,10 @@ void UEditorEngine::EndPIE()
         PIEWorld = nullptr;
 
         // TODO: PIE에서 EditorWorld로 돌아올 때, 기존 선택된 Picking이 유지되어야 함. 현재는 에러를 막기위해 임시조치.
-        
+
         DeselectActor(GetSelectedActor());
         DeselectComponent(GetSelectedComponent());
-        
+
 
     }
     // 다시 EditorWorld로 돌아옴.
@@ -226,7 +248,7 @@ void UEditorEngine::EndPIE()
 void UEditorEngine::StartViewer()
 {
     FWorldContext& ViewerWorldContext = CreateNewWorldContext(EWorldType::Viewer);
-    UWorld* ViewerWorld = UWorld::CreateWorld(this, EWorldType::Viewer, FString("ViewerWorld"));
+    ViewerWorld = UWorld::CreateWorld(this, EWorldType::Viewer, FString("ViewerWorld"));
     ViewerWorld->WorldType = EWorldType::Viewer;
     ViewerWorldContext.SetCurrentWorld(ViewerWorld);
     ActiveWorld = ViewerWorld;
@@ -273,7 +295,7 @@ void UEditorEngine::SelectActor(AActor* InActor)
 
 void UEditorEngine::SelectBone(const FBoneNode* InBone)
 {
-    if (InBone) 
+    if (InBone)
     {
         PrivateEditorSelection::GBoneNodeSelected = InBone;
     }

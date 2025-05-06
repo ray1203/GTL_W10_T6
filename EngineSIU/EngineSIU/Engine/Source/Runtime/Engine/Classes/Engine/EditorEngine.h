@@ -31,6 +31,7 @@ public:
     
     UWorld* PIEWorld = nullptr;
     UWorld* EditorWorld = nullptr;
+    UWorld* ViewerWorld = nullptr;
 
     void StartPIE();
     void EndPIE();
