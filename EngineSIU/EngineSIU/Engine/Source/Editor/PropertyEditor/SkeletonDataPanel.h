@@ -17,5 +17,5 @@ private:
     void DrawBoneTransformPanel() const;
     USkeleton* Skeleton = nullptr;
 private:
-    float Width = 0, Height = 0;
+    float Width = 400, Height = 600;
 };

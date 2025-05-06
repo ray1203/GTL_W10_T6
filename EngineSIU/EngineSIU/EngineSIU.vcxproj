@@ -405,6 +405,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\SkinWeightVertexBuffer.cpp" />
     <ClCompile Include="Engine\Source\Editor\UnrealEd\ViewerEd.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.cpp" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmod.dll" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodL.dll" />
     <None Include="Engine\Source\ThirdParty\FMOD\bin\arm64\fmodstudio.dll" />
@@ -887,6 +888,7 @@
     <ClInclude Include="Engine\Source\Editor\UnrealEd\ViewerEd.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.h" />
     <None Include="Shaders\EditorShaderConstants.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Debug|x64'">true</ExcludedFromBuild>

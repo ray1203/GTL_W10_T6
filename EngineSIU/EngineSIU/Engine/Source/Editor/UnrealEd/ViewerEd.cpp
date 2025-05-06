@@ -2,9 +2,13 @@
 #include "EditorPanel.h"
 
 #include "PropertyEditor/SkeletonDataPanel.h"
+#include "PropertyEditor/ViewerControlEditorPanel.h"
 
 void ViewerEd::Initialize()
 {
+    auto ViewerControlPanel = std::make_shared<ViewerControlEditorPanel>();
+    Panels["ViewerControlEditorPanel"] = ViewerControlPanel;
+
     auto SkeletonPanel = std::make_shared<SkeletonDataPanel>();
     Panels["SkeletonDataPanel"] = SkeletonPanel;
 }

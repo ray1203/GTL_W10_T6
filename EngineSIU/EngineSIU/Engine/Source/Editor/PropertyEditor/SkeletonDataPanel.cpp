@@ -15,13 +15,13 @@ void SkeletonDataPanel::Render()
     const float topMargin = 0.0f;
 
     ImGui::SetNextWindowPos(ImVec2(
-        Width,
+        ImGui::GetIO().DisplaySize.x - Width,
         topMargin
     ), ImGuiCond_Always);
 
     ImGui::SetNextWindowSize(ImVec2(
-        500,
-        800
+        Width,
+        Height
     ), ImGuiCond_Always);
 
     ImGuiWindowFlags flags =
@@ -151,13 +151,13 @@ void SkeletonDataPanel::DrawBoneTransformPanel() const
     const float panelHeight = 300.0f;
 
     ImGui::SetNextWindowPos(ImVec2(
-        500,
-        0
+        ImGui::GetIO().DisplaySize.x - Width,
+        Height
     ), ImGuiCond_Always);
 
     ImGui::SetNextWindowSize(ImVec2(
-        panelWidth,
-        panelHeight
+        Width,
+        350
     ), ImGuiCond_Always);
 
     ImGuiWindowFlags flags =
