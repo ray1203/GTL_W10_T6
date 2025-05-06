@@ -886,6 +886,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\SkinWeightVertexBuffer.h" />
     <ClInclude Include="Engine\Source\Editor\UnrealEd\ViewerEd.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.h" />
+    <ClInclude Include="resource.h" />
     <None Include="Shaders\EditorShaderConstants.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Debug|x64'">true</ExcludedFromBuild>
@@ -1004,6 +1005,17 @@
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodL.a" />
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudio.a" />
     <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudioL.a" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Icon.ico" />
+    <Image Include="..\ICon.png" />
+    <Image Include="Icon.ico" />
+    <Image Include="icon1.ico" />
+    <Image Include="icon2.ico" />
+    <Image Include="icon3.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="EngineSIU.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
