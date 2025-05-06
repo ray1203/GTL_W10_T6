@@ -1314,9 +1314,48 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
 
     // 8. TODO: Calculate Tangents (Requires Tangent member in FSkeletalMeshVertex and averaging logic)
 
-    // 9. Calculate Bounding Box
-    FLoaderFBX::ComputeBoundingBox(OutSkeletalMeshRenderData.BindPoseVertices, OutSkeletalMeshRenderData.Bounds.min, OutSkeletalMeshRenderData.Bounds.max);
 
+    // 9. Calculate Bounding Box
+    TArray<FVector> SkinnedBindPoseVerticesForBounds;
+    SkinnedBindPoseVerticesForBounds.Reserve(OutSkeletalMeshRenderData.BindPoseVertices.Num());
+
+    for (const FBX::FSkeletalMeshVertex& BindVertex : OutSkeletalMeshRenderData.BindPoseVertices)
+    {
+        FVector SkinnedPosition = FVector::ZeroVector;
+        const FVector& OriginalBindPos = BindVertex.Position; // 현재는 GeometryOffset 미적용 상태
+
+        for (int j = 0; j < MAX_BONE_INFLUENCES; ++j)
+        {
+            float Weight = BindVertex.BoneWeights[j];
+            if (Weight <= KINDA_SMALL_NUMBER) continue;
+
+            int32 BoneIdx = static_cast<int32>(BindVertex.BoneIndices[j]);
+            if (!OutSkeleton->BoneTree.IsValidIndex(BoneIdx)) continue;
+            const FBoneNode& BoneNode = OutSkeleton->BoneTree[BoneIdx];
+            const FMatrix& GeometryOffset = BoneNode.GeometryOffsetMatrix;
+
+            SkinnedPosition += GeometryOffset.TransformPosition(OriginalBindPos) * Weight;
+        }
+        SkinnedBindPoseVerticesForBounds.Add(SkinnedPosition);
+    }
+
+    // 이제 SkinnedBindPoseVerticesForBounds는 GeometryOffset이 적용된 정점들을 가짐
+    // ComputeBoundingBox(SkinnedBindPoseVerticesForBounds, ...); // 이 함수는 FVector 배열을 받도록 수정 필요
+    // 또는 ComputeBoundingBox 함수 내부에서 이 변환을 수행하도록 수정
+
+    // 현재 ComputeBoundingBox는 FSkeletalMeshVertex 배열을 받으므로,
+    // FSkeletalMeshVertex를 임시로 만들어서 위치만 채우고 전달해야 함.
+    TArray<FBX::FSkeletalMeshVertex> TempVerticesForBounds;
+    TempVerticesForBounds.Reserve(SkinnedBindPoseVerticesForBounds.Num());
+    for (const FVector& Pos : SkinnedBindPoseVerticesForBounds)
+    {
+        FBX::FSkeletalMeshVertex TempVtx;
+        TempVtx.Position = Pos;
+        TempVerticesForBounds.Add(TempVtx);
+    }
+    FLoaderFBX::ComputeBoundingBox(TempVerticesForBounds, OutSkeletalMeshRenderData.Bounds.min, OutSkeletalMeshRenderData.Bounds.max);
+  
+  
     return true;
 }
 
