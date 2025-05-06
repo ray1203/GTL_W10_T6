@@ -16,8 +16,7 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
     NewComponent->SkeletalMesh = SkeletalMesh;
     return NewComponent;
 }
-float AngleRad;
-bool t = false;
+
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime); // 부모 클래스 Tick 호출 (필요 시)
@@ -29,13 +28,15 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
     }
     TArray< FName> BoneName;
     SkeletalMesh->GetBoneNames(BoneName);
+    
     // 1. 움직일 본 찾기
     if (BoneName.IsEmpty()) return;
-    int32 BoneIndex = SkeletalMesh->GetBoneIndexByName(BoneName[2]);
-    if (t) return;
+    
+    int32 BoneIndex = SkeletalMesh->GetBoneIndexByName(BoneName[3]);
+   
     if (BoneIndex != INDEX_NONE)
     {
-        t = false;
+   
         // 2. 현재 로컬 변환 가져오기
         FMatrix CurrentLocalMatrix = SkeletalMesh->GetBoneLocalMatrix(BoneIndex);
      

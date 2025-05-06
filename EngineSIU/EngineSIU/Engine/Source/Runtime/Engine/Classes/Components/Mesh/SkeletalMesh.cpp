@@ -68,14 +68,7 @@ FMatrix USkeletalMesh::GetBoneLocalMatrix(uint32 BoneIndex) const
     }
     return Skeleton->CurrentPose.LocalTransforms[BoneIndex];
 }
-FMatrix USkeletalMesh::GetBoneBindLocalMatrix(uint32 BoneIndex) const
-{
-    if (!Skeleton || !Skeleton->BoneTree.IsValidIndex(BoneIndex))
-    {
-        return FMatrix::Identity;
-    }
-    return Skeleton->BoneTree[BoneIndex].BindTransform;
-}
+
 bool USkeletalMesh::SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix)
 {
     if (!Skeleton || !Skeleton->BoneTree.IsValidIndex(BoneIndex))

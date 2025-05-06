@@ -10,6 +10,7 @@
 
 class AActor;
 class USceneComponent;
+struct FBoneNode;
 
 class UEditorEngine : public UEngine
 {
@@ -34,6 +35,8 @@ public:
     void StartPIE();
     void EndPIE();
 
+    void StartViewer();
+
     // 주석은 UE에서 사용하던 매개변수.
     FWorldContext& GetEditorWorldContext(/*bool bEnsureIsGWorld = false*/);
     FWorldContext* GetPIEWorldContext(/*int32 WorldPIEInstance = 0*/);
@@ -41,12 +44,16 @@ public:
 public:
     void SelectActor(AActor* InActor);
 
+    void SelectBone(const FBoneNode* InBone);
+
     // 전달된 액터가 선택된 컴포넌트와 같다면 해제 
     void DeselectActor(AActor* InActor);
     void ClearActorSelection(); 
     
     bool CanSelectActor(const AActor* InActor) const;
     AActor* GetSelectedActor() const;
+
+    const FBoneNode* GetSelectedBone() const;
 
     void HoverActor(AActor* InActor);
 

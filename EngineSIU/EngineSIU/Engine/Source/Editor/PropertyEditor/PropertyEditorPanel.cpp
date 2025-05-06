@@ -36,6 +36,9 @@
 #include "Components/Shapes/SphereComponent.h"
 #include "Engine/CurveManager.h"
 
+#include "Components/SkeletalMeshComponent.h"
+#include "FLoaderFBX.h"
+
 void PropertyEditorPanel::Render()
 {
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
@@ -155,6 +158,12 @@ void PropertyEditorPanel::Render()
     {
         RenderForCameraComponent(CameraComponent);
     }
+
+    if (USkinnedMeshComponent* SkinnedMeshComponent = GetTargetComponent<USkinnedMeshComponent>(SelectedActor, SelectedComponent))
+    {
+        RenderForSkeletalMeshComponent(SkinnedMeshComponent);
+    }
+
 
     ImGui::End();
 }
@@ -1514,6 +1523,43 @@ void PropertyEditorPanel::RenderForCameraComponent(UCameraComponent* CameraCompo
     ImGui::PopStyleColor();
 }
 
+void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* SkeletalMeshComp) const
+{
+    ImGui::Text("Skinned Mesh Component");
+    ImGui::Separator();
+
+    USkeletalMesh* SkeletalMesh = SkeletalMeshComp->GetSkeletalMesh();
+    if (SkeletalMesh)
+    {
+        FString MeshName = SkeletalMesh->GetName();
+        FString FilePath = SkeletalMesh->GetRenderData()->FilePath;
+
+        ImGui::Text("Skeletal Mesh: %s", *MeshName);
+        ImGui::Separator();
+
+        if (ImGui::Button("Open in EngineSIU_Viewer"))
+        {
+            WCHAR ExePath[MAX_PATH];
+            GetModuleFileNameW(nullptr, ExePath, MAX_PATH);
+            std::filesystem::path CurrentExeDir = std::filesystem::path(ExePath).parent_path();  // 상위 폴더
+
+            // 상위 폴더로 가서 Viewer_Debug/EngineSIU_Viewer.exe 로 이동
+            std::filesystem::path ViewerExePath = CurrentExeDir.parent_path() / "Viewer_Debug" / "EngineSIU_Viewer.exe";
+
+            std::filesystem::path AbsFbxPath = std::filesystem::absolute(std::filesystem::path(GetData(FilePath)));
+
+            // 실행
+            ShellExecuteW(
+                nullptr,
+                L"open",
+                ViewerExePath.wstring().c_str(),     // 실행할 exe 경로
+                AbsFbxPath.wstring().c_str(),        // 인자: FBX 경로
+                nullptr,
+                SW_SHOWNORMAL
+            );
+        }
+    }
+}
 void PropertyEditorPanel::OnResize(HWND hWnd)
 {
     RECT ClientRect;

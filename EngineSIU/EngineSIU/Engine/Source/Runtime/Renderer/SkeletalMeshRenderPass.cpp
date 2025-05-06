@@ -344,6 +344,8 @@ void FSkeletalMeshRenderPass::RenderPrimitive(FBX::FSkeletalMeshRenderData* Rend
 
 void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport)
 {
+    const uint64 ShowFlag = Viewport->GetShowFlag();
+
     for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
     {
         if (!Comp || !Comp->GetSkeletalMesh())
@@ -356,8 +358,11 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         {
             continue;
         }
-        FSkeletalMeshDebugger::DrawSkeleton(Comp);
-        FSkeletalMeshDebugger::DrawSkeletonAABBs(Comp);
+
+        if (ShowFlag & EEngineShowFlags::SF_Bone) {
+            FSkeletalMeshDebugger::DrawSkeleton(Comp);
+            FSkeletalMeshDebugger::DrawSkeletonAABBs(Comp);
+        }
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
@@ -403,9 +408,6 @@ void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Vie
     ShadowManager->BindResourcesForSampling();
 
     PrepareRenderState(Viewport);
-
-
-
 
     RenderAllSkeletalMeshes(Viewport);
 

@@ -15,6 +15,7 @@
 #include "Games/LastWar/Characters/Wall.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Audio/AudioManager.h"
+#include "Engine/Animation/Skeleton.h"
 
 namespace PrivateEditorSelection
 {
@@ -23,6 +24,8 @@ namespace PrivateEditorSelection
 
     static USceneComponent* GComponentSelected = nullptr;
     static USceneComponent* GComponentHovered = nullptr;
+
+    static const FBoneNode* GBoneNodeSelected = nullptr;
 }
 
 void UEditorEngine::Init()
@@ -52,8 +55,10 @@ void UEditorEngine::Init()
     
     TMap<FString, FString> Config = FEditorConfigManager::GetInstance().Read();
     FString ScenePath = FEditorConfigManager::GetValueFromConfig<std::string>(Config, "ScenePath", "Saved/DefaultLevel.scene");
-
+    
+#ifndef _DEBUG_VIEWER
     LoadLevel(ScenePath);
+#endif // DEBUG_VIEWER
 }
 
 bool UEditorEngine::TryQuit(bool& OutbIsSave)
@@ -194,10 +199,6 @@ void UEditorEngine::StartPIE()
     PIEWorld->BeginPlay();
     GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.Target = PlayerCharacter;
     //GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 10.0f, FLinearColor::Red, false, true);
-
-    
-
-    // 나중에 제거하기
 }
 
 void UEditorEngine::EndPIE()
@@ -220,6 +221,22 @@ void UEditorEngine::EndPIE()
     }
     // 다시 EditorWorld로 돌아옴.
     ActiveWorld = EditorWorld;
+}
+
+void UEditorEngine::StartViewer()
+{
+    FWorldContext& ViewerWorldContext = CreateNewWorldContext(EWorldType::Viewer);
+    UWorld* ViewerWorld = UWorld::CreateWorld(this, EWorldType::Viewer, FString("ViewerWorld"));
+    ViewerWorld->WorldType = EWorldType::Viewer;
+    ViewerWorldContext.SetCurrentWorld(ViewerWorld);
+    ActiveWorld = ViewerWorld;
+
+    // GameMode 없으므로 StartPIE에서 바로 PC 생성
+    // 1) PlayerController 스폰
+    APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
+    ActiveWorld->AddPlayerController(PC);
+
+    ViewerWorld->BeginPlay();
 }
 
 FWorldContext& UEditorEngine::GetEditorWorldContext(/*bool bEnsureIsGWorld*/)
@@ -254,6 +271,14 @@ void UEditorEngine::SelectActor(AActor* InActor)
     }
 }
 
+void UEditorEngine::SelectBone(const FBoneNode* InBone)
+{
+    if (InBone) 
+    {
+        PrivateEditorSelection::GBoneNodeSelected = InBone;
+    }
+}
+
 void UEditorEngine::DeselectActor(AActor* InActor)
 {
     if (PrivateEditorSelection::GActorSelected == InActor && InActor)
@@ -276,6 +301,11 @@ bool UEditorEngine::CanSelectActor(const AActor* InActor) const
 AActor* UEditorEngine::GetSelectedActor() const
 {
     return PrivateEditorSelection::GActorSelected;
+}
+
+const FBoneNode* UEditorEngine::GetSelectedBone() const
+{
+    return PrivateEditorSelection::GBoneNodeSelected;
 }
 
 void UEditorEngine::HoverActor(AActor* InActor)
