@@ -21,7 +21,7 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime); // 부모 클래스 Tick 호출 (필요 시)
     // 스켈레탈 메시가 없거나 애니메이션 비활성화 시 중단
-   // return;
+    return;
     if (!SkeletalMesh)
     {
         return;
