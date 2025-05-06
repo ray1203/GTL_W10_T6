@@ -8,6 +8,7 @@ struct FBoneNode
     int32 ParentIndex;
     FMatrix BindTransform; // Bind pose transform (로컬 바인드 포즈)
     FMatrix InverseBindTransform; // Bind pose transform (로컬 바인드 포즈)
+    FMatrix GeometryOffsetMatrix;
 
     // 리타겟팅 모드 - Animation 주차에 필요 시 사용
     // TEnumAsByte<EBoneTranslationRetargetingMode::Type> TranslationRetargetingMode;
@@ -16,6 +17,7 @@ struct FBoneNode
         : ParentIndex(INDEX_NONE)
         , BindTransform(FMatrix::Identity)
         , InverseBindTransform(FMatrix::Identity)
+        , GeometryOffsetMatrix(FMatrix::Identity)
         // , TranslationRetargetingMode(EBoneTranslationRetargetingMode::Animation)
     {
     }
@@ -87,10 +89,10 @@ public:
         BoneNameToIndex.Empty();
     }
     // 본 추가 (인덱스 기반)
-    void AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlobalBindPose);
+    void AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlobalBindPose, const FMatrix& InTransformMatrix);
 
     // 본 추가 (이름 기반)
-    void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform);
+    void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform, const FMatrix& InTransformMatrix);
 
     // 본 이름으로 인덱스 가져오기
     uint32 GetBoneIndex(const FName Name) const;
@@ -103,6 +105,8 @@ public:
 
     // 인버스 바인드 포즈 행렬 가져오기
     FMatrix GetInverseBindTransform(int32 BoneIdx) const;
+
+    FMatrix GetGeometryOffsetTransform(int32 BoneIdx) const;
 
     // 스키닝 행렬 계산 (애니메이션 행렬 * 인버스 바인드 포즈 행렬)
     FMatrix CalculateSkinningMatrix(int32 BoneIdx, const FMatrix& AnimationMatrix) const;

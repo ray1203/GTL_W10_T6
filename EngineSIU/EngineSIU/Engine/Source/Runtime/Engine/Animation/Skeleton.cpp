@@ -11,7 +11,7 @@ USkeleton::USkeleton()
 {
 }
 
-void USkeleton::AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlobalBindPose) // 파라미터 이름 명시
+void USkeleton::AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlobalBindPose, const FMatrix& InTransformMatrix) // 파라미터 이름 명시
 {
     int32 CurrentBoneIndex = BoneTree.Num(); // 새로 추가될 본의 인덱스
     BoneNameToIndex.Add(Name, CurrentBoneIndex);
@@ -45,6 +45,7 @@ void USkeleton::AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlob
 
     // 2. 글로벌 바인드 포즈의 역행렬 계산 -> NewBoneNode.InverseBindTransform 에 저장
     NewBoneNode.InverseBindTransform = FMatrix::Inverse(InGlobalBindPose);
+    NewBoneNode.GeometryOffsetMatrix = InTransformMatrix;
     if (FMath::IsNearlyZero(NewBoneNode.InverseBindTransform.Determinant())) 
     {
         NewBoneNode.InverseBindTransform = FMatrix::Identity; // 방어 코드
@@ -66,7 +67,7 @@ void USkeleton::AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlob
     // 현재 포즈 크기 조정
     CurrentPose.Resize(BoneTree.Num());
 }
-void USkeleton::AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform)
+void USkeleton::AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform, const FMatrix& InTransformMatrix)
 {
     int32 ParentIdx = INDEX_NONE;
 
@@ -84,7 +85,7 @@ void USkeleton::AddBone(const FName Name, const FName ParentName, const FMatrix 
     BoneParentMap.Add(Name, ParentName);
 
     // 기존 AddBone 호출
-    AddBone(Name, ParentIdx, BindTransform);
+    AddBone(Name, ParentIdx, BindTransform, InTransformMatrix);
 }
 
 uint32 USkeleton::GetBoneIndex(const FName Name) const
@@ -132,9 +133,18 @@ FMatrix USkeleton::GetInverseBindTransform(int32 BoneIdx) const
     return FMatrix::Identity;
 }
 
+FMatrix USkeleton::GetGeometryOffsetTransform(int32 BoneIdx) const
+{
+    if (BoneTree.IsValidIndex(BoneIdx))
+    {
+        return BoneTree[BoneIdx].GeometryOffsetMatrix; // 저장된 값 사용
+    }
+    return FMatrix::Identity;
+}
+
 FMatrix USkeleton::CalculateSkinningMatrix(int32 BoneIdx, const FMatrix& AnimationMatrix) const
 {
-    return   GetInverseBindTransform(BoneIdx) * AnimationMatrix;
+    return  GetGeometryOffsetTransform(BoneIdx) * GetInverseBindTransform(BoneIdx) * AnimationMatrix;
 }
 
 void USkeleton::UpdateCurrentPose(const TArray<FMatrix>& LocalAnimationTransforms)

@@ -63,6 +63,7 @@ namespace  FBX {
         FName BoneName;
         FName ParentName;
         FMatrix GlobalBindPose;
+        FMatrix TransformMatrix;
     };
 
     struct FBXInfo
@@ -132,10 +133,10 @@ namespace  FBX {
 
     // TODO: Verify coordinate system conversions for YOUR engine!
     FVector ConvertFbxPosition(const FbxVector4& Vector) {
-        return FVector(static_cast<float>(Vector[0]), -static_cast<float>(Vector[2]), static_cast<float>(Vector[1])); // Example: Y-up -> Z-up LH
+        return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2])); // Example: Y-up -> Z-up LH
     }
     FVector ConvertFbxNormal(const FbxVector4& Vector) {
-        return FVector(static_cast<float>(Vector[0]), -static_cast<float>(Vector[2]), static_cast<float>(Vector[1])); // Example: Y-up -> Z-up LH
+        return FVector(static_cast<float>(Vector[0]), static_cast<float>(Vector[1]), static_cast<float>(Vector[2])); // Example: Y-up -> Z-up LH
     }
     FVector2D ConvertFbxUV(const FbxVector2& Vector) {
         return FVector2D(static_cast<float>(Vector[0]), 1 - static_cast<float>(Vector[1]));
@@ -1020,7 +1021,9 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         if (!OutFBXInfo.SkeletonHierarchy.Contains(BoneName))
         {
             FBoneHierarchyNode HierarchyNode; HierarchyNode.BoneName = BoneName;
-            FbxAMatrix GlobalBindPoseMatrix; bool bBindPoseFound = false;
+            FbxAMatrix GlobalBindPoseMatrix;
+            FbxAMatrix TransformMatrix;
+            bool bBindPoseFound = false;
             for (int meshIdx = 0; meshIdx < Scene->GetSrcObjectCount<FbxMesh>() && !bBindPoseFound; ++meshIdx)
             {
                 FbxMesh* Mesh = Scene->GetSrcObject<FbxMesh>(meshIdx); if (!Mesh) continue;
@@ -1035,14 +1038,19 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
                         if (Cluster && Cluster->GetLink() == BoneNode)
                         {
                             Cluster->GetTransformLinkMatrix(GlobalBindPoseMatrix);
-                            HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix); bBindPoseFound = true;
+                            Cluster->GetTransformMatrix(TransformMatrix);
+                            HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix); 
+                            HierarchyNode.TransformMatrix = ConvertFbxAMatrixToFMatrix(TransformMatrix);
+                            bBindPoseFound = true;
                         }
                     }
                 }
             }
-            if (!bBindPoseFound) {
+            if (!bBindPoseFound) 
+            {
                 GlobalBindPoseMatrix = BoneNode->EvaluateGlobalTransform(FBXSDK_TIME_ZERO);
                 HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix);
+                HierarchyNode.TransformMatrix = FMatrix::Identity;
             }
             OutFBXInfo.SkeletonHierarchy.Add(BoneName, HierarchyNode);
         }
@@ -1206,7 +1214,7 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
                 }
 
             }
-            OutSkeleton->AddBone(BoneName, ParentIndexInSkeleton, HNode->GlobalBindPose);
+            OutSkeleton->AddBone(BoneName, ParentIndexInSkeleton, HNode->GlobalBindPose, HNode->TransformMatrix);
         }
     }
 
@@ -1333,7 +1341,8 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
 {
     if (InVertices.IsEmpty())
     {
-        OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector; return;
+        OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector; 
+        return;
     }
     OutMinVector = InVertices[0].Position;
     OutMaxVector = InVertices[0].Position;
