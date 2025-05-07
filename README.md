@@ -1,6 +1,27 @@
 # SharkryEngine
-<img src="https://github.com/user-attachments/assets/5bf8b16d-a603-4b53-af6f-fa230b98b58c" width="400"/>
-<img src="https://github.com/user-attachments/assets/0075f6ac-2de1-4a21-9103-41d74da922b4" width="200"/>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/5bf8b16d-a603-4b53-af6f-fa230b98b58c" width="400"/><br/><br/>
+  <img src="https://github.com/user-attachments/assets/0075f6ac-2de1-4a21-9103-41d74da922b4" width="200"/>
+</p>
+
+**게임테크랩 팀5**  
+강현중, 오정훈, 정재현, 최현규
+
+---
+
+## 📄 개발 문서
+
+[📎 Notion 개발문서 바로가기](https://www.notion.so/W09-Team5-1ece29fe416d80668192e4191e059413)
+
+---
+
+## ⚠️ 빌드시 주의 사항
+
+1. **FBX SDK 경로**
+   - 정확한 경로에 설치해야 합니다:  
+     `C:\Program Files\Autodes
+
 
 
 **게임테크랩 팀5**  
