@@ -1544,8 +1544,8 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             std::filesystem::path CurrentExeDir = std::filesystem::path(ExePath).parent_path();  // 상위 폴더
 
             // 상위 폴더로 가서 Viewer_Debug/EngineSIU_Viewer.exe 로 이동
-            std::filesystem::path ViewerExePath = CurrentExeDir.parent_path() / "Viewer_Debug" / "EngineSIU_Viewer.exe";
 
+            std::filesystem::path ViewerExePath = CurrentExeDir.parent_path() / "Viewer_Release" / "EngineSIU_Viewer.exe";
             std::filesystem::path AbsFbxPath = std::filesystem::absolute(std::filesystem::path(GetData(FilePath)));
 
             // 실행
