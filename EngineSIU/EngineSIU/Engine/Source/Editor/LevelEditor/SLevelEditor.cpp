@@ -353,52 +353,65 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
     });
 
     Handler->OnMouseWheelDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
+    {
+        if (ImGui::GetIO().WantCaptureMouse) return;
+
+        // 뷰어 모드에서만 적용
+        if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer && ActiveViewportClient->IsPerspective())
         {
-            if (ImGui::GetIO().WantCaptureMouse) return;
+            UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+            USceneComponent* TargetComponent = Engine->GetSelectedComponent();
+            AActor* TargetActor = Engine->GetSelectedActor();
+            UPrimitiveComponent* Primitive = nullptr;
 
-            // 뷰어 모드에서만 적용
-            if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer && ActiveViewportClient->IsPerspective())
+            if (TargetComponent)
+                Primitive = Cast<UPrimitiveComponent>(TargetComponent);
+            else if (TargetActor)
+                Primitive = Cast<UPrimitiveComponent>(TargetActor->GetRootComponent());
+
+            float ScaleFactor = 1.0f;
+            if (Primitive)
             {
-                UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-                USceneComponent* TargetComponent = Engine->GetSelectedComponent();
-                AActor* TargetActor = Engine->GetSelectedActor();
-                UPrimitiveComponent* Primitive = nullptr;
+                // 모델 중심과 반지름 구하기
+                FBoundingBox Box = Primitive->GetBoundingBox();
+                FVector Center = (Box.min + Box.max) * 0.5f;
+                float Radius = (Box.max - Box.min).Length() * 0.5f;
 
-                if (TargetComponent)
-                    Primitive = Cast<UPrimitiveComponent>(TargetComponent);
-                else if (TargetActor)
-                    Primitive = Cast<UPrimitiveComponent>(TargetActor->GetRootComponent());
+                // 카메라 거리 측정
+                float Distance = (ActiveViewportClient->GetPerspectiveCamera().GetLocation() - Center).Length();
 
-                float ScaleFactor = 1.0f;
-                if (Primitive)
-                {
-                    // 모델 중심과 반지름 구하기
-                    FBoundingBox Box = Primitive->GetBoundingBox();
-                    FVector Center = (Box.min + Box.max) * 0.5f;
-                    float Radius = (Box.max - Box.min).Length() * 0.5f;
+                // 스케일 팩터: 거리와 모델 크기에 비례
+                ScaleFactor = (Radius + 1.0f) * 0.2f + Distance * 0.001f;
+            }
 
-                    // 카메라 거리 측정
-                    float Distance = (ActiveViewportClient->GetPerspectiveCamera().GetLocation() - Center).Length();
-
-                    // 스케일 팩터: 거리와 모델 크기에 비례
-                    ScaleFactor = (Radius + 1.0f) * 0.2f + Distance * 0.001f;
-                }
-
-                if (!InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
-                {
-                    FVector CameraLoc = ActiveViewportClient->GetPerspectiveCamera().GetLocation();
-                    FVector CameraForward = ActiveViewportClient->GetPerspectiveCamera().GetForwardVector();
-                    ActiveViewportClient->GetPerspectiveCamera().SetLocation(
-                        CameraLoc + CameraForward * InMouseEvent.GetWheelDelta() * ScaleFactor
-                    );
-                }
+            if (!InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
+            {
+                FVector CameraLoc = ActiveViewportClient->GetPerspectiveCamera().GetLocation();
+                FVector CameraForward = ActiveViewportClient->GetPerspectiveCamera().GetForwardVector();
+                ActiveViewportClient->GetPerspectiveCamera().SetLocation(
+                    CameraLoc + CameraForward * InMouseEvent.GetWheelDelta() * ScaleFactor
+                );
+            }
+        }
+        else if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+        {
+            // 에디터 모드 처리
+            if (ActiveViewportClient->IsPerspective())
+            {
+                // Perspective 모드에서는 카메라 이동
+                FVector CameraLoc = ActiveViewportClient->GetPerspectiveCamera().GetLocation();
+                FVector CameraForward = ActiveViewportClient->GetPerspectiveCamera().GetForwardVector();
+                ActiveViewportClient->GetPerspectiveCamera().SetLocation(
+                    CameraLoc + CameraForward * InMouseEvent.GetWheelDelta() * 0.5f
+                );
             }
             else
             {
                 // Ortho 모드일 땐 기존대로
                 FEditorViewportClient::SetOrthoSize(FEditorViewportClient::GetOrthoSize() + (-InMouseEvent.GetWheelDelta()));
             }
-        });
+        }
+    });
 
 
     Handler->OnKeyDownDelegate.AddLambda([this](const FKeyEvent& InKeyEvent)
