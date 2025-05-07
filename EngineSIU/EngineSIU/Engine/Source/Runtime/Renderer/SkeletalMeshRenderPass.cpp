@@ -133,6 +133,8 @@ void FSkeletalMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         break;
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
+    case EViewModeIndex::VMI_WorldNormal:
+    case EViewModeIndex::VMI_SceneDepth:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
