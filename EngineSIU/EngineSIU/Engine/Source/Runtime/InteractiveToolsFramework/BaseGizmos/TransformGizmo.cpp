@@ -131,10 +131,18 @@ void ATransformGizmo::Tick(float DeltaTime)
 		return;
 	}
 	// [TEMP] Viewermode gizmo setting
-	FVector GizmoPosition = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].GetTranslationVector();
 	FRotator GizmoRotation = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].ToQuat().Rotator();
 
-	SetActorLocation(GizmoPosition);
+    if (SelectedBone->ParentIndex == INDEX_NONE) 
+    {
+	    FVector GizmoPosition = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].GetTranslationVector();
+	    SetActorLocation(GizmoPosition);
+    }
+    else 
+    {
+        FVector GizmoPosition = Skeleton->CurrentPose.GlobalTransforms[SelectedBone->ParentIndex].GetTranslationVector();
+        SetActorLocation(GizmoPosition);
+    }
 	SetActorRotation(GizmoRotation);
 #else
 	if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
