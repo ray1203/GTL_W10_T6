@@ -426,8 +426,14 @@ void UEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseCompon
 
     FMatrix CurrentLocalMatrix = SkeletalMesh->GetBoneLocalMatrix(Skeleton->BoneNameToIndex[SelectedBone->Name]);
     // Quat - ToMatrix로 바로 적용 시 포지션이 원점으로 가는 문제가 있음(Why)
-    FRotator FinalRotation = FRotator(RotationDelta * CurrentRotation);
-    FMatrix NewLocalMatrix = CurrentLocalMatrix * FinalRotation.ToMatrix();
+    FVector LocalPos = CurrentLocalMatrix.GetTranslationVector();
+    FRotator LocalRot = FRotator(CurrentLocalMatrix.ToQuat() * RotationDelta);
+    FVector LocalScale = CurrentLocalMatrix.GetScaleVector();
+
+    FMatrix NewLocalMatrix =
+        FMatrix::GetScaleMatrix(LocalScale) *
+        FMatrix::GetRotationMatrix(LocalRot) *
+        FMatrix::GetTranslationMatrix(LocalPos);
     // 5. 새로운 로컬 변환 설정
     if (SkeletalMesh->SetBoneLocalMatrix(Skeleton->BoneNameToIndex[SelectedBone->Name], NewLocalMatrix))
     {
