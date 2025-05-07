@@ -31,6 +31,7 @@ namespace  FBX {
         FName NodeName;
         TArray<FVector> ControlPoints;
         TArray<int32> PolygonVertexIndices;
+        FMatrix MeshNodeGlobalTransformAtBindTime;
         struct AttributeData {
             TArray<FbxVector4> DataVec4;
             TArray<FbxVector2> DataVec2;
@@ -94,13 +95,13 @@ namespace  FBX {
             for (int32 i = 0; i < Influences.Num(); ++i) TotalWeight += Influences[i].Weight;
 
             // 3. 가중치 합으로 각 가중치 정규화 (합이 1이 되도록)
-            if (TotalWeight > KINDA_SMALL_NUMBER) 
-            { 
+            if (TotalWeight > KINDA_SMALL_NUMBER)
+            {
                 for (int32 i = 0; i < Influences.Num(); ++i) Influences[i].Weight /= TotalWeight;
             }
-            else if (!Influences.IsEmpty()) 
-            { 
-                
+            else if (!Influences.IsEmpty())
+            {
+
                 float EqualWeight = 1.0f / Influences.Num(); // 균등 분배
                 for (int32 i = 0; i < Influences.Num(); ++i) Influences[i].Weight = EqualWeight;
             }
@@ -115,11 +116,11 @@ namespace  FBX {
             {
                 Influences.SetNum(MaxInfluences);
 
-                if (MaxInfluences > 0) 
+                if (MaxInfluences > 0)
                 {
                     Influences.RemoveAt(Influences.Num() - MaxInfluences);
                 }
-                else 
+                else
                 {
                     Influences.Empty(); // MaxInfluences가 0이면 모든 영향 제거
                 }
@@ -139,15 +140,15 @@ namespace  FBX {
             }
 
             // 6. 최종 정규화 (부동 소수점 오류로 합이 정확히 1이 아닐 수 있으므로, 마지막 가중치 조정)
-            if (!Influences.IsEmpty()) 
+            if (!Influences.IsEmpty())
             {
                 float CurrentSum = 0.0f;
                 // 마지막 요소를 제외한 모든 요소의 가중치 합 계산
                 for (int32 i = 0; i < Influences.Num() - 1; ++i) CurrentSum += Influences[i].Weight;
 
                 int32 LastIndex = Influences.Num() - 1;
-                if (LastIndex >= 0) 
-                { 
+                if (LastIndex >= 0)
+                {
                     Influences[LastIndex].Weight = FMath::Max(0.0f, 1.0f - CurrentSum);
                 }
             }
@@ -172,12 +173,17 @@ namespace  FBX {
     // TODO: Verify matrix conversion (Row/Column Major, Coord System) for YOUR engine!
     FMatrix ConvertFbxAMatrixToFMatrix(const FbxAMatrix& FbxMatrix) {
         FMatrix Result;
+        // 간단한 유효성 검사 (모든 요소가 유한한지)
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
-                Result.M[i][j] = static_cast<float>(FbxMatrix.Get(i, j));
+                double val = FbxMatrix.Get(i, j);
+                if (!FMath::IsFinite(val))
+                {
+                    return FMatrix::Identity; // 문제가 있으면 단위 행렬 반환
+                }
+                Result.M[i][j] = static_cast<float>(val);
             }
         }
-
         return Result;
     }
     FbxAMatrix ConvertFMatrixToFbxAMatrix(const FMatrix& InMatrix)
@@ -1039,6 +1045,7 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
             }
         }
     }
+
     for (FbxNode* BoneNode : AllBoneNodesTemp)
     {
         FName BoneName(BoneNode->GetName()); BoneNodeToNameMap.Add(BoneNode, BoneName);
@@ -1064,14 +1071,14 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
                         {
                             Cluster->GetTransformLinkMatrix(GlobalBindPoseMatrix);
                             Cluster->GetTransformMatrix(TransformMatrix);
-                            HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix); 
+                            HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix);
                             HierarchyNode.TransformMatrix = ConvertFbxAMatrixToFMatrix(TransformMatrix);
                             bBindPoseFound = true;
                         }
                     }
                 }
             }
-            if (!bBindPoseFound) 
+            if (!bBindPoseFound)
             {
                 GlobalBindPoseMatrix = BoneNode->EvaluateGlobalTransform(FBXSDK_TIME_ZERO);
                 HierarchyNode.GlobalBindPose = ConvertFbxAMatrixToFMatrix(GlobalBindPoseMatrix);
@@ -1127,15 +1134,25 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
             if (Mesh)
             {
                 MeshRawData RawData;
+                FbxAMatrix MeshNodeFbxGlobalTransform = CurrentNode->EvaluateGlobalTransform(FBXSDK_TIME_ZERO);
+                RawData.MeshNodeGlobalTransformAtBindTime = ConvertFbxAMatrixToFMatrix(MeshNodeFbxGlobalTransform);
                 if (ExtractSingleMeshRawData(CurrentNode, RawData, MaterialPtrToNameMap))
+                {
                     OutFBXInfo.Meshes.Add(std::move(RawData));
+                }
             } // Use std::move
-            for (int i = 0; i < CurrentNode->GetChildCount(); ++i) ProcessNodeRecursive(CurrentNode->GetChild(i));
+            for (int i = 0; i < CurrentNode->GetChildCount(); ++i)
+                ProcessNodeRecursive(CurrentNode->GetChild(i));
         };
     ProcessNodeRecursive(RootNode);
     for (auto& Pair : OutFBXInfo.SkeletonHierarchy)
     {
+        if (Pair.Key.IsNone()) 
+        {
+            continue; // 또는 return false;
+        }
         const FName& BoneName = Pair.Key;
+
         const FBoneHierarchyNode& BoneNode = Pair.Value;
         FString BoneInfo = FbxTransformToString(ConvertFMatrixToFbxAMatrix(BoneNode.GlobalBindPose));
         UE_LOG(LogLevel::Display, TEXT("[%s] %s"), *BoneName.ToString(), *BoneInfo);
@@ -1143,21 +1160,31 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     return true;
 }
 
-bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMeshRenderData, USkeleton* OutSkeleton)
+bool FLoaderFBX::ConvertToSkeletalMesh(const TArray<FBX::MeshRawData>& AllRawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMeshRenderData, USkeleton* OutSkeleton)
 {
     using namespace ::FBX;
 
     if (!OutSkeleton) return false;
 
-    OutSkeletalMeshRenderData.MeshName = RawMeshData.NodeName.ToString();
-    OutSkeletalMeshRenderData.FilePath = FullFBXInfo.FilePath;
 
-    OutSkeleton->Clear(); // USkeleton 초기화
+    OutSkeletalMeshRenderData.MeshName = AllRawMeshData[0].NodeName.ToString();
+    OutSkeletalMeshRenderData.FilePath = FullFBXInfo.FilePath;
+    OutSkeleton->Clear();
 
     // 1. 스키닝에 관련된 모든 본 및 그 부모 본들 수집 (BonesToInclude)
     TArray<FName> RelevantBoneNames;
-    for (const auto& influence : RawMeshData.SkinningInfluences)
-        RelevantBoneNames.AddUnique(influence.BoneName);
+    for (const auto& RawMeshDataInstance : AllRawMeshData)
+    {
+        // 모든 메시의 영향 본 수집
+        for (const auto& influence : RawMeshDataInstance.SkinningInfluences)
+        {
+            RelevantBoneNames.AddUnique(influence.BoneName);
+        }
+    }
+    if (RelevantBoneNames.IsEmpty() && !AllRawMeshData.IsEmpty() && !FullFBXInfo.SkeletonHierarchy.IsEmpty())
+    {
+        FullFBXInfo.SkeletonHierarchy.GetKeys(RelevantBoneNames);
+    }
 
     TArray<FName> BonesToInclude = RelevantBoneNames;
     int32 CheckIndex = 0;
@@ -1166,8 +1193,11 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
         FName CurrentBoneName = BonesToInclude[CheckIndex++];
         const FBoneHierarchyNode* HNode = FullFBXInfo.SkeletonHierarchy.Find(CurrentBoneName);
         if (HNode && !HNode->ParentName.IsNone() && FullFBXInfo.SkeletonHierarchy.Contains(HNode->ParentName))
+        {
             BonesToInclude.AddUnique(HNode->ParentName);
+        }
     }
+
 
     // 2. 루트 본 식별 및 자식 관계 맵핑 (USkeleton에 아직 추가 안 함)
     TMap<FName, TArray<FName>> BoneChildrenMap;
@@ -1193,15 +1223,15 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
     TArray<FName> ProcessingQueue = RootBoneNamesForSorting;
     TMap<FName, bool> ProcessedBones;
     int32 Head = 0;
-    while (Head < ProcessingQueue.Num()) // Use index based queue to avoid frequent RemoveAt(0)
+    while (Head < ProcessingQueue.Num())
     {
         FName CurrentBoneName = ProcessingQueue[Head++];
-
-        if (ProcessedBones.Contains(CurrentBoneName)) continue;
-
+        if (ProcessedBones.Contains(CurrentBoneName))
+        {
+            continue;
+        }
         SortedBoneNames.Add(CurrentBoneName);
         ProcessedBones.Add(CurrentBoneName, true);
-
         if (BoneChildrenMap.Contains(CurrentBoneName))
         {
             for (const FName& ChildBoneName : BoneChildrenMap[CurrentBoneName])
@@ -1215,9 +1245,10 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
     }
     if (SortedBoneNames.Num() != BonesToInclude.Num())
     {
-        // 누락된 본 추가 (순서 보장 안 될 수 있음)
-        for (const FName& BoneName : BonesToInclude) {
-            if (!ProcessedBones.Contains(BoneName)) {
+        for (const FName& BoneName : BonesToInclude)
+        {
+            if (!ProcessedBones.Contains(BoneName))
+            {
                 SortedBoneNames.Add(BoneName);
             }
         }
@@ -1233,103 +1264,227 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
             if (!HNode->ParentName.IsNone())
             {
                 const uint32* FoundParentIndexPtr = OutSkeleton->BoneNameToIndex.Find(HNode->ParentName);
-                if (FoundParentIndexPtr)
-                {
-                    ParentIndexInSkeleton = static_cast<int32>(*FoundParentIndexPtr);
-                }
-
+                if (FoundParentIndexPtr) ParentIndexInSkeleton = static_cast<int32>(*FoundParentIndexPtr);
             }
             OutSkeleton->AddBone(BoneName, ParentIndexInSkeleton, HNode->GlobalBindPose, HNode->TransformMatrix);
         }
     }
 
     // 2. Prepare Skinning Data
-    TArray<FControlPointSkinningData> CpSkinData;
-    CpSkinData.Init({}, RawMeshData.ControlPoints.Num());
+    // --- 2. 메시 데이터 통합 ---
+    TArray<FVector> CombinedControlPoints_MeshNodeLocal; // 각 메시 노드 로컬 공간 기준 컨트롤 포인트
+    TArray<int32> CombinedPolygonVertexIndices;
+    TArray<FControlPointSkinningData> CombinedCpSkinData; // 컨트롤 포인트 기준 스키닝 데이터
 
-    for (const auto& influence : RawMeshData.SkinningInfluences)
+    // ReconstructVertexAttributes 결과 통합
+    TArray<FVector> CombinedPVNormals;
+    TArray<FVector2D> CombinedPVUVs;
+
+    uint32 GlobalVertexOffset = 0; // 전체 컨트롤 포인트에 대한 오프셋
+    uint32 GlobalPolyVertOffset = 0; // 전체 폴리곤 정점에 대한 오프셋 (PVNormals, PVUVs 인덱싱용)
+
+
+    for (const FBX::MeshRawData& CurrentRawMeshData : AllRawMeshData)
     {
-        const uint32* BoneIndexPtr = OutSkeleton->BoneNameToIndex.Find(influence.BoneName);
-        if (!BoneIndexPtr) continue;
+        // 2a. 메시 노드의 글로벌 변환 가져오기 (이 변환은 정점을 월드(또는 공통) 바인드 공간으로 옮김)
+        // 중요: 이 변환은 FBX 파싱 시 각 MeshRawData에 저장되어 있어야 함.
+        // 여기서는 임시로 단위 행렬로 가정. 실제로는 각 메시 노드의 글로벌 변환을 사용해야 함.
+        const FMatrix& MeshNodeWorldBindTransform = FMatrix::Identity;//CurrentRawMeshData.MeshNodeGlobalTransformAtBindTime; // 저장된 값 사용
 
-        int32 BoneIndex = static_cast<int32>(*BoneIndexPtr);
-        for (int i = 0; i < influence.ControlPointIndices.Num(); ++i)
+        // 컨트롤 포인트 추가 (메시 노드 변환 적용)
+        for (const FVector& cp_local_to_mesh_node : CurrentRawMeshData.ControlPoints)
         {
-            int32 CPIndex = influence.ControlPointIndices[i];
-            float Weight = static_cast<float>(influence.ControlPointWeights[i]);
-            if (CpSkinData.IsValidIndex(CPIndex) && Weight > KINDA_SMALL_NUMBER)
-                CpSkinData[CPIndex].Influences.Add({ BoneIndex, Weight });
+            CombinedControlPoints_MeshNodeLocal.Add(MeshNodeWorldBindTransform.TransformPosition(cp_local_to_mesh_node));
         }
-    }
-    for (int32 cpIdx = 0; cpIdx < CpSkinData.Num(); ++cpIdx)
-    {
-        CpSkinData[cpIdx].NormalizeWeights(MAX_BONE_INFLUENCES);
+
+        // 스키닝 데이터 추가 (컨트롤 포인트 인덱스에 GlobalVertexOffset 적용)
+        int32 CurrentMeshCPCount = CurrentRawMeshData.ControlPoints.Num();
+        int32 OldSize = CombinedCpSkinData.Num();
+        CombinedCpSkinData.SetNum(OldSize + CurrentMeshCPCount);
+
+        for (const auto& influence : CurrentRawMeshData.SkinningInfluences)
+        {
+            const uint32* SkelBoneIndexPtr = OutSkeleton->BoneNameToIndex.Find(influence.BoneName);
+            if (!SkelBoneIndexPtr) continue;
+            int32 SkelBoneIndex = static_cast<int32>(*SkelBoneIndexPtr);
+
+            for (int i = 0; i < influence.ControlPointIndices.Num(); ++i)
+            {
+                int32 LocalCPIndex = influence.ControlPointIndices[i];
+                int32 GlobalCPIndex = GlobalVertexOffset + LocalCPIndex; // 글로벌 인덱스
+                float Weight = static_cast<float>(influence.ControlPointWeights[i]);
+
+                if (CombinedCpSkinData.IsValidIndex(GlobalCPIndex) && Weight > KINDA_SMALL_NUMBER)
+                {
+                    CombinedCpSkinData[GlobalCPIndex].Influences.Add({ SkelBoneIndex, Weight });
+                }
+            }
+        }
+
+        // 정점 속성 재구성 및 통합
+        TArray<FVector> TempCPNormals, TempPVNormals_ForThisMesh;
+        TArray<FVector2D> TempCPUVs, TempPVUVs_ForThisMesh;
+        if (!ReconstructVertexAttributes(CurrentRawMeshData, TempCPNormals, TempPVNormals_ForThisMesh, TempCPUVs, TempPVUVs_ForThisMesh))
+        {
+            // return false; // 또는 기본값으로 계속 진행하는 로직 필요
+        }
+        for (const FVector& normal : TempPVNormals_ForThisMesh)
+        {
+            FMatrix NormalTransform = MeshNodeWorldBindTransform;
+            NormalTransform.RemoveTranslation(); // 이동 성분 제거
+            CombinedPVNormals.Add(NormalTransform.TransformPosition(normal).GetSafeNormal());
+        }
+        for (const FVector2D& uv : TempPVUVs_ForThisMesh)
+        {
+            CombinedPVUVs.Add(uv);
+        }
+
+
+
+        // 폴리곤 정점 인덱스 추가 (컨트롤 포인트 인덱스에 GlobalVertexOffset 적용)
+        for (int32 local_cp_idx : CurrentRawMeshData.PolygonVertexIndices)
+        {
+            CombinedPolygonVertexIndices.Add(GlobalVertexOffset + local_cp_idx);
+        }
+        GlobalVertexOffset += CurrentMeshCPCount;
+        GlobalPolyVertOffset += CurrentRawMeshData.PolygonVertexIndices.Num(); // PV 속성 인덱싱을 위함
     }
 
-    TArray<FVector> CPNormals, PVNormals; TArray<FVector2D> CPUVs, PVUVs;
-    if (!ReconstructVertexAttributes(RawMeshData, CPNormals, PVNormals, CPUVs, PVUVs)) return false;
-
-
-    if (!FinalizeVertexDataInternal(RawMeshData.ControlPoints, RawMeshData.PolygonVertexIndices,
-        CPNormals, PVNormals, CPUVs, PVUVs, CpSkinData,
-        OutSkeletalMeshRenderData))
+    // --- 3. 통합된 스키닝 가중치 정규화 ---
+    for (int32 cpIdx = 0; cpIdx < CombinedCpSkinData.Num(); ++cpIdx)
     {
-        return false;
+        CombinedCpSkinData[cpIdx].NormalizeWeights(MAX_BONE_INFLUENCES);
     }
-    if (OutSkeletalMeshRenderData.BindPoseVertices.IsEmpty() || OutSkeletalMeshRenderData.Indices.IsEmpty())
+
+
+    OutSkeletalMeshRenderData.BindPoseVertices.Empty();
+    OutSkeletalMeshRenderData.Indices.Empty();
+    std::unordered_map<FSkeletalMeshVertex, uint32> UniqueFinalVertices;
+    uint32 FinalVertexIndexCounter = 0;
+
+    for (int32 FinalPolyVertIdx = 0; FinalPolyVertIdx < CombinedPolygonVertexIndices.Num(); ++FinalPolyVertIdx)
     {
-        return false;
+        int32 GlobalCPIndex = CombinedPolygonVertexIndices[FinalPolyVertIdx]; // 폴리곤이 참조하는 컨트롤 포인트의 글로벌 인덱스
+
+        FSkeletalMeshVertex CurrentFinalVertex = {};
+
+        if (CombinedControlPoints_MeshNodeLocal.IsValidIndex(GlobalCPIndex))
+        {
+            CurrentFinalVertex.Position = CombinedControlPoints_MeshNodeLocal[GlobalCPIndex];
+        }
+        else { /* 오류 처리 또는 기본값 */ CurrentFinalVertex.Position = FVector::ZeroVector; }
+
+        if (CombinedPVNormals.IsValidIndex(FinalPolyVertIdx))
+        { // PV속성은 최종 폴리곤 정점 순서를 따름
+            CurrentFinalVertex.Normal = CombinedPVNormals[FinalPolyVertIdx];
+        }
+        else
+        {
+            CurrentFinalVertex.Normal = FVector(0, 0, 1);
+        }
+        if (!CurrentFinalVertex.Normal.IsNearlyZero())
+            CurrentFinalVertex.Normal.Normalize();
+        else
+            CurrentFinalVertex.Normal = FVector(0, 0, 1);
+
+        if (CombinedPVUVs.IsValidIndex(FinalPolyVertIdx))
+        {
+            CurrentFinalVertex.TexCoord = CombinedPVUVs[FinalPolyVertIdx];
+        }
+        else
+        {
+            CurrentFinalVertex.TexCoord = FVector2D::ZeroVector;
+        }
+
+        if (CombinedCpSkinData.IsValidIndex(GlobalCPIndex))
+        {
+            const auto& InfluencesForCP = CombinedCpSkinData[GlobalCPIndex].Influences;
+            // NormalizeWeights가 이미 호출되었으므로, 여기서 가져온 가중치는 정규화된 상태여야 함.
+            for (int32 i = 0; i < InfluencesForCP.Num() && i < MAX_BONE_INFLUENCES; ++i)
+            {
+                CurrentFinalVertex.BoneIndices[i] = InfluencesForCP[i].BoneIndex;
+                CurrentFinalVertex.BoneWeights[i] = InfluencesForCP[i].Weight;
+            }
+            for (int32 i = InfluencesForCP.Num(); i < MAX_BONE_INFLUENCES; ++i)
+            {
+                CurrentFinalVertex.BoneIndices[i] = 0;
+                CurrentFinalVertex.BoneWeights[i] = 0.0f;
+            }
+        }
+        else
+        {
+            // 스키닝 정보 없는 경우, 루트 본에 100% 가중치 (또는 다른 처리)
+            CurrentFinalVertex.BoneIndices[0] = 0;
+            CurrentFinalVertex.BoneWeights[0] = 1.0f;
+        }
+
+
+        auto it = UniqueFinalVertices.find(CurrentFinalVertex);
+        if (it != UniqueFinalVertices.end())
+        {
+            OutSkeletalMeshRenderData.Indices.Add(it->second);
+        }
+        else
+        {
+            uint32 NewIndex = FinalVertexIndexCounter++;
+            OutSkeletalMeshRenderData.BindPoseVertices.Add(CurrentFinalVertex);
+            UniqueFinalVertices[CurrentFinalVertex] = NewIndex;
+            OutSkeletalMeshRenderData.Indices.Add(NewIndex);
+        }
     }
 
     // 5. Populate Materials
     OutSkeletalMeshRenderData.Materials.Empty();
     TMap<FName, int32> MatNameToIndexMap;
-
-    for (const FName& MatName : RawMeshData.MaterialNames)
+    for (const FBX::MeshRawData& CurrentRawMeshData : AllRawMeshData)
     {
-        if (MatName.IsNone())
+        for (const FName& MatName : CurrentRawMeshData.MaterialNames)
         {
-            if (!MatNameToIndexMap.Contains(NAME_None))
+            if (MatName.IsNone())
+            {
+                if (!MatNameToIndexMap.Contains(NAME_None))
+                {
+                    int32 DefIdx = OutSkeletalMeshRenderData.Materials.Add(FFbxMaterialInfo());
+                    MatNameToIndexMap.Add(NAME_None, DefIdx);
+                }
+                continue;
+            }
+
+            const FFbxMaterialInfo* MatInfoPtr = FullFBXInfo.Materials.Find(MatName);
+            if (MatInfoPtr && !MatNameToIndexMap.Contains(MatName))
+            {
+                int32 NewIdx = OutSkeletalMeshRenderData.Materials.Add(*MatInfoPtr);
+                MatNameToIndexMap.Add(MatName, NewIdx);
+            }
+            else if (!MatInfoPtr && !MatNameToIndexMap.Contains(MatName))
             {
                 int32 DefIdx = OutSkeletalMeshRenderData.Materials.Add(FFbxMaterialInfo());
-                MatNameToIndexMap.Add(NAME_None, DefIdx);
+                MatNameToIndexMap.Add(MatName, DefIdx);
             }
-            continue;
-        }
-
-        const FFbxMaterialInfo* MatInfoPtr = FullFBXInfo.Materials.Find(MatName);
-        if (MatInfoPtr && !MatNameToIndexMap.Contains(MatName))
-        {
-            int32 NewIdx = OutSkeletalMeshRenderData.Materials.Add(*MatInfoPtr);
-            MatNameToIndexMap.Add(MatName, NewIdx);
-        }
-        else if (!MatInfoPtr && !MatNameToIndexMap.Contains(MatName))
-        {
-            int32 DefIdx = OutSkeletalMeshRenderData.Materials.Add(FFbxMaterialInfo());
-            MatNameToIndexMap.Add(MatName, DefIdx);
         }
     }
-
     if (OutSkeletalMeshRenderData.Materials.IsEmpty() && !OutSkeletalMeshRenderData.Indices.IsEmpty())
     {
         OutSkeletalMeshRenderData.Materials.Add(FFbxMaterialInfo());
         MatNameToIndexMap.Add(NAME_None, 0);
     }
-
-    if (!CreateMaterialSubsetsInternal(RawMeshData, MatNameToIndexMap, OutSkeletalMeshRenderData))
+    for (const FBX::MeshRawData& CurrentRawMeshData : AllRawMeshData)
     {
-        if (!OutSkeletalMeshRenderData.Indices.IsEmpty() && !OutSkeletalMeshRenderData.Materials.IsEmpty())
+        if (!CreateMaterialSubsetsInternal(CurrentRawMeshData, MatNameToIndexMap, OutSkeletalMeshRenderData))
         {
-            OutSkeletalMeshRenderData.Subsets.Empty();
-            FMeshSubset DefSub;
-            DefSub.MaterialIndex = 0;
-            DefSub.IndexStart = 0;
-            DefSub.IndexCount = OutSkeletalMeshRenderData.Indices.Num();
-            OutSkeletalMeshRenderData.Subsets.Add(DefSub);
-        }
-        else
-        {
-            return false;
+            if (!OutSkeletalMeshRenderData.Indices.IsEmpty() && !OutSkeletalMeshRenderData.Materials.IsEmpty())
+            {
+                OutSkeletalMeshRenderData.Subsets.Empty();
+                FMeshSubset DefSub;
+                DefSub.MaterialIndex = 0;
+                DefSub.IndexStart = 0;
+                DefSub.IndexCount = OutSkeletalMeshRenderData.Indices.Num();
+                OutSkeletalMeshRenderData.Subsets.Add(DefSub);
+            }
+            else
+            {
+                return false;
+            }
         }
     }
     uint32 TotalSubIdx = 0;
@@ -1345,46 +1500,54 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, cons
 
 
     // 9. Calculate Bounding Box
-    TArray<FVector> SkinnedBindPoseVerticesForBounds;
-    SkinnedBindPoseVerticesForBounds.Reserve(OutSkeletalMeshRenderData.BindPoseVertices.Num());
+    TArray<FVector> PositionsForBoundsCalculation;
+    PositionsForBoundsCalculation.Reserve(OutSkeletalMeshRenderData.BindPoseVertices.Num());
 
-    for (const FBX::FSkeletalMeshVertex& BindVertex : OutSkeletalMeshRenderData.BindPoseVertices)
+    for (const FBX::FSkeletalMeshVertex& VertexToSkinForBounds : OutSkeletalMeshRenderData.BindPoseVertices)
     {
-        FVector SkinnedPosition = FVector::ZeroVector;
-        const FVector& OriginalBindPos = BindVertex.Position; // 현재는 GeometryOffset 미적용 상태
+        FVector FinalPosForBounds = FVector::ZeroVector;
+        bool bWasSkinned = false; // 실제로 스키닝 계산이 수행되었는지
+
+        // VertexToSkinForBounds.Position은 이미 메시 노드의 월드 변환까지 적용된 공통 공간 기준 위치
+        const FVector& BasePositionForSkining = VertexToSkinForBounds.Position;
 
         for (int j = 0; j < MAX_BONE_INFLUENCES; ++j)
         {
-            float Weight = BindVertex.BoneWeights[j];
-            if (Weight <= KINDA_SMALL_NUMBER) continue;
+            uint32 BoneIdx = VertexToSkinForBounds.BoneIndices[j];
+            float Weight = VertexToSkinForBounds.BoneWeights[j];
 
-            int32 BoneIdx = static_cast<int32>(BindVertex.BoneIndices[j]);
+            if (Weight <= KINDA_SMALL_NUMBER) continue;
             if (!OutSkeleton->BoneTree.IsValidIndex(BoneIdx)) continue;
+
+            bWasSkinned = true;
             const FBoneNode& BoneNode = OutSkeleton->BoneTree[BoneIdx];
             const FMatrix& GeometryOffset = BoneNode.GeometryOffsetMatrix;
 
-            SkinnedPosition += GeometryOffset.TransformPosition(OriginalBindPos) * Weight;
+            FinalPosForBounds += GeometryOffset.TransformPosition(BasePositionForSkining) * Weight;
         }
-        SkinnedBindPoseVerticesForBounds.Add(SkinnedPosition);
+
+        if (!bWasSkinned)
+        {
+            // 스키닝 가중치가 전혀 없는 정점 (예: 모든 가중치가 0이거나, 유효한 본 인덱스가 없음)
+            FinalPosForBounds = BasePositionForSkining; // 원본 위치 (메시 노드 월드 변환 적용된 상태) 그대로 사용
+        }
+
+        PositionsForBoundsCalculation.Add(FinalPosForBounds);
     }
 
-    // 이제 SkinnedBindPoseVerticesForBounds는 GeometryOffset이 적용된 정점들을 가짐
-    // ComputeBoundingBox(SkinnedBindPoseVerticesForBounds, ...); // 이 함수는 FVector 배열을 받도록 수정 필요
-    // 또는 ComputeBoundingBox 함수 내부에서 이 변환을 수행하도록 수정
-
-    // 현재 ComputeBoundingBox는 FSkeletalMeshVertex 배열을 받으므로,
-    // FSkeletalMeshVertex를 임시로 만들어서 위치만 채우고 전달해야 함.
     TArray<FBX::FSkeletalMeshVertex> TempVerticesForBounds;
-    TempVerticesForBounds.Reserve(SkinnedBindPoseVerticesForBounds.Num());
-    for (const FVector& Pos : SkinnedBindPoseVerticesForBounds)
+
+    TempVerticesForBounds.Reserve(PositionsForBoundsCalculation.Num());
+
+    for (const FVector& Pos : PositionsForBoundsCalculation)
     {
         FBX::FSkeletalMeshVertex TempVtx;
         TempVtx.Position = Pos;
         TempVerticesForBounds.Add(TempVtx);
     }
     FLoaderFBX::ComputeBoundingBox(TempVerticesForBounds, OutSkeletalMeshRenderData.Bounds.min, OutSkeletalMeshRenderData.Bounds.max);
-  
-  
+
+
     return true;
 }
 
@@ -1409,7 +1572,7 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
 {
     if (InVertices.IsEmpty())
     {
-        OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector; 
+        OutMinVector = FVector::ZeroVector; OutMaxVector = FVector::ZeroVector;
         return;
     }
     OutMinVector = InVertices[0].Position;
@@ -1447,7 +1610,7 @@ FBX::FSkeletalMeshRenderData* FManagerFBX::LoadFBXSkeletalMeshAsset(const FStrin
     if (!FLoaderFBX::ParseFBX(PathFileName, ParsedInfo)) return nullptr;
     if (ParsedInfo.Meshes.IsEmpty()) return nullptr;
     FSkeletalMeshRenderData* NewRenderData = new FSkeletalMeshRenderData();
-    if (!FLoaderFBX::ConvertToSkeletalMesh(ParsedInfo.Meshes[0], ParsedInfo, *NewRenderData, OutSkeleton))
+    if (!FLoaderFBX::ConvertToSkeletalMesh(ParsedInfo.Meshes, ParsedInfo, *NewRenderData, OutSkeleton))
     {
         delete NewRenderData;
         return nullptr;

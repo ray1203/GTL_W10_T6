@@ -228,7 +228,7 @@ struct FLoaderFBX
     static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
 
     // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
-    static bool ConvertToSkeletalMesh(const FBX::MeshRawData& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, USkeleton* OutSkeleton);
+    static bool ConvertToSkeletalMesh(const TArray<FBX::MeshRawData>& RawMeshData, const FBX::FBXInfo& FullFBXInfo, FBX::FSkeletalMeshRenderData& OutSkeletalMesh, USkeleton* OutSkeleton);
     
     static bool CreateTextureFromFile(const FWString& Filename);
 
