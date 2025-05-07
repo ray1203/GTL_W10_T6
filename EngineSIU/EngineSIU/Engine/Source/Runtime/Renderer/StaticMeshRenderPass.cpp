@@ -105,28 +105,43 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         PixelShader = ShaderManager->GetPixelShaderByKey(L"GOURAUD_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Lit_Lambert:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Lit_BlinnPhong:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
-    case EViewModeIndex::VMI_SceneDepth:
-    case EViewModeIndex::VMI_WorldNormal:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(0);
         break;
-        // HeatMap ViewMode 등
+
+    case EViewModeIndex::VMI_SceneDepth:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderDepth");
+        UpdateLitUnlitConstant(0);
+        break;
+
+    case EViewModeIndex::VMI_WorldNormal:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
+        UpdateLitUnlitConstant(0);
+        break;
+
     default:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
@@ -135,6 +150,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         break;
     }
 }
+
 
 void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
@@ -175,7 +191,6 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportCl
 
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
-
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     TArray<FString> PSBufferKeys = {
@@ -187,11 +202,9 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportCl
     };
 
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
-
     BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FMaterialConstants"), 1, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FObjectConstantBuffer"), 12, EShaderStage::Vertex);
-
 
     Graphics->DeviceContext->RSSetViewports(1, &Viewport->GetViewportResource()->GetD3DViewport());
 
@@ -202,8 +215,7 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportCl
 
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
-
-    // Rasterizer
+    // Rasterizer 설정
     if (ViewMode == EViewModeIndex::VMI_Wireframe)
     {
         Graphics->DeviceContext->RSSetState(Graphics->RasterizerWireframeBack);
@@ -213,20 +225,9 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewportCl
         Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
     }
 
-    // Pixel Shader
-    if (ViewMode == EViewModeIndex::VMI_SceneDepth)
-    {
-        Graphics->DeviceContext->PSSetShader(DebugDepthShader, nullptr, 0);
-    }
-    else if (ViewMode == EViewModeIndex::VMI_WorldNormal)
-    {
-        Graphics->DeviceContext->PSSetShader(DebugWorldNormalShader, nullptr, 0);
-    }
-    else
-    {
-        Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    }
+    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 }
+
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
 {

@@ -84,15 +84,24 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
 
     Handler->OnMouseDownDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
-        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor && GEngine->ActiveWorld->WorldType != EWorldType::Viewer)
         {
             return;
         }
         
         if (ImGui::GetIO().WantCaptureMouse) return;
 
-        switch (InMouseEvent.GetEffectingButton())  // NOLINT(clang-diagnostic-switch-enum)
+        switch (InMouseEvent.GetEffectingButton())
         {
+        case EKeys::RightMouseButton:
+        {
+            if (!InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+            {
+                FWindowsCursor::SetShowMouseCursor(false);
+                MousePinPosition = InMouseEvent.GetScreenSpacePosition();
+            }
+            break;
+        }
         case EKeys::LeftMouseButton:
         {
             if (const UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
@@ -123,15 +132,6 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
                 const float TargetDist = FVector::Distance(ViewTransform->GetLocation(), TargetLocation);
                 const FVector TargetRayEnd = RayOrigin + RayDir * TargetDist;
                 TargetDiff = TargetLocation - TargetRayEnd;     
-            }
-            break;
-        }
-        case EKeys::RightMouseButton:
-        {
-            if (!InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
-            {
-                FWindowsCursor::SetShowMouseCursor(false);
-                MousePinPosition = InMouseEvent.GetScreenSpacePosition();
             }
             break;
         }

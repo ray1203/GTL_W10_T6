@@ -119,25 +119,40 @@ void FSkeletalMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         PixelShader = ShaderManager->GetPixelShaderByKey(L"GOURAUD_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Lit_Lambert:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Lit_BlinnPhong:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
+
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
-    case EViewModeIndex::VMI_WorldNormal:
-    case EViewModeIndex::VMI_SceneDepth:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(0);
+        break;
+
+    case EViewModeIndex::VMI_SceneDepth:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderDepth");
+        UpdateLitUnlitConstant(0);
+        break;
+
+    case EViewModeIndex::VMI_WorldNormal:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
         UpdateLitUnlitConstant(0);
         break;
 
@@ -149,6 +164,7 @@ void FSkeletalMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         break;
     }
 }
+
 
 void FSkeletalMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
