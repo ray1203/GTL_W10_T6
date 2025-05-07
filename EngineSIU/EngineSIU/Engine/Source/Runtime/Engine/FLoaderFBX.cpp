@@ -491,81 +491,149 @@ namespace  FBX {
         return true;
     }
 
+    // In FLoaderFBX.cpp
+
     bool ReconstructVertexAttributes(const MeshRawData& RawMeshData, TArray<FVector>& OutControlPointNormals, TArray<FVector>& OutPolygonVertexNormals, TArray<FVector2D>& OutControlPointUVs, TArray<FVector2D>& OutPolygonVertexUVs)
     {
         int32 ControlPointCount = RawMeshData.ControlPoints.Num();
         int32 PolygonVertexCount = RawMeshData.PolygonVertexIndices.Num();
-        OutControlPointNormals.Empty(ControlPointCount);
-        OutPolygonVertexNormals.Empty(PolygonVertexCount);
-        OutControlPointUVs.Empty(ControlPointCount);
-        OutPolygonVertexUVs.Empty(PolygonVertexCount);
 
+        // --- 출력 배열 초기화 및 기본값으로 채우기 ---
+        OutControlPointNormals.Empty(ControlPointCount);
+        OutControlPointNormals.Reserve(ControlPointCount); // 필요한 경우 용량 미리 확보
+        for (int32 i = 0; i < ControlPointCount; ++i) {
+            OutControlPointNormals.Add(FVector(0, 0, 1)); // 기본값
+        }
+
+        OutPolygonVertexNormals.Empty(PolygonVertexCount);
+        OutPolygonVertexNormals.Reserve(PolygonVertexCount);
+        for (int32 i = 0; i < PolygonVertexCount; ++i) {
+            OutPolygonVertexNormals.Add(FVector(0, 0, 1)); // 기본값
+        }
+
+        OutControlPointUVs.Empty(ControlPointCount);
+        OutControlPointUVs.Reserve(ControlPointCount);
+        for (int32 i = 0; i < ControlPointCount; ++i) {
+            OutControlPointUVs.Add(FVector2D(0, 0));    // 기본값
+        }
+
+        OutPolygonVertexUVs.Empty(PolygonVertexCount);
+        OutPolygonVertexUVs.Reserve(PolygonVertexCount);
+        for (int32 i = 0; i < PolygonVertexCount; ++i) {
+            OutPolygonVertexUVs.Add(FVector2D(0, 0));    // 기본값
+        }
+
+        // --- 법선 데이터 처리 ---
         const MeshRawData::AttributeData& NormalData = RawMeshData.NormalData;
         if (NormalData.MappingMode != FbxLayerElement::eNone)
         {
-            auto GetNormalValue = [&](int DataIndex) -> FVector
-                {
-                    if (DataIndex >= 0 && NormalData.DataVec4.IsValidIndex(DataIndex)) return ConvertFbxNormal(NormalData.DataVec4[DataIndex]);
-                    return FVector(0, 0, 1);
+            auto GetNormalValue = [&](int DataIndex) -> FVector {
+                if (DataIndex >= 0 && NormalData.DataVec4.IsValidIndex(DataIndex)) {
+                    // ConvertFbxNormal은 FBX 좌표를 엔진 좌표로 변환하는 함수여야 함
+                    return ConvertFbxNormal(NormalData.DataVec4[DataIndex]);
+                }
+                return FVector(0, 0, 1); // 데이터 접근 실패 시 기본값
                 };
+
             if (NormalData.MappingMode == FbxLayerElement::eByControlPoint)
             {
-                OutControlPointNormals.AddUninitialized(ControlPointCount);
                 if (NormalData.ReferenceMode == FbxLayerElement::eDirect)
-                    for (int32 i = 0; i < ControlPointCount; ++i)
+                {
+                    // DataVec4.Num()과 ControlPointCount 중 작은 값까지만 순회 (안전성)
+                    int32 LoopCount = FMath::Min(ControlPointCount, NormalData.DataVec4.Num());
+                    for (int32 i = 0; i < LoopCount; ++i) {
                         OutControlPointNormals[i] = GetNormalValue(i);
+                    }
+
+                }
                 else if (NormalData.ReferenceMode == FbxLayerElement::eIndexToDirect)
-                    for (int32 i = 0; i < ControlPointCount; ++i)
+                {
+                    // IndexArray.Num()과 ControlPointCount 중 작은 값까지만 순회
+                    int32 LoopCount = FMath::Min(ControlPointCount, NormalData.IndexArray.Num());
+                    for (int32 i = 0; i < LoopCount; ++i) 
                     {
-                        int idx = NormalData.IndexArray.IsValidIndex(i) ? NormalData.IndexArray[i] : -1;
+                        int idx = NormalData.IndexArray[i];
                         OutControlPointNormals[i] = GetNormalValue(idx);
                     }
-                else
-                    return false;
+                }
+                // else: 지원하지 않는 참조 모드. 이미 기본값으로 채워져 있음.
             }
             else if (NormalData.MappingMode == FbxLayerElement::eByPolygonVertex)
             {
-                OutPolygonVertexNormals.AddUninitialized(PolygonVertexCount);
                 if (NormalData.ReferenceMode == FbxLayerElement::eDirect)
-                    for (int32 i = 0; i < PolygonVertexCount; ++i)
-                        OutPolygonVertexNormals[i] = GetNormalValue(i);
-                else if (NormalData.ReferenceMode == FbxLayerElement::eIndexToDirect)
-                    for (int32 i = 0; i < PolygonVertexCount; ++i)
+                {
+                    int32 LoopCount = FMath::Min(PolygonVertexCount, NormalData.DataVec4.Num());
+                    for (int32 i = 0; i < LoopCount; ++i)
                     {
-                        int idx = NormalData.IndexArray.IsValidIndex(i) ? NormalData.IndexArray[i] : -1;
+                        OutPolygonVertexNormals[i] = GetNormalValue(i);
+                    }
+
+                }
+                else if (NormalData.ReferenceMode == FbxLayerElement::eIndexToDirect)
+                {
+                    int32 LoopCount = FMath::Min(PolygonVertexCount, NormalData.IndexArray.Num());
+                    for (int32 i = 0; i < LoopCount; ++i) {
+                        int idx = NormalData.IndexArray[i];
                         OutPolygonVertexNormals[i] = GetNormalValue(idx);
                     }
-                else
-                    return false;
+
+                }
             }
         }
 
+        // --- UV 데이터 처리 (법선과 유사한 방식으로) ---
         const MeshRawData::AttributeData& UVData = RawMeshData.UVData;
         if (UVData.MappingMode != FbxLayerElement::eNone)
         {
-            auto GetUVValue = [&](int DataIndex) -> FVector2D
-                {
-                    if (DataIndex >= 0 && UVData.DataVec2.IsValidIndex(DataIndex)) return ConvertFbxUV(UVData.DataVec2[DataIndex]);
-                    return FVector2D(0, 0);
+            auto GetUVValue = [&](int DataIndex) -> FVector2D {
+                if (DataIndex >= 0 && UVData.DataVec2.IsValidIndex(DataIndex)) {
+                    return ConvertFbxUV(UVData.DataVec2[DataIndex]);
+                }
+                return FVector2D(0, 0); // 기본값
                 };
+
             if (UVData.MappingMode == FbxLayerElement::eByControlPoint)
             {
-                OutControlPointUVs.AddUninitialized(ControlPointCount);
-                if (UVData.ReferenceMode == FbxLayerElement::eDirect) for (int32 i = 0; i < ControlPointCount; ++i) OutControlPointUVs[i] = GetUVValue(i);
-                else if (UVData.ReferenceMode == FbxLayerElement::eIndexToDirect) for (int32 i = 0; i < ControlPointCount; ++i) { int idx = UVData.IndexArray.IsValidIndex(i) ? UVData.IndexArray[i] : -1; OutControlPointUVs[i] = GetUVValue(idx); }
-                else return false;
+                if (UVData.ReferenceMode == FbxLayerElement::eDirect)
+                {
+                    int32 LoopCount = FMath::Min(ControlPointCount, UVData.DataVec2.Num());
+                    for (int32 i = 0; i < LoopCount; ++i)
+                        OutControlPointUVs[i] = GetUVValue(i);
+                    if (LoopCount < ControlPointCount) { /* 로그 */ }
+                }
+                else if (UVData.ReferenceMode == FbxLayerElement::eIndexToDirect)
+                {
+                    int32 LoopCount = FMath::Min(ControlPointCount, UVData.IndexArray.Num());
+                    for (int32 i = 0; i < LoopCount; ++i) {
+                        int idx = UVData.IndexArray[i];
+                        OutControlPointUVs[i] = GetUVValue(idx);
+                    }
+                    if (LoopCount < ControlPointCount) { /* 로그 */ }
+                }
             }
             else if (UVData.MappingMode == FbxLayerElement::eByPolygonVertex)
             {
-                OutPolygonVertexUVs.AddUninitialized(PolygonVertexCount);
-                if (UVData.ReferenceMode == FbxLayerElement::eDirect) for (int32 i = 0; i < PolygonVertexCount; ++i) OutPolygonVertexUVs[i] = GetUVValue(i);
-                else if (UVData.ReferenceMode == FbxLayerElement::eIndexToDirect) for (int32 i = 0; i < PolygonVertexCount; ++i) { int idx = UVData.IndexArray.IsValidIndex(i) ? UVData.IndexArray[i] : -1; OutPolygonVertexUVs[i] = GetUVValue(idx); }
-                else return false;
+                if (UVData.ReferenceMode == FbxLayerElement::eDirect)
+                {
+                    int32 LoopCount = FMath::Min(PolygonVertexCount, UVData.DataVec2.Num());
+                    for (int32 i = 0; i < LoopCount; ++i)
+                        OutPolygonVertexUVs[i] = GetUVValue(i);
+                    if (LoopCount < PolygonVertexCount) { /* 로그 */ }
+                }
+                else if (UVData.ReferenceMode == FbxLayerElement::eIndexToDirect)
+                {
+                    int32 LoopCount = FMath::Min(PolygonVertexCount, UVData.IndexArray.Num());
+                    for (int32 i = 0; i < LoopCount; ++i) {
+                        int idx = UVData.IndexArray[i];
+                        OutPolygonVertexUVs[i] = GetUVValue(idx);
+                    }
+                    if (LoopCount < PolygonVertexCount) { /* 로그 */ }
+                }
             }
         }
-        return true;
-    }
 
+        return true; // 항상 성공 (데이터 없으면 기본값 사용)
+    }
     bool FinalizeVertexDataInternal(const TArray<FVector>& ControlPointPositions, const TArray<int32>& PolygonVertexIndices,
         const TArray<FVector>& ControlPointNormals, const TArray<FVector>& PolygonVertexNormals,
         const TArray<FVector2D>& ControlPointUVs, const TArray<FVector2D>& PolygonVertexUVs,
@@ -1147,7 +1215,7 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     ProcessNodeRecursive(RootNode);
     for (auto& Pair : OutFBXInfo.SkeletonHierarchy)
     {
-        if (Pair.Key.IsNone()) 
+        if (Pair.Key.IsNone())
         {
             continue; // 또는 return false;
         }
@@ -1326,12 +1394,13 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const TArray<FBX::MeshRawData>& AllRawMes
         TArray<FVector2D> TempCPUVs, TempPVUVs_ForThisMesh;
         if (!ReconstructVertexAttributes(CurrentRawMeshData, TempCPNormals, TempPVNormals_ForThisMesh, TempCPUVs, TempPVUVs_ForThisMesh))
         {
-            // return false; // 또는 기본값으로 계속 진행하는 로직 필요
+            return false; // 또는 기본값으로 계속 진행하는 로직 필요
         }
+        FMatrix NormalTransform = MeshNodeWorldBindTransform;
+        NormalTransform.RemoveTranslation();
+
         for (const FVector& normal : TempPVNormals_ForThisMesh)
         {
-            FMatrix NormalTransform = MeshNodeWorldBindTransform;
-            NormalTransform.RemoveTranslation(); // 이동 성분 제거
             CombinedPVNormals.Add(NormalTransform.TransformPosition(normal).GetSafeNormal());
         }
         for (const FVector2D& uv : TempPVUVs_ForThisMesh)
