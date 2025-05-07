@@ -75,74 +75,121 @@ bool USkeletalMesh::SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocal
     {
         return false;
     }
-    Skeleton->CurrentPose.LocalTransforms[BoneIndex] = NewLocalMatrix;
+    bool bChanged = false;
+    for (int r = 0; r < 4; ++r) 
+    {
+        for (int c = 0; c < 4; ++c)
+        {
+            if (!FMath::IsNearlyEqual(Skeleton->CurrentPose.LocalTransforms[BoneIndex].M[r][c], NewLocalMatrix.M[r][c])) 
+            {
+                bChanged = true;
+                break;
+            }
+            if (bChanged) 
+                break;
+        }
+    }
 
-    return true;
+    if (bChanged)
+    {
+        Skeleton->CurrentPose.LocalTransforms[BoneIndex] = NewLocalMatrix;
+        Skeleton->MarkBoneAndChildrenDirty(BoneIndex); // 변경된 본과 자식들을 dirty로 표시
+    }
+     return true;
 }
 
 void USkeletalMesh::UpdateWorldTransforms()
 {
     if (!Skeleton || Skeleton->BoneTree.IsEmpty()) return;
 
-    // 계층 구조 순서대로 처리 (루트부터 자식으로)
-    TArray<int32> ProcessingOrder; ProcessingOrder.Reserve(Skeleton->BoneTree.Num());
-    TArray<uint8> Processed; Processed.Init(false, Skeleton->BoneTree.Num());
-    TArray<int32> Queue; Queue.Reserve(Skeleton->BoneTree.Num());
-
-    for (int32 i = 0; i < Skeleton->BoneTree.Num(); ++i)
-        if (Skeleton->BoneTree[i].ParentIndex == INDEX_NONE)
-            Queue.Add(i);
-
-    int32 Head = 0;
-    while (Head < Queue.Num())
+    // Dirty 플래그가 설정된 본이 없으면 업데이트 건너뛰기
+    if (!Skeleton->CurrentPose.bAnyBoneTransformDirty)
     {
-        int32 CurrentIndex = Queue[Head++];
-        if (Processed[CurrentIndex]) continue;
-
-        ProcessingOrder.Add(CurrentIndex);
-        Processed[CurrentIndex] = true;
-
-        for (int32 i = 0; i < Skeleton->BoneTree.Num(); ++i)
-            if (Skeleton->BoneTree[i].ParentIndex == CurrentIndex && !Processed[i])
-                Queue.Add(i);
+        return;
     }
 
-    // 오류 처리: 모든 본이 처리되었는지 확인
-    if (ProcessingOrder.Num() != Skeleton->BoneTree.Num())
-        for (int32 i = 0; i < Skeleton->BoneTree.Num(); ++i)
-            if (!Processed[i])
-                ProcessingOrder.Add(i);
+    // 스켈레톤으로부터 캐시된 처리 순서 가져오기
+    const TArray<int32>& CurrentProcessingOrder = Skeleton->GetProcessingOrder();
+
+    if (CurrentProcessingOrder.IsEmpty() && !Skeleton->BoneTree.IsEmpty()) 
+    {
+         return;
+    }
+
+    bool bActuallyUpdatedAny = false; 
+    // 실제로 업데이트된 본이 있는지 추적
 
     // 순서대로 월드 변환 계산
-    for (int32 BoneIndex : ProcessingOrder)
+    for (int32 BoneIndex : CurrentProcessingOrder)
     {
-        int32 ParentIdx = Skeleton->BoneTree[BoneIndex].ParentIndex;
-
-        if (ParentIdx != INDEX_NONE && Skeleton->BoneTree.IsValidIndex(ParentIdx))
+        // 배열 접근 전 유효성 검사
+        if (!Skeleton->BoneTree.IsValidIndex(BoneIndex) ||
+            !Skeleton->CurrentPose.LocalTransforms.IsValidIndex(BoneIndex) ||
+            !Skeleton->CurrentPose.GlobalTransforms.IsValidIndex(BoneIndex) ||
+            !Skeleton->CurrentPose.SkinningMatrices.IsValidIndex(BoneIndex) ||
+            !Skeleton->CurrentPose.BoneTransformDirtyFlags.IsValidIndex(BoneIndex))
         {
-            // 자식 월드 = 부모 월드 * 자식 로컬 (올바른 순서)
-            Skeleton->CurrentPose.GlobalTransforms[BoneIndex] =
-                Skeleton->CurrentPose.LocalTransforms[BoneIndex] *
-                Skeleton->CurrentPose.GlobalTransforms[ParentIdx];
-
-            // Skeleton->CurrentPose.[BoneIndex] =
-            //     Skeleton->CurrentPose.GlobalTransforms[ParentIdx] *
-            //     Skeleton->CurrentPose.LocalTransforms[BoneIndex];
-        }
-        else
-        {
-            // 루트 월드 = 루트 로컬
-            Skeleton->CurrentPose.GlobalTransforms[BoneIndex] =
-                Skeleton->CurrentPose.LocalTransforms[BoneIndex];
+             continue;
         }
 
-        // 스키닝 행렬 업데이트
-        //Skeleton->UpdateCurrentPose(Skeleton->CurrentPose.LocalTransforms);
-        Skeleton->CurrentPose.SkinningMatrices[BoneIndex] =
-            Skeleton->CalculateSkinningMatrix(BoneIndex, Skeleton->CurrentPose.GlobalTransforms[BoneIndex]);
+        // 이 본이 dirty하거나, (또는 부모가 dirty해서 자식도 업데이트해야 하는 경우 - MarkBoneAndChildrenDirty에서 처리됨)
+        if (Skeleton->CurrentPose.BoneTransformDirtyFlags[BoneIndex])
+        {
+            bActuallyUpdatedAny = true;
+
+            const FBoneNode& CurrentBone = Skeleton->BoneTree[BoneIndex];
+            const FMatrix& LocalTransform = Skeleton->CurrentPose.LocalTransforms[BoneIndex];
+            int32 ParentIdx = CurrentBone.ParentIndex;
+
+            if (ParentIdx != INDEX_NONE)
+            {
+                // 부모의 GlobalTransform은 ProcessingOrder에 의해 이미 최신 상태여야 함.
+                // (만약 부모가 dirty였다면 이전에 이미 업데이트 되었음)
+                if (!Skeleton->CurrentPose.GlobalTransforms.IsValidIndex(ParentIdx)) 
+                {
+                    Skeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalTransform;
+                }
+                else 
+                {
+                    const FMatrix& ParentGlobalTransform = Skeleton->CurrentPose.GlobalTransforms[ParentIdx];
+                    Skeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalTransform * ParentGlobalTransform;
+                }
+            }
+            else
+            {
+                Skeleton->CurrentPose.GlobalTransforms[BoneIndex] = LocalTransform;
+            }
+
+            Skeleton->CurrentPose.SkinningMatrices[BoneIndex] =
+                Skeleton->CalculateSkinningMatrix(BoneIndex, Skeleton->CurrentPose.GlobalTransforms[BoneIndex]);
+
+            Skeleton->CurrentPose.BoneTransformDirtyFlags[BoneIndex] = false; // 업데이트 완료 후 플래그 해제
+        }
+    }
+
+    if (bActuallyUpdatedAny) 
+    { 
+        // 실제로 업데이트된 본이 있었던 경우에만 전체 플래그 해제
+        // 모든 dirty 본이 처리되었는지 확인 후 bAnyBoneTransformDirty를 false로 설정해야 함.
+        // 간단하게는, 업데이트가 발생했다면 false로 설정.
+        // 더 정확하게는, 모든 BoneTransformDirtyFlags가 false인지 확인 후 설정.
+        // 하지만 MarkBoneAndChildrenDirty에서 bAnyBoneTransformDirty를 true로 설정했으므로,
+        // 업데이트가 한 번이라도 수행되면 false로 설정해도 무방.
+        bool StillDirty = false;
+        for (bool DirtyFlag : Skeleton->CurrentPose.BoneTransformDirtyFlags) 
+        {
+            if (DirtyFlag) 
+            {
+                StillDirty = true;
+                break;
+            }
+        }
+        if (!StillDirty) 
+        {
+            Skeleton->CurrentPose.bAnyBoneTransformDirty = false;
+        }
     }
 }
-
 
 bool USkeletalMesh::UpdateAndApplySkinning()
 {
@@ -259,10 +306,14 @@ FWString USkeletalMesh::GetObjectName() const
 
 void USkeletalMesh::SetData(FBX::FSkeletalMeshRenderData* renderData)
 {
+    Skeleton->FinalizeBoneHierarchy();
+
     SkeletalMeshRenderData = renderData;
 
     uint32 verticeNum = SkeletalMeshRenderData->BindPoseVertices.Num();
+
     if (verticeNum <= 0) return;
+
     SkeletalMeshRenderData->DynamicVertexBuffer = FEngineLoop::Renderer.CreateDynamicVertexBuffer(SkeletalMeshRenderData->MeshName, SkeletalMeshRenderData->BindPoseVertices);
 
     uint32 indexNum = SkeletalMeshRenderData->Indices.Num();

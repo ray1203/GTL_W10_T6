@@ -9,7 +9,7 @@ struct FBoneNode
     FMatrix BindTransform; // Bind pose transform (로컬 바인드 포즈)
     FMatrix InverseBindTransform; // Bind pose transform (로컬 바인드 포즈)
     FMatrix GeometryOffsetMatrix;
-
+    TArray<int32> ChildBoneIndices;
     // 리타겟팅 모드 - Animation 주차에 필요 시 사용
     // TEnumAsByte<EBoneTranslationRetargetingMode::Type> TranslationRetargetingMode;
 
@@ -53,8 +53,13 @@ struct FAnimationPoseData
 
     // 스키닝 행렬 (애니메이션 행렬 * 인버스 바인드 포즈 행렬)
     TArray<FMatrix> SkinningMatrices;
+    
+    TArray<uint8> BoneTransformDirtyFlags;
+    
+    bool bAnyBoneTransformDirty;      
 
     void Resize(int32 NumBones);
+    void MarkAllDirty();
 };
 
 class USkeleton : public UObject
@@ -94,6 +99,10 @@ public:
     // 본 추가 (이름 기반)
     void AddBone(const FName Name, const FName ParentName, const FMatrix BindTransform, const FMatrix& InTransformMatrix);
 
+    // Dirty Flag 관련 함수
+    void MarkBoneAndChildrenDirty(int32 BoneIndex); // 특정 본과 그 자식들을 Dirty로 표시
+    void FinalizeBoneHierarchy(); // AddBone이 모두 끝난 후 호출하여 ChildBoneIndices 채우기 등
+
     // 본 이름으로 인덱스 가져오기
     uint32 GetBoneIndex(const FName Name) const;
 
@@ -114,6 +123,7 @@ public:
     // 현재 애니메이션 포즈 업데이트
     void UpdateCurrentPose(const TArray<FMatrix>& LocalAnimationTransforms);
 
+    TArray<int32> GetProcessingOrder();
     // 메시-스켈레톤 링크업 데이터 찾기 또는 추가 
     /*const FSkeletonToMeshLinkup& FindOrAddMeshLinkupData(const UObject* InMesh);*/
 
@@ -122,4 +132,10 @@ public:
 
     // 스켈레톤 본 인덱스 → 메시 본 인덱스 변환
     /*int32 GetMeshBoneIndexFromSkeletonBoneIndex(const UObject* InMesh, int32 SkeletonBoneIndex);*/
+private:
+    mutable TArray<int32> CachedProcessingOrder;
+    mutable bool bProcessingOrderCacheDirty;
+private:
+    void CalculateAndCacheProcessingOrder_Internal() const; // private 멤버 함수로 선언
+    void EnsureProcessingOrderCache() const;
 };
