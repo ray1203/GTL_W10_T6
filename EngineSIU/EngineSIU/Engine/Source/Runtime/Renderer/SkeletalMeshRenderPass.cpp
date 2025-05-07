@@ -28,6 +28,8 @@
 #include "Components/Light/PointLightComponent.h"
 
 #include "FLoaderFBX.h"
+#include "FSkeletalMeshDebugger.h"
+
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
     : VertexShader(nullptr)
     , PixelShader(nullptr)

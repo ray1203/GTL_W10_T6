@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <unordered_map> 
+#include "FSkeletalMeshDebugger.h" // FSkeletalMeshDebugger 클래스 선언을 사용하기 위해 포함
 
 class USkeletalMeshComponent;
 
@@ -269,13 +270,4 @@ private:
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
-};
-struct FSkeletalMeshDebugger
-{
-    static void DrawSkeletonAABBs(const USkeletalMeshComponent* SkelMeshComp);
-
-    static void DrawSkeleton(const USkeletalMeshComponent* SkelMeshComp);
-    static void DrawBoneNames(const FBX::FSkeletalMeshRenderData& Mesh);
-    static void DrawBoneAxes(const FBX::FSkeletalMeshRenderData& Mesh);
-    static void DrawBoneHierarchy(const FBX::FSkeletalMeshRenderData& Mesh);
 };
