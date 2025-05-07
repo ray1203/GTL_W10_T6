@@ -461,10 +461,15 @@ void FRenderer::RenderViewer(const std::shared_ptr<FViewportClient>& Viewport)
     }*/
 
     RenderWorldScene(Viewport);
+    
+    {
+	    LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
+    }
 
-	QUICK_SCOPE_CYCLE_COUNTER(LinePass_CPU)
-	QUICK_GPU_SCOPE_CYCLE_COUNTER(LinePass_GPU, *GPUTimingManager)
-	LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
+    {
+        GizmoRenderPass->Render(Viewport); // 기존 뎁스를 SRV로 전달해서 샘플 후 비교하기 위해 기즈모 전용 DSV 사용
+    }
+
     //RenderPostProcess(Viewport);
     //RenderEditorOverlay(Viewport);
 
