@@ -29,6 +29,7 @@ public:
     FMatrix GetBoneLocalMatrix(uint32 BoneIndex) const;
    
     bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
+    bool SetBoneRotation(uint32 BoneIndex, const FMatrix& RotationMatrix);
     void UpdateWorldTransforms();
     bool UpdateAndApplySkinning();
     bool GetBoneNames(TArray<FName>& OutBoneNames) const;

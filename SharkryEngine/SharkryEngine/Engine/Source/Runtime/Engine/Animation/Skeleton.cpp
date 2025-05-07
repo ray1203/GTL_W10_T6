@@ -207,7 +207,9 @@ FMatrix USkeleton::GetGeometryOffsetTransform(int32 BoneIdx) const
 
 FMatrix USkeleton::CalculateSkinningMatrix(int32 BoneIdx, const FMatrix& AnimationMatrix) const
 {
-    return  GetGeometryOffsetTransform(BoneIdx) * GetInverseBindTransform(BoneIdx) * AnimationMatrix;
+    // 언리얼 좌표계에 맞는 원래 순서로 복원
+    // 지오메트리 오프셋 → 인버스 바인드 포즈 → 애니메이션 행렬
+    return GetGeometryOffsetTransform(BoneIdx) * GetInverseBindTransform(BoneIdx) * AnimationMatrix;
 }
 
 void USkeleton::UpdateCurrentPose(const TArray<FMatrix>& LocalAnimationTransforms)

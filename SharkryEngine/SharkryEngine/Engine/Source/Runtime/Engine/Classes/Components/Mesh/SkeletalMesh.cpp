@@ -98,6 +98,42 @@ bool USkeletalMesh::SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocal
      return true;
 }
 
+// 회전만 변경하는 새로운 함수 추가
+bool USkeletalMesh::SetBoneRotation(uint32 BoneIndex, const FMatrix& RotationMatrix)
+{
+    if (!Skeleton || !Skeleton->BoneTree.IsValidIndex(BoneIndex))
+    {
+        return false;
+    }
+    
+    // 기존 행렬에서 이동 성분을 추출
+    FVector Translation = Skeleton->CurrentPose.LocalTransforms[BoneIndex].GetTranslationVector();
+    FVector Scale = Skeleton->CurrentPose.LocalTransforms[BoneIndex].GetScaleVector();
+    
+    // 회전 행렬에서 회전 성분만 추출하여 사용
+    FMatrix RotationOnly = RotationMatrix;
+    RotationOnly.RemoveTranslation(); // 이동 성분 제거
+    
+    // 기존 위치와 새 회전을 합쳐서 새 변환 행렬 생성
+    FMatrix NewTransform = FMatrix::Identity;
+    
+    // 스케일 적용
+    NewTransform.M[0][0] = Scale.X;
+    NewTransform.M[1][1] = Scale.Y;
+    NewTransform.M[2][2] = Scale.Z;
+    
+    // 회전 적용 (회전 행렬과 스케일 행렬 곱)
+    NewTransform = RotationOnly * NewTransform;
+    
+    // 이동 벡터 적용
+    NewTransform.M[3][0] = Translation.X;
+    NewTransform.M[3][1] = Translation.Y;
+    NewTransform.M[3][2] = Translation.Z;
+    
+    // 새 행렬로 본 업데이트
+    return SetBoneLocalMatrix(BoneIndex, NewTransform);
+}
+
 void USkeletalMesh::UpdateWorldTransforms()
 {
     if (!Skeleton || Skeleton->BoneTree.IsEmpty()) return;
@@ -214,59 +250,76 @@ bool USkeletalMesh::UpdateAndApplySkinning()
     {
         const FBX::FSkeletalMeshVertex& BindVertex = BindVertices[i];
         FBX::FSkeletalMeshVertex& SkinnedVertex = SkinnedVertices[i];
-        bool bHasSignificantWeight = false;
-
-        for (int j = 0; j < MAX_BONE_INFLUENCES; ++j)
+        
+        // 초기화: 바인드 포즈 정점의 속성 복사
+        SkinnedVertex = BindVertex;
+        
+        // 해당 정점에 영향을 주는 본이 없으면 바인드 포즈 그대로 사용
+        bool bHasInfluence = false;
+        for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
         {
-            // 가중치가 충분히 크고, 연결된 본 인덱스가 유효한지 확인
             if (BindVertex.BoneWeights[j] > KINDA_SMALL_NUMBER &&
                 Skeleton->BoneTree.IsValidIndex(static_cast<int32>(BindVertex.BoneIndices[j])))
             {
-                bHasSignificantWeight = true; // 유의미한 가중치 발견!
-                break; // 더 이상 확인할 필요 없음
+                bHasInfluence = true;
+                break;
             }
         }
-
-        if (!bHasSignificantWeight) { SkinnedVertex = BindVertex; continue; }
-
+        
+        if (!bHasInfluence) continue;
+        
+        // 가중 합산을 위한 초기화
         FVector SkinnedPosition = FVector::ZeroVector;
         FVector SkinnedNormal = FVector::ZeroVector;
-        const FVector& BindPositionVec = BindVertex.Position;
-        const FVector& BindNormalVec = BindVertex.Normal;
-
+        
+        // 각 본의 영향력을 합산
+        float TotalWeight = 0.0f;
         for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
         {
             float Weight = BindVertex.BoneWeights[j];
-
             if (Weight <= KINDA_SMALL_NUMBER) continue;
-
+            
             int32 BoneIndex = static_cast<int32>(BindVertex.BoneIndices[j]);
-
             if (!Skeleton->BoneTree.IsValidIndex(BoneIndex)) continue;
-
+            
+            TotalWeight += Weight;
+            
+            // 스키닝 행렬 적용
             const FMatrix& SkinMatrix = Skeleton->CurrentPose.SkinningMatrices[BoneIndex];
-
-            SkinnedPosition += SkinMatrix.TransformPosition(BindPositionVec) * Weight;
-
+            
+            // 위치 변환
+            SkinnedPosition += SkinMatrix.TransformPosition(BindVertex.Position) * Weight;
+            
+            // 법선 변환 (위치 변환과 다름)
             FMatrix NormalMatrix = SkinMatrix;
             NormalMatrix.RemoveTranslation();
-
+            
             if (FMath::Abs(NormalMatrix.Determinant()) > SMALL_NUMBER)
             {
+                // 법선 벡터 변환을 위한 역전치(inverse transpose) 행렬 계산
                 FMatrix InvTranspose = FMatrix::Transpose(FMatrix::Inverse(NormalMatrix));
-
-                SkinnedNormal += InvTranspose.TransformPosition(BindNormalVec) * Weight;
+                SkinnedNormal += FMatrix::TransformVector(BindVertex.Normal, InvTranspose) * Weight;
             }
-            else { SkinnedNormal += BindNormalVec * Weight; }
+            else
+            {
+                SkinnedNormal += BindVertex.Normal * Weight;
+            }
         }
-
-        SkinnedVertex.Position = SkinnedPosition;
-        SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal();
-        SkinnedVertex.TexCoord = BindVertex.TexCoord;
-        // BoneIndices/Weights는 그대로 유지
-        for (int k = 0; k < MAX_BONE_INFLUENCES; ++k) {
-            SkinnedVertex.BoneIndices[k] = BindVertex.BoneIndices[k];
-            SkinnedVertex.BoneWeights[k] = BindVertex.BoneWeights[k];
+        
+        // 가중치 합이 1에 가까워야 함 (부동소수점 오차 허용)
+        if (TotalWeight > KINDA_SMALL_NUMBER)
+        {
+            if (!FMath::IsNearlyEqual(TotalWeight, 1.0f))
+            {
+                // 가중치 합이 1이 아니면 정규화
+                float InvWeight = 1.0f / TotalWeight;
+                SkinnedPosition *= InvWeight;
+                SkinnedNormal *= InvWeight;
+            }
+            
+            // 최종 결과 적용
+            SkinnedVertex.Position = SkinnedPosition;
+            SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal();
         }
     }
 
