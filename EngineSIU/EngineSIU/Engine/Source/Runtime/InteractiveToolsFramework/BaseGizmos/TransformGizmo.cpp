@@ -136,7 +136,6 @@ void ATransformGizmo::Tick(float DeltaTime)
 
 	SetActorLocation(GizmoPosition);
 	SetActorRotation(GizmoRotation);
-	SetActorScale(FVector(1.5f, 1.5f, 1.5f));
 #else
 	if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
 	{
