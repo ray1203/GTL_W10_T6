@@ -42,6 +42,7 @@ void FEditorViewportClient::Tick(const float DeltaTime)
 
     if (GEngine->ActiveWorld->WorldType == EWorldType::Editor || GEngine->ActiveWorld->WorldType == EWorldType::Viewer)
     {
+        if(GEngine->ActiveWorld->WorldType == EWorldType::Editor)
         UpdateEditorCameraMovement(DeltaTime);
         GizmoActor->Tick(DeltaTime);
     }
@@ -448,11 +449,11 @@ void FEditorViewportClient::MouseMove(const FPointerEvent& InMouseEvent)
 
             if (UEditorEngine* Engine = Cast<UEditorEngine>(GEngine))
             {
-                if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Engine->GetSelectedComponent()))
+                if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Engine->GetViewerTargetComponent()))
                 {
                     LookAt = (Prim->GetBoundingBox().min + Prim->GetBoundingBox().max) * 0.5f;
                 }
-                else if (AActor* Selected = Engine->GetSelectedActor())
+                else if (AActor* Selected = Engine->GetViewerTargetActor())
                 {
                     if (UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Selected->GetRootComponent()))
                     {

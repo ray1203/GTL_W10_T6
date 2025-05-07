@@ -16,6 +16,15 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Audio/AudioManager.h"
 #include "Engine/Animation/Skeleton.h"
+#include "Classes/Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "FLoaderFBX.h"
+#include "UnrealEd/EditorViewportClient.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "Actors/DirectionalLightActor.h"
+#include "Actors/AmbientLightActor.h"
+extern FWString GViewerFilePath;
+extern FEngineLoop GEngineLoop;
 
 namespace PrivateEditorSelection
 {
@@ -26,6 +35,12 @@ namespace PrivateEditorSelection
     static USceneComponent* GComponentHovered = nullptr;
 
     static const FBoneNode* GBoneNodeSelected = nullptr;
+}
+
+namespace ViewerTarget
+{
+    static AActor* GTargetActor = nullptr;
+    static USceneComponent* GTargetComponent = nullptr;
 }
 
 void UEditorEngine::Init()
@@ -253,11 +268,35 @@ void UEditorEngine::StartViewer()
     ViewerWorldContext.SetCurrentWorld(ViewerWorld);
     ActiveWorld = ViewerWorld;
 
-    // GameMode 없으므로 StartPIE에서 바로 PC 생성
+    ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
+    SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
+    Cast<UEditorEngine>(GEngine)->SetViewerTargetComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
+    Cast<UEditorEngine>(GEngine)->SetViewerTargetActor(SkeletalMeshActor);
+    ADirectionalLight* DirectionalLightActor = GEngine->ActiveWorld->SpawnActor<ADirectionalLight>();
+    DirectionalLightActor->SetActorRotation(FRotator(-30.0f, -45.0f, 0.0f));
+    GEngine->ActiveWorld->SpawnActor<AAmbientLight>();
+
+
+    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
+    {
+        FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+        FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
+        float Radius = Extents.Length();
+
+        float FOV = 90.0f; // 기본 시야각
+        float VerticalFOV = FMath::DegreesToRadians(FOV);
+        float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+        if (std::shared_ptr<FEditorViewportClient> ViewClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient())
+        {
+            FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
+            FVector Forward = Cam.GetForwardVector();
+            Cam.SetLocation(Center - Forward * Distance);
+        }
+    }
     // 1) PlayerController 스폰
     APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
     ActiveWorld->AddPlayerController(PC);
-
     ViewerWorld->BeginPlay();
 }
 
@@ -392,4 +431,21 @@ void UEditorEngine::HoverComponent(USceneComponent* InComponent)
 UEditorPlayer* UEditorEngine::GetEditorPlayer() const
 {
     return EditorPlayer;
+}
+
+AActor* UEditorEngine::GetViewerTargetActor() const
+{
+    return ViewerTarget::GTargetActor;
+}
+USceneComponent* UEditorEngine::GetViewerTargetComponent() const
+{
+    return ViewerTarget::GTargetComponent;
+}
+const void UEditorEngine::SetViewerTargetActor(AActor* InActor)
+{
+    ViewerTarget::GTargetActor = InActor;
+}
+const void UEditorEngine::SetViewerTargetComponent(USceneComponent* InComponent)
+{
+    ViewerTarget::GTargetComponent = InComponent;
 }

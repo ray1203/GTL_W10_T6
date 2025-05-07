@@ -360,8 +360,8 @@ void SLevelEditor::Initialize(uint32 InEditorWidth, uint32 InEditorHeight)
         if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer && ActiveViewportClient->IsPerspective())
         {
             UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-            USceneComponent* TargetComponent = Engine->GetSelectedComponent();
-            AActor* TargetActor = Engine->GetSelectedActor();
+            USceneComponent* TargetComponent = Engine->GetViewerTargetComponent();
+            AActor* TargetActor = Engine->GetViewerTargetActor();
             UPrimitiveComponent* Primitive = nullptr;
 
             if (TargetComponent)

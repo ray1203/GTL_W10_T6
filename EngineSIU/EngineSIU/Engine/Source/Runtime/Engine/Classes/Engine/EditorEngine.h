@@ -10,7 +10,10 @@
 
 class AActor;
 class USceneComponent;
+class UPrimitiveComponent;
 struct FBoneNode;
+
+
 
 class UEditorEngine : public UEngine
 {
@@ -58,7 +61,6 @@ public:
 
     void HoverActor(AActor* InActor);
 
-    
     void NewLevel();
 
     void SelectComponent(USceneComponent* InComponent) const;
@@ -72,6 +74,15 @@ public:
 
     void HoverComponent(USceneComponent* InComponent);
 
+    // 뷰어에서 사용하는 함수
+    AActor* GetViewerTargetActor() const;
+   
+    USceneComponent* GetViewerTargetComponent() const;
+    
+    const void SetViewerTargetActor(AActor* InActor);
+   
+    const void SetViewerTargetComponent(USceneComponent* InComponent);
+    
 public:
     UEditorPlayer* GetEditorPlayer() const;
     
