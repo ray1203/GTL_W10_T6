@@ -255,6 +255,43 @@
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\debug;$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\$(Configuration);$(ProjectDir)Engine\Source\ThirdParty\Lua\lib;$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>REM fmod.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\x64\fmod.dll" "$(OutDir)"
+
+REM lua.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
+
+REM Shaders 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+
+REM Scripts 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+
+REM Font 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+
+REM font.dds 복사
+xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
+xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
+
+REM Contents 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+
+REM Icon Textures 복사
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\PointLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\SpotLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AmbientLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\ExponentialHeightFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AtmosphericFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+
+REM Assets 폴더 루트의 파일만 복사 (하위 폴더 제외)
+for %%F in ("$(ProjectDir)Assets\*.*") do (
+    if not "%%~aF"=="d" xcopy /Y "%%F" "$(OutDir)Assets\"
+)
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Viewer_Debug|x64'">
     <ClCompile>
@@ -273,6 +310,43 @@
       <AdditionalLibraryDirectories>C:\Program Files\Autodesk\FBX\FBX SDK\2020.3.7\lib\x64\debug;$(ProjectDir)Engine\Source\ThirdParty\DirectXTK\Lib\$(PlatformTarget)\Debug;$(ProjectDir)Engine\Source\ThirdParty\Lua\lib;$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DirectXTK.lib;libfbxsdk-md.lib;libxml2-md.lib;zlib-md.lib;lua.lib;fmod_vc.lib;fmodL_vc.lib;fmodstudio_vc.lib;fmodstudioL_vc.lib;fsbank_vc.lib;libfbxsdk-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>REM fmod.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\x64\fmod.dll" "$(OutDir)"
+
+REM lua.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
+
+REM Shaders 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+
+REM Scripts 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+
+REM Font 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+
+REM font.dds 복사
+xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
+xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
+
+REM Contents 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+
+REM Icon Textures 복사
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\PointLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\SpotLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AmbientLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\ExponentialHeightFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AtmosphericFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+
+REM Assets 폴더 루트의 파일만 복사 (하위 폴더 제외)
+for %%F in ("$(ProjectDir)Assets\*.*") do (
+    if not "%%~aF"=="d" xcopy /Y "%%F" "$(OutDir)Assets\"
+)
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -360,6 +434,43 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>REM fmod.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\x64\fmod.dll" "$(OutDir)"
+
+REM lua.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
+
+REM Shaders 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+
+REM Scripts 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+
+REM Font 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+
+REM font.dds 복사
+xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
+xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
+
+REM Contents 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+
+REM Icon Textures 복사
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\PointLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\SpotLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AmbientLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\ExponentialHeightFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AtmosphericFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+
+REM Assets 폴더 루트의 파일만 복사 (하위 폴더 제외)
+for %%F in ("$(ProjectDir)Assets\*.*") do (
+    if not "%%~aF"=="d" xcopy /Y "%%F" "$(OutDir)Assets\"
+)
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.cpp" />
@@ -1150,28 +1261,6 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmod.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudio.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudioL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmod.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudio.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudioL.a" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\Icon.ico" />
