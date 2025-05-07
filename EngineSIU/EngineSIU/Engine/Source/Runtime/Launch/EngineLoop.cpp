@@ -106,7 +106,9 @@ int32 FEngineLoop::Init(HINSTANCE hInstance)
     ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
     SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
     Cast<UEditorEngine>(GEngine)->SelectComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
+    Cast<UEditorEngine>(GEngine)->SelectActor(SkeletalMeshActor);
     GEngine->ActiveWorld->GetActiveLevel()->Actors.Add(SkeletalMeshActor);
+    //UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
     {

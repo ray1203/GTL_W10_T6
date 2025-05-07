@@ -7,6 +7,11 @@
 #include "Engine/EditorEngine.h"
 #include "World/World.h"
 #include "Engine/FLoaderOBJ.h"
+#include "Core/Math/Quat.h"
+
+#include "Classes/Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/Mesh/SkeletalMesh.h"
 
 ATransformGizmo::ATransformGizmo()
 {
@@ -85,24 +90,70 @@ void ATransformGizmo::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // Editor 모드에서만 Tick.
-    if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
-    {
-        return;
-    }
+#ifdef _DEBUG_VIEWER
+	UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+	if (!Engine)
+	{
+		return;
+	}
 
-    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-    if (!Engine)
-    {
-        return;
-    }
+	const FBoneNode* SelectedBone = Engine->GetSelectedBone();
 
-    UEditorPlayer* EditorPlayer = Engine->GetEditorPlayer();
-    if (!EditorPlayer)
-    {
-        return;
-    }
-    
+	if (!SelectedBone) return;
+
+	AActor* SkeletalActor= nullptr;
+
+	for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
+	{
+		if (ASkeletalMeshActor* TargetActor = Cast<ASkeletalMeshActor>(Actor))
+		{
+			SkeletalActor= Actor;
+		}
+	}
+
+	if (!Engine || !SkeletalActor)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* SkeletalComp = SkeletalActor->GetComponentByClass<USkeletalMeshComponent>();
+	USkeletalMesh* SkeletalMesh = SkeletalComp->GetSkeletalMesh();
+
+	if (!SkeletalMesh)
+	{
+		return;
+	};
+
+	USkeleton* Skeleton = SkeletalMesh->Skeleton;
+
+	if (!Skeleton)
+	{
+		return;
+	}
+	// [TEMP] Viewermode gizmo setting
+	FVector GizmoPosition = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].GetTranslationVector();
+	FRotator GizmoRotation = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].ToQuat().Rotator();
+
+	SetActorLocation(GizmoPosition);
+	SetActorRotation(GizmoRotation);
+#else
+	if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+	{
+		return;
+	}
+
+	UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+	if (!Engine)
+	{
+		return;
+	}
+
+	UEditorPlayer* EditorPlayer = Engine->GetEditorPlayer();
+	if (!EditorPlayer)
+	{
+		return;
+	}
+
     USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
     AActor* SelectedActor = Engine->GetSelectedActor();
 
@@ -130,6 +181,7 @@ void ATransformGizmo::Tick(float DeltaTime)
             SetActorRotation(FRotator(0.0f, 0.0f, 0.0f));
         }
     }
+#endif
 }
 
 void ATransformGizmo::Initialize(FEditorViewportClient* InViewport)

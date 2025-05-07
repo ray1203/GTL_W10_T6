@@ -13,6 +13,10 @@
 #include "UObject/Object.h"
 #include "UObject/UObjectIterator.h"
 
+#include "Classes/Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/Mesh/SkeletalMesh.h"
+
 #include "ImGUI/imgui.h"
 
 
@@ -21,7 +25,8 @@ void UEditorPlayer::Initialize()
     FSlateAppMessageHandler* Handler = GEngineLoop.GetAppMessageHandler();
     Handler->OnMouseDownDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
-        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor &&
+            GEngine->ActiveWorld->WorldType != EWorldType::Viewer)
         {
             return;
         }
@@ -51,7 +56,8 @@ void UEditorPlayer::Initialize()
 
     Handler->OnMouseMoveDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
-        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor &&
+            GEngine->ActiveWorld->WorldType != EWorldType::Viewer)
         {
             return;
         }
@@ -66,7 +72,8 @@ void UEditorPlayer::Initialize()
 
     Handler->OnMouseUpDelegate.AddLambda([this](const FPointerEvent& InMouseEvent)
     {
-        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor)
+        if (GEngine->ActiveWorld->WorldType != EWorldType::Editor &&
+            GEngine->ActiveWorld->WorldType != EWorldType::Viewer)
         {
             return;
         }
@@ -381,8 +388,59 @@ void UEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseCompon
         RotationDelta = FQuat(Axis, RotationAmount);
     }
     
+#ifdef _DEBUG_VIEWER
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+    const FBoneNode* SelectedBone = Engine->GetSelectedBone();
+
+    if (!SelectedBone) return;
+
+    AActor* SkeletalActor = nullptr;
+
+    for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
+    {
+        if (ASkeletalMeshActor* TargetActor = Cast<ASkeletalMeshActor>(Actor))
+        {
+            SkeletalActor = Actor;
+        }
+    }
+
+    if (!Engine || !SkeletalActor)
+    {
+        return;
+    }
+
+    USkeletalMeshComponent* SkeletalComp = SkeletalActor->GetComponentByClass<USkeletalMeshComponent>();
+    USkeletalMesh* SkeletalMesh = SkeletalComp->GetSkeletalMesh();
+
+    if (!SkeletalMesh)
+    {
+        return;
+    };
+
+    USkeleton* Skeleton = SkeletalMesh->Skeleton;
+
+    if (!Skeleton)
+    {
+        return;
+    }
+
+    FMatrix CurrentLocalMatrix = SkeletalMesh->GetBoneLocalMatrix(Skeleton->BoneNameToIndex[SelectedBone->Name]);
+    // Quat - ToMatrix로 바로 적용 시 포지션이 원점으로 가는 문제가 있음(Why)
+    FRotator FinalRotation = FRotator(RotationDelta * CurrentRotation);
+    FMatrix NewLocalMatrix = CurrentLocalMatrix * FinalRotation.ToMatrix();
+    // 5. 새로운 로컬 변환 설정
+    if (SkeletalMesh->SetBoneLocalMatrix(Skeleton->BoneNameToIndex[SelectedBone->Name], NewLocalMatrix))
+    {
+        // 6. 스켈레톤 전체 월드 변환 업데이트 (로컬 변경 후 필수)
+        SkeletalMesh->UpdateWorldTransforms();
+
+        SkeletalMesh->UpdateAndApplySkinning();
+    }
+#else
     // 쿼터니언의 곱 순서는 delta * current 가 맞음.
     Component->SetWorldRotation(RotationDelta * CurrentRotation); 
+#endif 
+
 }
 
 void UEditorPlayer::ControlScale(USceneComponent* Component, UGizmoBaseComponent* Gizmo, float DeltaX, float DeltaY)

@@ -110,6 +110,7 @@ void SkeletonDataPanel::Render()
 
             if (ImGui::IsItemClicked())
             {
+                Engine->SelectActor(SelectedActor);
                 Engine->SelectBone(Bone);
             }
 

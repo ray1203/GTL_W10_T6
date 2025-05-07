@@ -200,8 +200,9 @@ void FGizmoRenderPass::RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, cons
 
     USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
     AActor* SelectedActor = Engine->GetSelectedActor();
+    const FBoneNode* SelectedBone =  Engine->GetSelectedBone();
 
-    if (SelectedComponent == nullptr && SelectedActor == nullptr)
+    if (SelectedComponent == nullptr && SelectedActor == nullptr && SelectedBone == nullptr)
     {
         return;
     }

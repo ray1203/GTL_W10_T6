@@ -40,7 +40,7 @@ void FEditorViewportClient::Tick(const float DeltaTime)
 {
     FViewportClient::Tick(DeltaTime);
 
-    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor)
+    if (GEngine->ActiveWorld->WorldType == EWorldType::Editor || GEngine->ActiveWorld->WorldType == EWorldType::Viewer)
     {
         UpdateEditorCameraMovement(DeltaTime);
         GizmoActor->Tick(DeltaTime);
@@ -156,6 +156,7 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
     // 에디터 모드
     else if (GEngine->ActiveWorld->WorldType == EWorldType::Viewer)
     {
+        UEditorPlayer* EdPlayer = CastChecked<UEditorEngine>(GEngine)->GetEditorPlayer();
         switch (InKeyEvent.GetCharacter())
         {
         case 'A':
@@ -194,6 +195,21 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
             else if (InKeyEvent.GetInputEvent() == IE_Released)
                 PressedKeys.Remove(EKeys::E);
             break;
+        case '1':
+        {
+            EdPlayer->SetMode(CM_TRANSLATION);
+            break;
+        }
+        case '2':
+        {
+            EdPlayer->SetMode(CM_ROTATION);
+            break;
+        }
+        case '3':
+        {
+            EdPlayer->SetMode(CM_SCALE);
+            break;
+        }
         default:
             break;
         }
