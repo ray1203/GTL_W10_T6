@@ -45,18 +45,6 @@ FStaticMeshRenderPass::~FStaticMeshRenderPass()
 
 void FStaticMeshRenderPass::CreateShader()
 {
-    // Begin Debug Shaders
-    HRESULT hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderDepth", L"Shaders/StaticMeshPixelShaderDepth.hlsl", "mainPS");
-    if (FAILED(hr))
-    {
-        return;
-    }
-    hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderWorldNormal", L"Shaders/StaticMeshPixelShaderWorldNormal.hlsl", "mainPS");
-    if (FAILED(hr))
-    {
-        return;
-    }
-    // End Debug Shaders
 
 #pragma region UberShader
     D3D_SHADER_MACRO DefinesGouraud[] =
@@ -64,7 +52,7 @@ void FStaticMeshRenderPass::CreateShader()
         { GOURAUD, "1" },
         { nullptr, nullptr }
     };
-    hr = ShaderManager->AddPixelShader(L"GOURAUD_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesGouraud);
+    HRESULT hr = ShaderManager->AddPixelShader(L"GOURAUD_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesGouraud);
     if (FAILED(hr))
     {
         return;
@@ -86,7 +74,7 @@ void FStaticMeshRenderPass::CreateShader()
         { PHONG, "1" },
         { nullptr, nullptr }
     };
-    hr = ShaderManager->AddPixelShader(L"PHONG_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesBlinnPhong);
+   hr = ShaderManager->AddPixelShader(L"PHONG_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesBlinnPhong);
     if (FAILED(hr))
     {
         return;
@@ -131,6 +119,8 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         break;
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
+    case EViewModeIndex::VMI_SceneDepth:
+    case EViewModeIndex::VMI_WorldNormal:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
