@@ -9,6 +9,7 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/RidenEi-V1.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/SharkryPVM_NoFixed.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Sharkry_Unreal.fbx"));
+    //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Sharkry_NoTwist.fbx"));
     SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
 }

@@ -614,9 +614,9 @@ void FEditorViewportClient::LoadConfig(const TMap<FString, FString>& Config)
     PerspectiveCamera.ViewRotation.X = FEditorConfigManager::GetValueFromConfig(Config, "PerspectiveCameraRotX" + ViewportNum, 0.0f);
     PerspectiveCamera.ViewRotation.Y = FEditorConfigManager::GetValueFromConfig(Config, "PerspectiveCameraRotY" + ViewportNum, 0.0f);
     PerspectiveCamera.ViewRotation.Z = FEditorConfigManager::GetValueFromConfig(Config, "PerspectiveCameraRotZ" + ViewportNum, 0.0f);
-    ShowFlag = FEditorConfigManager::GetValueFromConfig(Config, "ShowFlag" + ViewportNum, 63.0f);
-    ViewMode = static_cast<EViewModeIndex>(FEditorConfigManager::GetValueFromConfig(Config, "ViewMode" + ViewportNum, 0));
-    ViewportType = static_cast<ELevelViewportType>(FEditorConfigManager::GetValueFromConfig(Config, "ViewportType" + ViewportNum, 3));
+    ShowFlag = FEditorConfigManager::GetValueFromConfig(Config, "ShowFlag" + ViewportNum, 3135.0f);
+    ViewMode = static_cast<EViewModeIndex>(FEditorConfigManager::GetValueFromConfig(Config, "ViewMode" + ViewportNum, 1));
+    ViewportType = static_cast<ELevelViewportType>(FEditorConfigManager::GetValueFromConfig(Config, "ViewportType" + ViewportNum, 0));
 }
 
 void FEditorViewportClient::SaveConfig(TMap<FString, FString>& Config) const

@@ -298,6 +298,43 @@
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>REM fmod.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\FMOD\lib\x64\fmod.dll" "$(OutDir)"
+
+REM lua.dll 복사
+xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
+
+REM Shaders 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+
+REM Scripts 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+
+REM Font 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+
+REM font.dds 복사
+xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
+xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
+
+REM Contents 폴더 전체 복사
+xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+
+REM Icon Textures 복사
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\PointLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\SpotLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AmbientLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\ExponentialHeightFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\AtmosphericFog_64.png" "$(OutDir)Assets\Editor\Icon\"
+
+REM Assets 폴더 루트의 파일만 복사 (하위 폴더 제외)
+for %%F in ("$(ProjectDir)Assets\*.*") do (
+    if not "%%~aF"=="d" xcopy /Y "%%F" "$(OutDir)Assets\"
+)
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Viewer_Release|x64'">
     <ClCompile>
