@@ -1,6 +1,7 @@
-# 🦈 SharkryEngine
-![ChatGPT Image 2025년 5월 7일 오후 04_53_07](https://github.com/user-attachments/assets/5bf8b16d-a603-4b53-af6f-fa230b98b58c)
-![image (4)](https://github.com/user-attachments/assets/0075f6ac-2de1-4a21-9103-41d74da922b4)
+# SharkryEngine
+<img src="https://github.com/user-attachments/assets/5bf8b16d-a603-4b53-af6f-fa230b98b58c" width="400"/>
+<img src="https://github.com/user-attachments/assets/0075f6ac-2de1-4a21-9103-41d74da922b4" width="200"/>
+
 
 **게임테크랩 팀5**  
 강현중, 오정훈, 정재현, 최현규
