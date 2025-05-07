@@ -94,6 +94,7 @@ int USkinnedMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, cons
 
     FBX::FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetRenderData();
     const TArray<FBX::FSkeletalMeshVertex>& Vertices = RenderData->BindPoseVertices;
+
     const int32 VertexNum = Vertices.Num();
     if (VertexNum == 0)
     {
@@ -117,11 +118,10 @@ int USkinnedMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, cons
             Idx1 = Indices[Idx1];
             Idx2 = Indices[Idx2];
         }
-
         // 각 삼각형의 버텍스 위치를 FVector로 불러옵니다.
-        FVector v0 = FVector(Vertices[Idx0].Position.X, Vertices[Idx0].Position.Y, Vertices[Idx0].Position.Z);
-        FVector v1 = FVector(Vertices[Idx1].Position.X, Vertices[Idx1].Position.Y, Vertices[Idx1].Position.Z);
-        FVector v2 = FVector(Vertices[Idx2].Position.X, Vertices[Idx2].Position.Y, Vertices[Idx2].Position.Z);
+        FVector v0 = SkeletalMesh->Skeleton->GetGeometryOffsetTransform(0).TransformPosition(Vertices[Idx0].Position);
+        FVector v1 = SkeletalMesh->Skeleton->GetGeometryOffsetTransform(0).TransformPosition(Vertices[Idx1].Position);
+        FVector v2 = SkeletalMesh->Skeleton->GetGeometryOffsetTransform(0).TransformPosition(Vertices[Idx2].Position);
 
         float HitDistance = FLT_MAX;
         if (IntersectRayTriangle(InRayOrigin, InRayDirection, v0, v1, v2, HitDistance))
