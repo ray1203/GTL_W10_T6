@@ -3,7 +3,7 @@
 #include "ActorComponent.h"
 #include "sol/sol.hpp"
 
-#pragma comment( linker, "/entry:WinMainCRTStartup /subsystem:console" )
+//#pragma comment( linker, "/entry:WinMainCRTStartup /subsystem:console" )
 
 
 class AActor;

@@ -80,6 +80,28 @@ void UEditorEngine::Init()
 
 bool UEditorEngine::TryQuit(bool& OutbIsSave)
 {
+#ifdef  _DEBUG_VIEWER
+    int response = tinyfd_messageBox(
+        "Engine SIUUU",
+        "종료 하시겠습니까",
+        "yesno",
+        "question",    // 아이콘
+        0              // 기본 버튼 (0 = 첫 번째 버튼이 기본)
+    );
+    if (response == 1)
+    {
+        // Do not Save
+        OutbIsSave = false;
+        return true;
+    }
+    else if (response == 0)
+    {
+        // 취소
+        OutbIsSave = false;
+        return false;
+    }
+
+#else
     int response = tinyfd_messageBox(
         "Engine SIUUU",
         "변경 사항을 저장하시겠습니까?",
@@ -106,7 +128,7 @@ bool UEditorEngine::TryQuit(bool& OutbIsSave)
         OutbIsSave = false;
         return false;
     }
-
+#endif
     OutbIsSave = false;
     return true;
 }
@@ -262,6 +284,9 @@ void UEditorEngine::EndPIE()
 
 void UEditorEngine::StartViewer()
 {
+#ifdef _DEBUG_VIEWER
+
+
     FWorldContext& ViewerWorldContext = CreateNewWorldContext(EWorldType::Viewer);
     ViewerWorld = UWorld::CreateWorld(this, EWorldType::Viewer, FString("ViewerWorld"));
     ViewerWorld->WorldType = EWorldType::Viewer;
@@ -298,6 +323,7 @@ void UEditorEngine::StartViewer()
     APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
     ActiveWorld->AddPlayerController(PC);
     ViewerWorld->BeginPlay();
+#endif
 }
 
 FWorldContext& UEditorEngine::GetEditorWorldContext(/*bool bEnsureIsGWorld*/)
