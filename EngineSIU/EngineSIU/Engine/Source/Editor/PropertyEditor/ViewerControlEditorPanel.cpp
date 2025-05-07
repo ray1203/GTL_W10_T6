@@ -161,7 +161,7 @@ void ViewerControlEditorPanel::CreateFlagButton()
 
     const char* ViewModeNames[] = {
         "Lit_Gouraud", "Lit_Lambert", "Lit_Phong",
-        "Unlit", "Wireframe",
+        "Unlit", "Wireframe", "SceneDepth",
         "World Normal"
     };
 
