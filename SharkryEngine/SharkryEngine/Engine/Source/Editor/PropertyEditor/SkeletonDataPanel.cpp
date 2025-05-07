@@ -147,7 +147,6 @@ void SkeletonDataPanel::OnResize(HWND hWnd)
 
 void SkeletonDataPanel::DrawBoneTransformPanel() const
 {
-    // 패널 위치/크기 설정
     const float panelWidth = 500.0f;
     const float panelHeight = 300.0f;
 
@@ -168,100 +167,91 @@ void SkeletonDataPanel::DrawBoneTransformPanel() const
     ImGui::Begin("Bone Properties", nullptr, flags);
 
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-
-    // 선택된 본 정보 가져오기
     const FBoneNode* SelectedBone = Engine->GetSelectedBone();
 
     if (SelectedBone)
     {
         int BoneIndex = Skeleton->BoneNameToIndex[SelectedBone->Name];
-        // 1. 본 기본 정보 표시
-        ImGui::Text("Bone Name: %s", (*SelectedBone->Name.ToString()));
-        ImGui::Separator();
 
-        // 2. 트랜스폼 편집
         FMatrix LocalTransform = Skeleton->CurrentPose.LocalTransforms[BoneIndex];
         FMatrix GlobalTransform = Skeleton->CurrentPose.GlobalTransforms[BoneIndex];
 
         FVector LocalPos = LocalTransform.GetTranslationVector();
-        FRotator LocalRot = LocalTransform.ToQuat().Rotator(); // 쿼터니언 → 로테이터
+        FRotator LocalRot = LocalTransform.ToQuat().Rotator();
         FVector LocalScale = LocalTransform.GetScaleVector();
 
         FVector GlobalPos = GlobalTransform.GetTranslationVector();
         FRotator GlobalRot = GlobalTransform.ToQuat().Rotator();
         FVector GlobalScale = GlobalTransform.GetScaleVector();
 
-        // 3. 디버그 정보 표시
-        /* 로컬 변환 편집 */
+        // 본 로컬 트랜스폼 편집
         ImGui::TextColored(ImVec4(1, 1, 0, 1), "[Local Transform]");
-        ImGui::InputFloat3("Position##Local", &LocalPos.X);
-        ImGui::InputFloat3("Rotation##Local", &LocalRot.Pitch);
-        ImGui::InputFloat3("Scale##Local", &LocalScale.X);
+        bool bLocalChanged = false;
+        bLocalChanged |= ImGui::DragFloat3("Position##Local", &LocalPos.X, 0.1f);
+        bLocalChanged |= ImGui::DragFloat3("Rotation##Local", &LocalRot.Pitch, 0.5f);
+        bLocalChanged |= ImGui::DragFloat3("Scale##Local", &LocalScale.X, 0.01f);
 
-        /* 글로벌 변환 표시 */
+        // 글로벌 트랜스폼 편집
         ImGui::TextColored(ImVec4(1, 0, 1, 1), "[Global Transform]");
-        ImGui::Text("Position: %.2f, %.2f, %.2f", GlobalPos.X, GlobalPos.Y, GlobalPos.Z);
-        
-        // 글로벌 회전 편집 가능하게 변경
+        bool bGlobalChanged = false;
+        bGlobalChanged |= ImGui::DragFloat3("Position##Global", &GlobalPos.X, 0.1f);
         float GlobalRotValues[3] = { GlobalRot.Pitch, GlobalRot.Yaw, GlobalRot.Roll };
-        if (ImGui::InputFloat3("Rotation##Global", GlobalRotValues))
+        bGlobalChanged |= ImGui::DragFloat3("Rotation##Global", GlobalRotValues, 0.5f);
+        bGlobalChanged |= ImGui::DragFloat3("Scale##Global", &GlobalScale.X, 0.01f);
+
+        AActor* SelectedActor = nullptr;
+        for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
         {
-            // 값이 변경되면 새 회전 생성
-            FRotator NewGlobalRot(GlobalRotValues[0], GlobalRotValues[1], GlobalRotValues[2]);
-            
-            AActor* SelectedActor = nullptr;
-            for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
+            if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
             {
-                if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
-                {
-                    SelectedActor = SkeletalActor;
-                    break;
-                }
+                SelectedActor = SkeletalActor;
+                break;
             }
-            
-            if (SelectedActor)
+        }
+
+        if (SelectedActor)
+        {
+            USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
+            if (SkeletalComp && SkeletalComp->GetSkeletalMesh())
             {
-                USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
-                if (SkeletalComp && SkeletalComp->GetSkeletalMesh())
+                USkeletalMesh* Mesh = SkeletalComp->GetSkeletalMesh();
+
+                if (bLocalChanged)
                 {
-                    USkeletalMesh* SkeletalMesh = SkeletalComp->GetSkeletalMesh();
-                    
-                    // 회전 행렬 생성
-                    FMatrix RotationMatrix = FMatrix::GetRotationMatrix(NewGlobalRot);
-                    
-                    // 원래 global rotation에서 local rotation으로 변환
+                    FMatrix NewLocalMatrix =
+                        FMatrix::GetScaleMatrix(LocalScale) *
+                        FMatrix::GetRotationMatrix(LocalRot) *
+                        FMatrix::GetTranslationMatrix(LocalPos);
+
+                    Mesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
+                    Mesh->UpdateWorldTransforms();
+                    Mesh->UpdateAndApplySkinning();
+                }
+
+                if (bGlobalChanged)
+                {
+                    FRotator NewGlobalRot(GlobalRotValues[0], GlobalRotValues[1], GlobalRotValues[2]);
+                    FMatrix NewGlobalMatrix =
+                        FMatrix::GetScaleMatrix(GlobalScale) *
+                        FMatrix::GetRotationMatrix(NewGlobalRot) *
+                        FMatrix::GetTranslationMatrix(GlobalPos);
+
                     FMatrix ParentGlobalInverse = FMatrix::Identity;
                     int32 ParentIdx = SelectedBone->ParentIndex;
-                    
-                    if (ParentIdx != INDEX_NONE && 
-                        Skeleton->CurrentPose.GlobalTransforms.IsValidIndex(ParentIdx))
+
+                    if (ParentIdx != INDEX_NONE && Skeleton->CurrentPose.GlobalTransforms.IsValidIndex(ParentIdx))
                     {
-                        ParentGlobalInverse = FMatrix::Inverse( Skeleton->CurrentPose.GlobalTransforms[ParentIdx]);
+                        ParentGlobalInverse = FMatrix::Inverse(Skeleton->CurrentPose.GlobalTransforms[ParentIdx]);
                     }
-                    
-                    // Global -> Local 변환: Local = Global * ParentGlobalInverse
-                    FMatrix NewLocalMatrix = RotationMatrix * ParentGlobalInverse;
-                    
-                    // 위치 성분 유지
-                    NewLocalMatrix.M[3][0] = LocalTransform.M[3][0];
-                    NewLocalMatrix.M[3][1] = LocalTransform.M[3][1];
-                    NewLocalMatrix.M[3][2] = LocalTransform.M[3][2];
-                    
-                    // 적용
-                    SkeletalMesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
-                    SkeletalMesh->UpdateWorldTransforms();
-                    SkeletalMesh->UpdateAndApplySkinning();
+
+                    FMatrix NewLocalMatrix = NewGlobalMatrix * ParentGlobalInverse;
+
+                    Mesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
+                    Mesh->UpdateWorldTransforms();
+                    Mesh->UpdateAndApplySkinning();
                 }
             }
         }
-        
-        ImGui::Text("Scale: %.2f, %.2f, %.2f", GlobalScale.X, GlobalScale.Y, GlobalScale.Z);
-        // 3. 변경 사항 적용
-        //if (ImGui::Button("Apply Transform"))
-        //{
-        //    const_cast<FBoneNode*>(SelectedBone)->BindTransform = LocalTransform;
-        //    //Skeleton->MarkPackageDirty();
-        //}
     }
     else
     {
