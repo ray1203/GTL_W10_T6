@@ -131,7 +131,7 @@ void ATransformGizmo::Tick(float DeltaTime)
 		return;
 	}
 	// [TEMP] Viewermode gizmo setting
-	FRotator GizmoRotation = Skeleton->CurrentPose.GlobalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].ToQuat().Rotator();
+	FRotator GizmoRotation = Skeleton->CurrentPose.LocalTransforms[Skeleton->BoneNameToIndex[SelectedBone->Name]].ToQuat().Rotator();
 
     if (SelectedBone->ParentIndex == INDEX_NONE) 
     {
