@@ -27,16 +27,18 @@
      `Release_Viewer` 설정으로 **별도 빌드**해야 합니다.
 
 3. **실행 전 준비**
-   - 다음 폴더 및 파일들을 실행 폴더(예: `Binaries\x64\Debug`)로 복사해야 합니다:
+   -  ~~다음 폴더 및 파일들을 실행 폴더(예: `Binaries\x64\Debug`)로 복사해야 합니다:~~  
+
      ```
-     Assets/
-     Contents/
-     Fonts/
-     Scripts/
-     Shaders/
-     FMod library/
-     icon.ico
+     ~~Assets/~~  
+    ~~Contents/~~  
+    ~~Fonts/~~  
+    ~~Scripts/~~  
+    ~~Shaders/~~  
+    ~~FMod library/~~  
+    ~~icon.ico~~  
      ```
+     --> 빌드시 알아서 넣어줍니다
 4. **뷰어로 열기**
   - FBX 파일의 연결프로그램으로 Viewer를 연결하면 뷰어 단독으로 사용하실 수 있습니다
 ---
