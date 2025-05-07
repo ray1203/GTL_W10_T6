@@ -262,6 +262,7 @@ void UEditorEngine::EndPIE()
 
 void UEditorEngine::StartViewer()
 {
+#ifdef _DEBUG_VIEWER
     FWorldContext& ViewerWorldContext = CreateNewWorldContext(EWorldType::Viewer);
     ViewerWorld = UWorld::CreateWorld(this, EWorldType::Viewer, FString("ViewerWorld"));
     ViewerWorld->WorldType = EWorldType::Viewer;
@@ -298,6 +299,7 @@ void UEditorEngine::StartViewer()
     APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
     ActiveWorld->AddPlayerController(PC);
     ViewerWorld->BeginPlay();
+    #endif
 }
 
 FWorldContext& UEditorEngine::GetEditorWorldContext(/*bool bEnsureIsGWorld*/)
