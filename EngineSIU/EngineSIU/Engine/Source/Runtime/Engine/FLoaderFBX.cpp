@@ -1824,11 +1824,28 @@ void FSkeletalMeshDebugger::DrawSkeletonAABBs(const USkeletalMeshComponent* Skel
 
     constexpr float ScaleFactor = 1.f;
     const FVector4 BoxColor = FVector4(1.0f, 0.2f, 0.2f, 1.0f);
-    const float HalfExtent = 0.1f;
 
     const FMatrix CompTransform = SkelMeshComp->GetRotationMatrix() * SkelMeshComp->GetScaleMatrix() * SkelMeshComp->GetTranslationMatrix();
     const FMatrix ToXFront = FMatrix::CreateRotationMatrix(0, 0, 0.f);
     const FMatrix WorldMatrix = ToXFront * CompTransform;
+
+    // 평균 본 길이 계산
+    const TArray<FBoneNode>& BoneTree = Skeleton->BoneTree;
+    float TotalBoneLength = 0.f;
+    int32 BoneCountWithParent = 0;
+    for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
+    {
+        int32 ParentIndex = BoneTree[BoneIndex].ParentIndex;
+        if (ParentIndex >= 0 && ParentIndex < NumBones)
+        {
+            FVector ChildPos = WorldMatrix.TransformPosition(Pose.GlobalTransforms[BoneIndex].GetTranslationVector() * ScaleFactor);
+            FVector ParentPos = WorldMatrix.TransformPosition(Pose.GlobalTransforms[ParentIndex].GetTranslationVector() * ScaleFactor);
+            TotalBoneLength += (ChildPos - ParentPos).Length();
+            ++BoneCountWithParent;
+        }
+    }
+    float AvgBoneLength = (BoneCountWithParent > 0) ? TotalBoneLength / BoneCountWithParent : 1.f;
+    float HalfExtent = AvgBoneLength * 0.1f;
 
     for (int32 BoneIndex = 0; BoneIndex < NumBones; ++BoneIndex)
     {
