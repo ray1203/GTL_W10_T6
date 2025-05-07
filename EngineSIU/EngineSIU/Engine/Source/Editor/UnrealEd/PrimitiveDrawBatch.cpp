@@ -226,6 +226,26 @@ void UPrimitiveDrawBatch::ReleaseOBBBuffers()
         OBBSRV = nullptr;
     }
 }
+void UPrimitiveDrawBatch::AddAABBToBatch(const FBoundingBox& LocalAABB, const FMatrix& ModelMatrix)
+{
+    FVector LocalVertices[8] = {
+       { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.min.Z },
+       { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.min.Z },
+       { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.min.Z },
+       { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.min.Z },
+       { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.max.Z },
+       { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.max.Z },
+       { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.max.Z },
+       { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.max.Z }
+    };
+
+    FOBB OBB;
+    for (int i = 0; i < 8; ++i)
+    {
+        OBB.corners[i] = ModelMatrix.TransformPosition(LocalVertices[i]);
+    }
+    OrientedBoundingBoxes.Add(OBB);
+}
 
 // 6. 프리미티브 렌더링 관련 함수
 void UPrimitiveDrawBatch::AddAABBToBatch(const FBoundingBox& LocalAABB, const FVector& Center, const FMatrix& ModelMatrix)

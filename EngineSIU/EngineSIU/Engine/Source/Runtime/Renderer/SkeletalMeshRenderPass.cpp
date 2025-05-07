@@ -392,7 +392,7 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
 
         if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
         {
-            FEngineLoop::PrimitiveDrawBatch.AddAABBToBatch(Comp->GetBoundingBox(), Comp->GetWorldLocation(), WorldMatrix);
+            FEngineLoop::PrimitiveDrawBatch.AddAABBToBatch(Comp->GetBoundingBox(), WorldMatrix);
         }
     }
 }
