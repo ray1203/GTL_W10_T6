@@ -1,6 +1,7 @@
 #pragma once
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
+#include "Engine/Source/Runtime/Engine/Classes/Components/Mesh/SkeletalMesh.h"
 
 class UAnimInstance : public UObject
 {
@@ -12,8 +13,13 @@ public:
 
     void TriggerAnimNotifies(float DeltaSeconds);
 
+    TMap<FName, uint32> GetRequiredBones();
+
 protected:
     virtual void NativeUpdateAnimation(float DeltaSeconds);
 
+
+private:
+    USkeletalMesh* SkeletalMesh = nullptr;
 };
 

@@ -47,7 +47,7 @@ public:
 
     virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
 
-private:
+public:
     TArray<FBoneAnimationTrack> BoneAnimationTracks;
     float PlayLength;
     FFrameRate FrameRate;
