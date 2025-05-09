@@ -828,6 +828,10 @@
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimDataModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="SharkryEngine.natvis" />
@@ -1089,6 +1093,14 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameTime.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameNumber.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
@@ -1156,28 +1168,6 @@
     <FxCompile Include="Shaders\FadeEffect.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmod.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudio.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\bin\x86\libfmodstudioL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\arm64\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x64\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudioL_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmodstudio_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\fmod_vc.lib" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmod.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodL.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudio.a" />
-    <Library Include="Engine\Source\ThirdParty\FMOD\lib\x86\libfmodstudioL.a" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icon1.ico" />
