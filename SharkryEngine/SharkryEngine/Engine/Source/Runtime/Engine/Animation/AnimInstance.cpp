@@ -2,10 +2,8 @@
 
 UAnimInstance::UAnimInstance()
 {
-
 }
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaSeconds)
 {
-
 }

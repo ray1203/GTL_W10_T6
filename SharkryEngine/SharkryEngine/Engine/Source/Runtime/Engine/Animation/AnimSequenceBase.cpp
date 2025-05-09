@@ -2,10 +2,9 @@
 
 UAnimSequenceBase::UAnimSequenceBase()
 {
-
 }
 
-UAnimDataModel* UAnimSequenceBase::GetDataMode() const
+UAnimDataModel* UAnimSequenceBase::GetDataModel() const
 {
     return nullptr;
 }

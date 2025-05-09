@@ -1,8 +1,6 @@
 #pragma once
-
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
-
 
 class UAnimInstance : public UObject
 {
@@ -10,6 +8,8 @@ class UAnimInstance : public UObject
 
 public:
     UAnimInstance();
+    ~UAnimInstance() = default;
 
     void TriggerAnimNotifies(float DeltaSeconds);
 };
+

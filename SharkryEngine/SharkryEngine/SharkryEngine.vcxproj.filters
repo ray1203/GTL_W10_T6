@@ -175,21 +175,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{A9773D1D-2B7E-4A45-9967-3C8F6D68F622}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine\Public">
-      <UniqueIdentifier>{3dacaf8f-66e5-4421-9aad-2d08494e2816}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Public\Animation">
-      <UniqueIdentifier>{e3c622a9-edf8-46f3-9eae-39e97a6b92ca}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Source\Runtime\Engine\Classes\Animation">
-      <UniqueIdentifier>{964fa91d-06b2-449c-8283-c1c6911c4346}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData">
-      <UniqueIdentifier>{61913f0a-53ce-48be-baef-f75367008d89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Engine\Source\Runtime\Core\Misc">
-      <UniqueIdentifier>{04a7bedf-7e33-43cd-9c5b-f7a3306f54c1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SLevelEditor.cpp">
@@ -843,19 +828,10 @@
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\SkeletonDataPanel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationAsset.cpp">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.cpp">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.cpp">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClCompile>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData\AnimDataModel.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Core\Misc\FrameRate.cpp">
-      <Filter>Engine\Source\Runtime\Core\Misc</Filter>
-    </ClCompile>
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="SharkryEngine.natvis" />
@@ -1117,27 +1093,17 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\ViewerControlEditorPanel.h" />
-    <ClInclude Include="Engine\Public\Animation\AnimTypes.h">
-      <Filter>Engine\Public\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimationAsset.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimInstance.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimSequenceBase.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData\AnimDataModel.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation\AnimData</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData\IAnimationDataModel.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Animation\AnimData</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h">
-      <Filter>Engine\Source\Runtime\Core\Misc</Filter>
-    </ClInclude>
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameTime.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameNumber.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimCurveTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData\IAnimationDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\IAnimationDataModel.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

@@ -3,6 +3,7 @@
 #include <numbers>
 #include "Core/HAL/PlatformType.h"
 #include <random>
+#include <smmintrin.h>
 
 
 #define PI                   (3.1415926535897932f)
@@ -10,6 +11,30 @@
 #define KINDA_SMALL_NUMBER   (1.e-4f)
 
 #define PI_DOUBLE            (3.141592653589793238462643383279502884197169399)
+
+#define MIN_uint8		((uint8)	0x00)
+#define	MIN_uint16		((uint16)	0x0000)
+#define	MIN_uint32		((uint32)	0x00000000)
+#define MIN_uint64		((uint64)	0x0000000000000000)
+#define MIN_int8		((int8)		-128)
+#define MIN_int16		((int16)	-32768)
+#define MIN_int32		((int32)	0x80000000)
+#define MIN_int64		((int64)	0x8000000000000000)
+
+#define MAX_uint8		((uint8)	0xff)
+#define MAX_uint16		((uint16)	0xffff)
+#define MAX_uint32		((uint32)	0xffffffff)
+#define MAX_uint64		((uint64)	0xffffffffffffffff)
+#define MAX_int8		((int8)		0x7f)
+#define MAX_int16		((int16)	0x7fff)
+#define MAX_int32		((int32)	0x7fffffff)
+#define MAX_int64		((int64)	0x7fffffffffffffff)
+
+#define MIN_flt			(1.175494351e-38F)			/* min positive value */
+#define MAX_flt			(3.402823466e+38F)
+#define MIN_dbl			(2.2250738585072014e-308)	/* min positive value */
+#define MAX_dbl			(1.7976931348623158e+308)	
+
 
 struct FMath
 {
@@ -373,5 +398,30 @@ struct FMath
     static inline bool IsFinite(double Value)
     {
         return !IsNaN(Value) && !std::isinf(Value);
+    }
+
+    static FORCEINLINE double FloorToDouble(double F)
+    {
+        return _mm_cvtsd_f64(_mm_floor_pd(_mm_set_sd(F)));
+    }
+
+    static FORCEINLINE float FloorToFloat(float F)
+    {
+        return _mm_cvtss_f32(_mm_floor_ps(_mm_set_ss(F)));
+    }
+
+    static FORCEINLINE int32 FloorToInt32(float F)
+    {
+        return _mm_cvt_ss2si(_mm_set_ss(F + F - 0.5f)) >> 1;
+    }
+
+    static FORCEINLINE int32 TruncToInt32(float F)
+    {
+        return _mm_cvtt_ss2si(_mm_set_ss(F));
+    }
+
+    static FORCEINLINE float Frac(float Value)
+    {
+        return Value - FloorToFloat(Value);
     }
 };
