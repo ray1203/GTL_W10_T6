@@ -11,5 +11,9 @@ public:
     ~UAnimInstance() = default;
 
     void TriggerAnimNotifies(float DeltaSeconds);
+
+protected:
+    virtual void NativeUpdateAnimation(float DeltaSeconds);
+
 };
 
