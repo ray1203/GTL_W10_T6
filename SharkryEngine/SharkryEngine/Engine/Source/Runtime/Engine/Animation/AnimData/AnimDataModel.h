@@ -1,7 +1,7 @@
 #pragma once
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
-#include "AnimTypes.h"
+#include "Animation/AnimTypes.h"
 #include "Core/Misc/FrameRate.h"
 
 enum EInterpMode : uint8

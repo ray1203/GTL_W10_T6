@@ -1,13 +1,12 @@
 #pragma once
-#include "UObject/Object.h"
-#include "UObject/ObjectMacros.h"
+#include "AnimationAsset.h"
 
 class UAnimDataModel;
 struct FAnimNotifyEvent;
 
-class UAnimSequenceBase : public UObject
+class UAnimSequenceBase : public UAnimationAsset
 {
-    DECLARE_CLASS(UAnimSequenceBase, UObject)
+    DECLARE_CLASS(UAnimSequenceBase, UAnimationAsset)
 
 public:
     UAnimSequenceBase();
