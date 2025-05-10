@@ -8,5 +8,7 @@ class UAnimSequence : public UAnimSequenceBase
 public:
     UAnimSequence();
     ~UAnimSequence() = default;
+
+    virtual void GetAnimationPose(FPoseContext& PoseContext, const FAnimExtractContext& ExtractContext) const override;
 };
 

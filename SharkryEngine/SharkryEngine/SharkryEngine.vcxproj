@@ -480,6 +480,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSingleNodeInstance.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimTypes.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\CameraActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier.cpp" />

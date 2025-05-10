@@ -14,6 +14,7 @@ public:
     void InitializeAnimation();
     void SetAnimationAsset(UAnimationAsset* NewAsset, bool bIsLooping, float InPlayRate=1.f);
     void SetPlaying(bool bInPlaying);
+    virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 protected:
     float CurrentPosition = 0.f;
@@ -21,5 +22,7 @@ protected:
     bool  bLooping = false;
     float PlayRate = 1.f;
     UAnimationAsset* AnimAsset = nullptr;
+
+    FPoseContext Output{ RequiredBones };
 };
 

@@ -11,7 +11,12 @@ public:
     UAnimDataModel();
     ~UAnimDataModel() = default;
 
-    virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
+    const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
+    float GetPlayLength() const;
+    FFrameRate GetFrameRate() const;
+    int32 GetNumberOfFrames() const;
+    int32 GetNumberOfKeys() const;
+    const FAnimationCurveData& GetCurveData() const;;
 
 private:
     TArray<FBoneAnimationTrack> BoneAnimationTracks;
