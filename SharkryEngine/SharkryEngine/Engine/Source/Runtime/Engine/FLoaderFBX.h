@@ -237,6 +237,9 @@ struct FLoaderFBX
 
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 
+    // TODO 아래 함수에 대한 오버로딩으로 Animation 파일만 있는 경우도 대응할것
+    static void ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes);
+
     // TODO 아래 테스트 코드 지우기
     static void GenerateTestAnimationAsset();
 

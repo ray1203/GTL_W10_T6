@@ -1566,7 +1566,7 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
         }
 
         // 1) Buffer to hold user‐entered animation asset name
-        static char AnimAssetBuffer[256] = "TestAnim";
+        static char AnimAssetBuffer[256] = "mixamo.com";
 
         // 2) InputText for the animation asset name
         ImGui::InputText("Animation Asset Name", AnimAssetBuffer, IM_ARRAYSIZE(AnimAssetBuffer));

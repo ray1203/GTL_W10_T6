@@ -28,6 +28,8 @@
 #include "Engine/Animation/AnimData/AnimDataModel.h"
 #include "Engine/Source/Runtime/Engine/Animation/AnimationAsset.h"
 
+#include "Core/Math/JungleMath.h"
+
 namespace  FBX {
     // --- 중간 데이터 구조체 (Internal) ---
     struct MeshRawData
@@ -1229,6 +1231,11 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         FString BoneInfo = FbxTransformToString(ConvertFMatrixToFbxAMatrix(BoneNode.GlobalBindPose));
         UE_LOG(LogLevel::Display, TEXT("[%s] %s"), *BoneName.ToString(), *BoneInfo);
     }
+
+    // Pass 4: Animation Data
+
+    ParseFBXAnim(Scene, AllBoneNodesTemp);
+
     return true;
 }
 
@@ -1654,6 +1661,143 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
     {
         OutMinVector = FVector::Min(OutMinVector, InVertices[i].Position);
         OutMaxVector = FVector::Max(OutMaxVector, InVertices[i].Position);
+    }
+}
+
+void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
+{
+    int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
+    for (int i = 0; i < NumStacks; i++) 
+    {
+        // Stack의 개수만큼 애니메이션의 클립이 있는 것임
+        FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
+        FString TakeName = Stack->GetName();
+
+        // 엔진 내부 구조도 준비
+        UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+        // FrameRate 구하기
+        FbxGlobalSettings& Globals = Scene->GetGlobalSettings();
+        FbxTime::EMode TimeMode = Globals.GetTimeMode();
+        AnimDataModel->FrameRate = FFrameRate(FbxTime::GetFrameRate(TimeMode), 1);
+        // NubmerOfFrames 구하기, 커브가 들어가면 수정 필요할수도있음
+        FbxTimeSpan Span = Stack->GetLocalTimeSpan();
+        double DurationSeconds = Span.GetDuration().GetSecondDouble();
+        AnimDataModel->NumberOfFrames = int32(FMath::FloorToDouble(DurationSeconds * AnimDataModel->FrameRate.AsDecimal() + 0.5f));
+        // PlayLength 값 구하기
+        AnimDataModel->PlayLength = AnimDataModel->NumberOfFrames / AnimDataModel->FrameRate.AsDecimal();
+
+        // 아래에서 갱신해줄 것임, 최솟값으로 갱신하여 Null 오류가 나지 않도록 일단 처리
+        AnimDataModel->NumberOfKeys = INT_MAX;
+
+        // Stack 내부에서 레이어 꺼내서 사용
+        // 일단은 단일 레이어로 가정하여 0번에서 가져다가 사용
+        // 이후 다중 레이어 고려해야하고 그 땐 curveNode->GetCurveRecursive() 사용 고려해볼것
+        // TODO 다중 레이어 대응
+        FbxAnimLayer* Layer = Stack->GetMember<FbxAnimLayer>(0);
+
+        // 미리구한 Bone 목록을 통해 프레임 정보에 접근
+        
+        for (FbxNode* BoneNode : BoneNodes)
+        {
+            FBoneAnimationTrack AnimationTrack;
+            AnimationTrack.Name = BoneNode->GetName();
+
+            // 프레임 정보가 들어 있는 커브에 접근
+
+            // Translation
+            FbxAnimCurve* PosCurveX = BoneNode->LclTranslation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_X, false);
+            FbxAnimCurve* PosCurveY = BoneNode->LclTranslation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Y, false);
+            FbxAnimCurve* PosCurveZ = BoneNode->LclTranslation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Z, false);
+
+            // Rotation
+            FbxAnimCurve* RotCurveX = BoneNode->LclRotation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_X, false);
+            FbxAnimCurve* RotCurveY = BoneNode->LclRotation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Y, false);
+            FbxAnimCurve* RotCurveZ = BoneNode->LclRotation.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Z, false);
+
+            // Scale
+            FbxAnimCurve* ScaleCurveX = BoneNode->LclScaling.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_X, false);
+            FbxAnimCurve* ScaleCurveY = BoneNode->LclScaling.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Y, false);
+            FbxAnimCurve* ScaleCurveZ = BoneNode->LclScaling.GetCurve(Layer, FBXSDK_CURVENODE_COMPONENT_Z, false);
+
+            // 커브들로부터 정보 추출
+
+            // Translation 처리, 최적화를 위해 없는 경우도 있음
+            // 대부분 X, Y, Z 는 쌍으로 이어져 있으므로 CurveX만 체크
+            if (PosCurveX != nullptr) 
+            {
+                //Translation X, Y, Z의 숫자가 같은 경우에 같이 처리 다르면 오류
+                if (PosCurveX->KeyGetCount() == PosCurveY->KeyGetCount()
+                    && PosCurveY->KeyGetCount() == PosCurveZ->KeyGetCount())
+                {
+                    for (int j = 0; j < PosCurveX->KeyGetCount(); j++)
+                    {
+                        FbxAnimCurveKey KeyX = PosCurveX->KeyGet(j);
+                        FbxAnimCurveKey KeyY = PosCurveY->KeyGet(j);
+                        FbxAnimCurveKey KeyZ = PosCurveZ->KeyGet(j);
+
+                        AnimationTrack.InternalTrack.PosKeys.Add(FVector(KeyX.GetValue(), KeyY.GetValue(), KeyZ.GetValue()));
+                    }
+                }
+
+                if (PosCurveX->KeyGetCount() < AnimDataModel->NumberOfKeys)
+                {
+                    AnimDataModel->NumberOfKeys = PosCurveX->KeyGetCount();
+                }
+            }
+
+            if (RotCurveX != nullptr) 
+            {
+                //Rotation X, Y, Z의 숫자가 같은 경우에 같이 처리 다르면 오류
+                if (RotCurveX->KeyGetCount() == RotCurveY->KeyGetCount()
+                    && RotCurveY->KeyGetCount() == RotCurveZ->KeyGetCount())
+                {
+                    for (int j = 0; j < RotCurveX->KeyGetCount(); j++)
+                    {
+                        FbxAnimCurveKey KeyX = RotCurveX->KeyGet(j);
+                        FbxAnimCurveKey KeyY = RotCurveY->KeyGet(j);
+                        FbxAnimCurveKey KeyZ = RotCurveZ->KeyGet(j);
+
+                        AnimationTrack.InternalTrack.RotKeys.Add(JungleMath::EulerToQuaternion(FVector(KeyX.GetValue(), KeyY.GetValue(), KeyZ.GetValue())));
+                    }
+                }
+
+                if (RotCurveX->KeyGetCount() < AnimDataModel->NumberOfKeys)
+                {
+                    AnimDataModel->NumberOfKeys = RotCurveX->KeyGetCount();
+                }
+            }
+            
+            if (ScaleCurveX != nullptr) 
+            {
+                //Scale X, Y, Z의 숫자가 같은 경우에 같이 처리 다르면 오류
+                if (ScaleCurveX->KeyGetCount() == ScaleCurveY->KeyGetCount()
+                    && ScaleCurveY->KeyGetCount() == ScaleCurveZ->KeyGetCount())
+                {
+                    for (int j = 0; j < ScaleCurveX->KeyGetCount(); j++)
+                    {
+                        FbxAnimCurveKey KeyX = ScaleCurveX->KeyGet(j);
+                        FbxAnimCurveKey KeyY = ScaleCurveY->KeyGet(j);
+                        FbxAnimCurveKey KeyZ = ScaleCurveZ->KeyGet(j);
+
+                        AnimationTrack.InternalTrack.ScaleKeys.Add(FVector(KeyX.GetValue(), KeyY.GetValue(), KeyZ.GetValue()));
+                    }
+                }
+
+                if (ScaleCurveX->KeyGetCount() < AnimDataModel->NumberOfKeys)
+                {
+                    AnimDataModel->NumberOfKeys = ScaleCurveX->KeyGetCount();
+                }
+            }
+
+            AnimDataModel->BoneAnimationTracks.Add(AnimationTrack);
+        }
+        
+        // 4) UAnimSequence 생성 및 DataModel 연결
+        UAnimSequence* Sequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+        Sequence->SetDataModel(AnimDataModel);
+
+        // 5) 매니저에 등록
+        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
     }
 }
 
