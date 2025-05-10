@@ -231,7 +231,7 @@ inline FFrameTime::FFrameTime()
 }
 
 
-FFrameTime::FFrameTime(int32 InFrameNumber)
+inline FFrameTime::FFrameTime(int32 InFrameNumber)
     : FrameNumber(InFrameNumber), SubFrame(0.f)
 {
 }
