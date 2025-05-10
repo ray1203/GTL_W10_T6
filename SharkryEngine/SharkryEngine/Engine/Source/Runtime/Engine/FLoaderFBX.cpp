@@ -75,6 +75,8 @@ namespace  FBX {
         TMap<FName, FBoneHierarchyNode> SkeletonHierarchy;
         TArray<FName> SkeletonRootBoneNames;
         TMap<FName, FFbxMaterialInfo> Materials;
+        TArray<FSkeletalAnimationSequence> AnimSequences;
+        FFrameRate FrameRate;
     };
 
     struct FControlPointSkinningData
@@ -1225,6 +1227,125 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         FString BoneInfo = FbxTransformToString(ConvertFMatrixToFbxAMatrix(BoneNode.GlobalBindPose));
         UE_LOG(LogLevel::Display, TEXT("[%s] %s"), *BoneName.ToString(), *BoneInfo);
     }
+
+    // Pass 4: Animation Data
+
+    // 1) 애니메이션 스택(클립) 개수
+    int AnimStackCount = Scene->GetSrcObjectCount<FbxAnimStack>();
+    for (int stackIndex = 0; stackIndex < AnimStackCount; ++stackIndex)
+    {
+        // 각 스택(클립) 가져오기
+        FbxAnimStack* AnimStack = Scene->GetSrcObject<FbxAnimStack>(stackIndex);
+        Scene->SetCurrentAnimationStack(AnimStack);
+
+        // 시퀀스 정보 구조체 생성
+        FSkeletalAnimationSequence Seq;
+        Seq.Name = FString(AnimStack->GetName());
+
+        // FbxTime을 꺼내서 초 단위로 변환
+        FbxTime StartTime = AnimStack->GetLocalTimeSpan().GetStart();
+        FbxTime StopTime = AnimStack->GetLocalTimeSpan().GetStop();
+
+        // 이 스택의 전체 길이(ms 단위로 제공됨)
+        double start = StartTime.GetSecondDouble();
+        double stop = StopTime.GetSecondDouble();
+        Seq.SequenceLength = float(stop - start);
+
+        // 타임라인을 프레임 단위로 바꾸고 싶다면
+        Seq.FrameRate = OutFBXInfo.FrameRate; // 미리 FBXInfo에 세팅해 둔 프레임레이트
+
+        // 레이어(Blend Layer) 순회
+        int layerCount = AnimStack->GetMemberCount<FbxAnimLayer>();
+        for (int layerIndex = 0; layerIndex < layerCount; ++layerIndex)
+        {
+            FbxAnimLayer* Layer = AnimStack->GetMember<FbxAnimLayer>(layerIndex);
+
+            // 각 본 노드마다 Pos/Rot/Scale 커브 파싱
+            for (auto& BonePair : OutFBXInfo.SkeletonHierarchy)
+            {
+                FName BoneName = BonePair.Key;
+                FbxNode* BoneNode = FindFbxNodeByName(Scene, *BoneName.ToString());
+                if (!BoneNode)
+                    continue;
+
+                FBoneAnimationTrack BoneTrack;
+                BoneTrack.Name = BoneName;
+
+                double FrameStart = start;
+
+                // Translation/Rotation/Scale 커브에 걸린 모든 키타임 수집
+                TSet<double> KeyTimes;
+                auto GatherCurveTimes = [&](auto GetCurveFunc) {
+                    for (int axis = 0; axis < 3; ++axis)
+                    {
+                        FbxAnimCurve* Curve = GetCurveFunc(axis);
+                        if (!Curve) continue;
+                        int KeyCount = Curve->KeyGetCount();
+                        for (int ki = 0; ki < KeyCount; ++ki)
+                        {
+                            double t = Curve->KeyGetTime(ki).GetSecondDouble() - FrameStart;
+                            KeyTimes.Add(t);
+                        }
+                    }
+                    };
+                GatherCurveTimes([&](int axis) { return BoneNode->LclTranslation.GetCurve(Layer, axis); });
+                GatherCurveTimes([&](int axis) { return BoneNode->LclRotation.GetCurve(Layer, axis); });
+                GatherCurveTimes([&](int axis) { return BoneNode->LclScaling.GetCurve(Layer, axis); });
+
+                // 정렬된 키타임 배열로 변환
+                TArray<double> SortedTimes = KeyTimes.Array();
+                SortedTimes.Sort();
+
+                // 각 배열 용량 예약
+                BoneTrack.InternalTrack.PosKeys.Reserve(SortedTimes.Num());
+                BoneTrack.InternalTrack.RotKeys.Reserve(SortedTimes.Num());
+                BoneTrack.InternalTrack.ScaleKeys.Reserve(SortedTimes.Num());
+
+                // 시간별로 한 번에 샘플링
+                for (double tSec : SortedTimes)
+                {
+                    FbxTime ft;
+                    ft.SetSecondDouble(tSec + FrameStart);
+
+                    // 로컬 변환(Translation, Rotation, Scale) 한 번에 읽기
+                    FbxAMatrix LocalTM = BoneNode->EvaluateLocalTransform(ft);
+
+                    // 위치
+                    FbxVector4 T = LocalTM.GetT();
+                    BoneTrack.InternalTrack.PosKeys.Add(
+                        FVector(static_cast<float>(T[0]),
+                            static_cast<float>(T[1]),
+                            static_cast<float>(T[2]))
+                    );
+
+                    // 회전 (쿼터니언)
+                    FbxQuaternion Q = LocalTM.GetQ();
+                    BoneTrack.InternalTrack.RotKeys.Add(
+                        FQuat(static_cast<float>(Q[0]),
+                            static_cast<float>(Q[1]),
+                            static_cast<float>(Q[2]),
+                            static_cast<float>(Q[3]))
+                    );
+
+                    // 스케일
+                    FbxVector4 S = LocalTM.GetS();
+                    BoneTrack.InternalTrack.ScaleKeys.Add(
+                        FVector(static_cast<float>(S[0]),
+                            static_cast<float>(S[1]),
+                            static_cast<float>(S[2]))
+                    );
+                }
+
+                // 6) 완성된 본 트랙을 시퀀스에 추가
+                Seq.BoneTracks.Add(std::move(BoneTrack));
+            }
+        }
+
+        // 5) 완성된 시퀀스를 FBXInfo에 추가
+        OutFBXInfo.AnimSequences.Add(std::move(Seq));
+    }
+
+
     return true;
 }
 
@@ -1651,6 +1772,34 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
         OutMinVector = FVector::Min(OutMinVector, InVertices[i].Position);
         OutMaxVector = FVector::Max(OutMaxVector, InVertices[i].Position);
     }
+}
+
+FbxNode* FLoaderFBX::FindFbxNodeByName(FbxScene* Scene, const char* NodeName)
+{
+    if (!Scene || !Scene->GetRootNode() || !NodeName || NodeName[0] == '\0')
+        return nullptr;
+
+    return FindFbxNodeByNameRecursive(Scene->GetRootNode(), NodeName);
+}
+
+FbxNode* FLoaderFBX::FindFbxNodeByNameRecursive(FbxNode* Node, const char* NodeName)
+{
+    if (!Node)
+        return nullptr;
+
+    // 이름 일치 체크
+    if (std::strcmp(Node->GetName(), NodeName) == 0)
+        return Node;
+
+    // 자식 노드 순회
+    for (int i = 0; i < Node->GetChildCount(); ++i)
+    {
+        FbxNode* Found = FindFbxNodeByNameRecursive(Node->GetChild(i), NodeName);
+        if (Found)
+            return Found;
+    }
+
+    return nullptr;
 }
 
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }

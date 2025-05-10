@@ -1,6 +1,5 @@
 #pragma once
 
-#include "FrameNumber.h"
 #include "FrameTime.h"
 
 struct FFrameRate

@@ -5,7 +5,7 @@
 class UAnimInstance : public UObject
 {
     DECLARE_CLASS(UAnimInstance, UObject)
-
+     
 public:
     UAnimInstance();
     ~UAnimInstance() = default;

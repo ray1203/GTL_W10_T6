@@ -15,8 +15,10 @@
 #include <functional>
 #include <unordered_map> 
 #include "FSkeletalMeshDebugger.h" // FSkeletalMeshDebugger 클래스 선언을 사용하기 위해 포함
+#include "Animation/AnimTypes.h"
 
 class USkeletalMeshComponent;
+
 
 // --- FBX 로딩 관련 네임스페이스 ---
 namespace FBX
@@ -235,7 +237,10 @@ struct FLoaderFBX
 
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 
+    static FbxNode* FindFbxNodeByName(FbxScene* Scene, const char* NodeName);
+
 private:
+    static FbxNode* FindFbxNodeByNameRecursive(FbxNode* Node, const char* NodeName);
     static void CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2);
 };
 
@@ -267,6 +272,7 @@ public:
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
 private:
+    inline static TMap<FString, TArray<FSkeletalAnimationSequence*>> FBXAnimationSequenceMap;
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;

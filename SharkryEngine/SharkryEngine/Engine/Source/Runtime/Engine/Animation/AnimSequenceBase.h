@@ -16,7 +16,7 @@ public:
     UAnimDataModel* GetDataModel() const;
 
     /** Animation notifies, sorted by time (earliest notification first). */
-    UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
+    //UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
 
 
 

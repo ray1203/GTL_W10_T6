@@ -9,6 +9,5 @@ class UAnimationAsset : public UObject
 public:
     UAnimationAsset();
     ~UAnimationAsset() = default;
-
 };
 

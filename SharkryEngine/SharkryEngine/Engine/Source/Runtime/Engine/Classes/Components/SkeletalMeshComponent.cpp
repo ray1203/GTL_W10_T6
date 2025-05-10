@@ -1,11 +1,10 @@
 #include "Components/SkeletalMeshComponent.h"
-
 #include "Engine/FLoaderFBX.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
-
 #include "GameFramework/Actor.h"
+#include "Animation/AnimSingleNodeInstance.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
@@ -87,4 +86,45 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         // SetStaticMesh(nullptr); // 또는 아무것도 안 함
         UE_LOG(LogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
     }
+}
+
+void USkeletalMeshComponent::PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping)
+{
+    SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    SetAnimation(NewAnimToPlay);
+    Play(bLooping);
+}
+
+void USkeletalMeshComponent::SetAnimationMode(EAnimationMode NewMode)
+{
+    AnimationMode = NewMode;
+}
+
+EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
+{
+    return AnimationMode;
+}
+
+void USkeletalMeshComponent::SetAnimation(UAnimationAsset* NewAnimToPlay)
+{
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetAnimationAsset(NewAnimToPlay, false);
+        SingleNodeInstance->SetPlaying(false);
+    }
+}
+
+void USkeletalMeshComponent::Play(bool bLooping)
+{
+}
+
+void USkeletalMeshComponent::Stop()
+{
+}
+
+UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
+{
+    AnimScriptInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
+    return Cast<UAnimSingleNodeInstance>(AnimScriptInstance);
 }

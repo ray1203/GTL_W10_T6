@@ -2,6 +2,16 @@
 #include "Components/SkinnedMeshComponent.h"
 #include "Mesh/SkeletalMesh.h"
 
+enum class EAnimationMode {
+    AnimationBlueprint,
+    AnimationSingleNode,
+    AnimationCustomMode
+};;
+
+class UAnimInstance;
+class UAnimSingleNodeInstance;
+class UAnimationAsset;
+
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
     DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
@@ -19,11 +29,17 @@ public:
     void SetselectedSubMeshIndex(const int& value) { selectedSubMeshIndex = value; }
     int GetselectedSubMeshIndex() const { return selectedSubMeshIndex; };
 
-    //virtual uint32 GetNumMaterials() const override;
-    //virtual UMaterial* GetMaterial(uint32 ElementIndex) const override;
-    //virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;
-    //virtual TArray<FName> GetMaterialSlotNames() const override;
-    //virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
+    void PlayAnimation(UAnimationAsset* NewAnimToPlay, bool bLooping = false);
+    void SetAnimationMode(EAnimationMode NewMode);
+    EAnimationMode GetAnimationMode() const;
+    void SetAnimation(UAnimationAsset* NewAnimToPlay);
+    void Play(bool bLooping = false);
+    void Stop();
 
-    //virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
+    UAnimSingleNodeInstance* GetSingleNodeInstance();
+private:
+    EAnimationMode AnimationMode = EAnimationMode::AnimationSingleNode;
+    UAnimationAsset* CurrentAnim = nullptr;
+    UAnimInstance* AnimScriptInstance = nullptr;
+
 };
