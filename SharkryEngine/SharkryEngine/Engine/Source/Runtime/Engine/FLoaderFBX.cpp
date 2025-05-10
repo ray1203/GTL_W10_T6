@@ -1710,21 +1710,21 @@ void FLoaderFBX::GenerateTestAnimationAsset()
         FVector(0.0f, 15.0f,  0.0f),  // 30
 
         // Frame 31..45: (0,15,0)→(0,0,15)
-        FVector(0.0f, 14.0f,  1.0f),  // 31
-        FVector(0.0f, 13.0f,  2.0f),  // 32
-        FVector(0.0f, 12.0f,  3.0f),  // 33
-        FVector(0.0f, 11.0f,  4.0f),  // 34
-        FVector(0.0f, 10.0f,  5.0f),  // 35
-        FVector(0.0f,  9.0f,  6.0f),  // 36
-        FVector(0.0f,  8.0f,  7.0f),  // 37
-        FVector(0.0f,  7.0f,  8.0f),  // 38
-        FVector(0.0f,  6.0f,  9.0f),  // 39
-        FVector(0.0f,  5.0f, 10.0f),  // 40
-        FVector(0.0f,  4.0f, 11.0f),  // 41
-        FVector(0.0f,  3.0f, 12.0f),  // 42
-        FVector(0.0f,  2.0f, 13.0f),  // 43
-        FVector(0.0f,  1.0f, 14.0f),  // 44
-        FVector(0.0f,  0.0f, 15.0f)   // 45
+        FVector(0.0f, 14.0f,  0.0f),  // 31
+        FVector(0.0f, 13.0f,  0.0f),  // 32
+        FVector(0.0f, 12.0f,  0.0f),  // 33
+        FVector(0.0f, 11.0f,  0.0f),  // 34
+        FVector(0.0f, 10.0f,  0.0f),  // 35
+        FVector(0.0f,  9.0f,  0.0f),  // 36
+        FVector(0.0f,  8.0f,  0.0f),  // 37
+        FVector(0.0f,  7.0f,  0.0f),  // 38
+        FVector(0.0f,  6.0f,  0.0f),  // 39
+        FVector(0.0f,  5.0f, 0.0f),  // 40
+        FVector(0.0f,  4.0f, 0.0f),  // 41
+        FVector(0.0f,  3.0f, 0.0f),  // 42
+        FVector(0.0f,  2.0f, 0.0f),  // 43
+        FVector(0.0f,  1.0f, 0.0f),  // 44
+        FVector(0.0f,  0.0f, 0.0f)   // 45
     };
 
     Raw.RotKeys = {
@@ -1761,9 +1761,9 @@ void FLoaderFBX::GenerateTestAnimationAsset()
     AnimDataModel->BoneAnimationTracks.Add(RootTrack);
 
     // 3) 메타데이터(길이, 프레임레이트 등) 세팅
-    AnimDataModel->PlayLength = 1.0f;             // 총 1초짜리
     AnimDataModel->FrameRate = FFrameRate(30, 1);// 30fps
     AnimDataModel->NumberOfFrames = 45;              // 1초 * 30fps
+    AnimDataModel->PlayLength = AnimDataModel->NumberOfFrames / AnimDataModel->FrameRate.AsDecimal();
     AnimDataModel->NumberOfKeys = Raw.PosKeys.Num();// 2
 
     // (커브는 이 예제에선 사용하지 않으므로 비워 둡니다.)
