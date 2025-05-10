@@ -1558,6 +1558,36 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
                 SW_SHOWNORMAL
             );
         }
+
+        if (ImGui::Button("Generate Test Animation")) 
+        {
+            FLoaderFBX::GenerateTestAnimationAsset();
+
+        }
+
+        // 1) Buffer to hold user‐entered animation asset name
+        static char AnimAssetBuffer[256] = "TestAnim";
+
+        // 2) InputText for the animation asset name
+        ImGui::InputText("Animation Asset Name", AnimAssetBuffer, IM_ARRAYSIZE(AnimAssetBuffer));
+
+        // 3) When button is clicked, convert to FString and call SetAnimAsset
+        if (ImGui::Button("Set Anim Asset"))
+        {
+            // Convert UTF-8 char buffer to Unreal's TCHAR
+            FString AnimName = AnimAssetBuffer;
+            
+            if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(SkeletalMeshComp)) 
+            {
+                SkeletalMesh->SetAnimAsset(AnimName);
+            }
+            
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+
     }
 }
 void PropertyEditorPanel::OnResize(HWND hWnd)

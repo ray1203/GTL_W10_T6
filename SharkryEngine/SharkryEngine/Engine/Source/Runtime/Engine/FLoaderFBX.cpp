@@ -24,6 +24,10 @@
 #include "UObject/ObjectFactory.h"    // FManagerFBX 에서 사용
 #include "FSkeletalMeshDebugger.h"   // FSkeletalMeshDebugger 클래스 사용
 
+#include "Engine/Animation/AnimSequence.h"
+#include "Engine/Animation/AnimData/AnimDataModel.h"
+#include "Engine/Source/Runtime/Engine/Animation/AnimationAsset.h"
+
 namespace  FBX {
     // --- 중간 데이터 구조체 (Internal) ---
     struct MeshRawData
@@ -1653,6 +1657,42 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
     }
 }
 
+void FLoaderFBX::GenerateTestAnimationAsset()
+{
+    // 1) DataModel 생성
+   //    Outer 는 TransientPackage 로 대체했습니다.
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    // 2) 간단한 Root 본 트랙 하나 세팅
+    FBoneAnimationTrack RootTrack;
+    RootTrack.Name = FName("Spine");
+
+    FRawAnimSequenceTrack& Raw = RootTrack.InternalTrack;
+
+    // 두 키: t=0 과 t=1 초
+    Raw.PosKeys = { FVector::ZeroVector, FVector(3.f, 0.f, 0.f) };
+    Raw.RotKeys = { FQuat(),       FQuat()};
+    Raw.ScaleKeys = { FVector(1.f),          FVector(1.f) };
+
+    AnimDataModel->BoneAnimationTracks.Add(RootTrack);
+
+    // 3) 메타데이터(길이, 프레임레이트 등) 세팅
+    AnimDataModel->PlayLength = 1.0f;             // 총 1초짜리
+    AnimDataModel->FrameRate = FFrameRate(30, 1);// 30fps
+    AnimDataModel->NumberOfFrames = 30;              // 1초 * 30fps
+    AnimDataModel->NumberOfKeys = Raw.PosKeys.Num();// 2
+
+    // (커브는 이 예제에선 사용하지 않으므로 비워 둡니다.)
+
+    // 4) UAnimSequence 생성 및 DataModel 연결
+    UAnimSequence* Sequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+    Sequence->SetDataModel(AnimDataModel);
+
+    // 5) 매니저에 등록
+    //    "TestAnim" 이라는 이름으로 등록합니다.
+    FManagerFBX::AddAnimationAsset(TEXT("TestAnim"), Sequence);
+}
+
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }
 
 
@@ -1756,4 +1796,19 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
         return SkeletalMeshMap[name];
 
     return CreateSkeletalMesh(FString(name.c_str()));
+}
+
+UAnimationAsset* FManagerFBX::GetAnimationAsset(const FString& name)
+{
+    if (AnimationAssetMap.Contains(name)) 
+    {
+        return AnimationAssetMap[name];
+    }
+
+    return nullptr;
+}
+
+void FManagerFBX::AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset)
+{
+    AnimationAssetMap.Add(name, AnimationAsset);
 }

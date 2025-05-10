@@ -43,6 +43,10 @@ struct FPoseContext
     //FStackCustomAttribues Attributes;
     bool bIsAdditivePose;
 
+    FPoseContext()
+        :AnimInstance(nullptr), bIsAdditivePose(false)
+    {}
+
     FPoseContext(UAnimInstance* InAnimInstance, bool bInExpectsAdditive = false) 
         :AnimInstance(InAnimInstance), bIsAdditivePose(bInExpectsAdditive)
     { }

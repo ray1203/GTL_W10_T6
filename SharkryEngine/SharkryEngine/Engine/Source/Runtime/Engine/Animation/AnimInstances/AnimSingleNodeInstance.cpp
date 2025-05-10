@@ -1,5 +1,10 @@
 #include "AnimSingleNodeInstance.h"
 
+UAnimSingleNodeInstance::UAnimSingleNodeInstance()
+{
+
+}
+
 void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     if (AnimSequence) 

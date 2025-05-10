@@ -5,6 +5,13 @@
 
 class UAnimSingleNodeInstance : public UAnimInstance 
 {
+    DECLARE_CLASS(UAnimSingleNodeInstance, UObject)
+
+public:
+    UAnimSingleNodeInstance();
+    ~UAnimSingleNodeInstance() = default;
+
+    void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; }
 
 protected:
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
