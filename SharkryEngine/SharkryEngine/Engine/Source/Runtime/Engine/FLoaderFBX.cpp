@@ -1665,21 +1665,105 @@ void FLoaderFBX::GenerateTestAnimationAsset()
 
     // 2) 간단한 Root 본 트랙 하나 세팅
     FBoneAnimationTrack RootTrack;
-    RootTrack.Name = FName("Spine");
+    RootTrack.Name = FName("mixamorig:Spine");
 
     FRawAnimSequenceTrack& Raw = RootTrack.InternalTrack;
 
-    // 두 키: t=0 과 t=1 초
-    Raw.PosKeys = { FVector::ZeroVector, FVector(3.f, 0.f, 0.f) };
-    Raw.RotKeys = { FQuat(),       FQuat()};
-    Raw.ScaleKeys = { FVector(1.f),          FVector(1.f) };
+    // 완전히 테스트 코드
+
+    // 완전 하드코딩된 46프레임(0~45) Pos/Rot/Scale 키 리스트
+
+    Raw.PosKeys = {
+        // Frame 0..15: (0→15,0,0)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(1.0f,  0.0f,  0.0f),  //  1
+        FVector(2.0f,  0.0f,  0.0f),  //  2
+        FVector(3.0f,  0.0f,  0.0f),  //  3
+        FVector(4.0f,  0.0f,  0.0f),  //  4
+        FVector(5.0f,  0.0f,  0.0f),  //  5
+        FVector(6.0f,  0.0f,  0.0f),  //  6
+        FVector(7.0f,  0.0f,  0.0f),  //  7
+        FVector(8.0f,  0.0f,  0.0f),  //  8
+        FVector(9.0f,  0.0f,  0.0f),  //  9
+        FVector(10.0f,  0.0f,  0.0f),  // 10
+        FVector(11.0f,  0.0f,  0.0f),  // 11
+        FVector(12.0f,  0.0f,  0.0f),  // 12
+        FVector(13.0f,  0.0f,  0.0f),  // 13
+        FVector(14.0f,  0.0f,  0.0f),  // 14
+        FVector(15.0f,  0.0f,  0.0f),  // 15
+
+        // Frame 16..30: (15,0,0)→(0,15,0)
+        FVector(14.0f,  1.0f,  0.0f),  // 16
+        FVector(13.0f,  2.0f,  0.0f),  // 17
+        FVector(12.0f,  3.0f,  0.0f),  // 18
+        FVector(11.0f,  4.0f,  0.0f),  // 19
+        FVector(10.0f,  5.0f,  0.0f),  // 20
+        FVector(9.0f,  6.0f,  0.0f),  // 21
+        FVector(8.0f,  7.0f,  0.0f),  // 22
+        FVector(7.0f,  8.0f,  0.0f),  // 23
+        FVector(6.0f,  9.0f,  0.0f),  // 24
+        FVector(5.0f, 10.0f,  0.0f),  // 25
+        FVector(4.0f, 11.0f,  0.0f),  // 26
+        FVector(3.0f, 12.0f,  0.0f),  // 27
+        FVector(2.0f, 13.0f,  0.0f),  // 28
+        FVector(1.0f, 14.0f,  0.0f),  // 29
+        FVector(0.0f, 15.0f,  0.0f),  // 30
+
+        // Frame 31..45: (0,15,0)→(0,0,15)
+        FVector(0.0f, 14.0f,  1.0f),  // 31
+        FVector(0.0f, 13.0f,  2.0f),  // 32
+        FVector(0.0f, 12.0f,  3.0f),  // 33
+        FVector(0.0f, 11.0f,  4.0f),  // 34
+        FVector(0.0f, 10.0f,  5.0f),  // 35
+        FVector(0.0f,  9.0f,  6.0f),  // 36
+        FVector(0.0f,  8.0f,  7.0f),  // 37
+        FVector(0.0f,  7.0f,  8.0f),  // 38
+        FVector(0.0f,  6.0f,  9.0f),  // 39
+        FVector(0.0f,  5.0f, 10.0f),  // 40
+        FVector(0.0f,  4.0f, 11.0f),  // 41
+        FVector(0.0f,  3.0f, 12.0f),  // 42
+        FVector(0.0f,  2.0f, 13.0f),  // 43
+        FVector(0.0f,  1.0f, 14.0f),  // 44
+        FVector(0.0f,  0.0f, 15.0f)   // 45
+    };
+
+    Raw.RotKeys = {
+        // 46개 모두 FQuat::Identity 로
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat(), FQuat(), FQuat(),
+        FQuat(), FQuat()
+    };
+
+    Raw.ScaleKeys = {
+        // 46개 모두 FVector(1,1,1) 로
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f)
+    };
 
     AnimDataModel->BoneAnimationTracks.Add(RootTrack);
 
     // 3) 메타데이터(길이, 프레임레이트 등) 세팅
     AnimDataModel->PlayLength = 1.0f;             // 총 1초짜리
     AnimDataModel->FrameRate = FFrameRate(30, 1);// 30fps
-    AnimDataModel->NumberOfFrames = 30;              // 1초 * 30fps
+    AnimDataModel->NumberOfFrames = 45;              // 1초 * 30fps
     AnimDataModel->NumberOfKeys = Raw.PosKeys.Num();// 2
 
     // (커브는 이 예제에선 사용하지 않으므로 비워 둡니다.)

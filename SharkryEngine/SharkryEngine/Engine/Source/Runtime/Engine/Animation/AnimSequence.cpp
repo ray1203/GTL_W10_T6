@@ -6,6 +6,15 @@ UAnimSequence::UAnimSequence()
 {
 }
 
+float UAnimSequence::GetPlayLength()
+{
+    if (AnimDataModel == nullptr) {
+        return 0.0f;
+    }
+
+    return AnimDataModel->PlayLength;
+}
+
 void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext)
 {
     if (!AnimDataModel)
@@ -18,18 +27,17 @@ void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const F
     }
 
     // 2) 로컬 포즈를 참조 포즈로 초기화
-    /*OutAnimationPoseData.ResetToRefPose(
-        OutAnimationPoseData.AnimInstanceProxy->GetRequiredBones()
-    );*/
+    OutAnimationPoseData.ResetToRefPose(
+        OutAnimationPoseData.AnimInstance->GetRequiredBoneLocalTransforms()
+    );
 
     // 3) 각 뼈 애니메이션 트랙을 샘플링하여 포즈에 덮어쓰기
     const TArray<FBoneAnimationTrack>& Tracks = AnimDataModel->GetBoneAnimationTracks();
-    const TMap<FName, uint32>& BoneNameToIndex = OutAnimationPoseData.AnimInstance->GetRequiredBones();
+    const TMap<FName, uint32>& BoneNameToIndex = OutAnimationPoseData.AnimInstance->GetRequiredBoneNames();
 
     // 3) 각 트랙을 샘플링해서 Pose 배열에 덮어쓰기
     for (const FBoneAnimationTrack& Track : Tracks)
     {
-        // 트랙의 Bone 이름으로 Pose 인덱스를 찾아본다
         const uint32* FoundIndex = BoneNameToIndex.Find(Track.Name);
         if (!FoundIndex)
         {

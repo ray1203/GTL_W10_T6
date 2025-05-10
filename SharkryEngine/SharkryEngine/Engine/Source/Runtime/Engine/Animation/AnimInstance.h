@@ -13,10 +13,17 @@ public:
 
     void TriggerAnimNotifies(float DeltaSeconds);
 
-    TMap<FName, uint32> GetRequiredBones();
+    TMap<FName, uint32> GetRequiredBoneNames();
 
-protected:
+    TArray<FMatrix> GetRequiredBoneLocalTransforms();
+
+    void UpdateAnimation(float DeltaSeconds);
+
     virtual void NativeUpdateAnimation(float DeltaSeconds);
+
+    void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh);
+
+    USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 
 
 private:

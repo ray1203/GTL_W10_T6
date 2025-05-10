@@ -23,6 +23,9 @@ public:
 
     void SetAnimAsset(const FString& AnimName);
 
+    void TickAnimation(float DeltaTime, bool bNeedsValidRootMotion);
+    void RefreshBoneTransforms();
+
     //virtual uint32 GetNumMaterials() const override;
     //virtual UMaterial* GetMaterial(uint32 ElementIndex) const override;
     //virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;

@@ -49,7 +49,19 @@ struct FPoseContext
 
     FPoseContext(UAnimInstance* InAnimInstance, bool bInExpectsAdditive = false) 
         :AnimInstance(InAnimInstance), bIsAdditivePose(bInExpectsAdditive)
-    { }
+    { 
+    }
+
+    void ResetToRefPose(const TArray<FMatrix>& RefPoses) 
+    {
+        Pose.BoneTransforms.Empty();
+
+        for (const FMatrix& RefPose : RefPoses)
+        {
+            Pose.BoneTransforms.Add(RefPose);
+        }
+    }
+
 };
 
 struct FAnimExtractContext 
