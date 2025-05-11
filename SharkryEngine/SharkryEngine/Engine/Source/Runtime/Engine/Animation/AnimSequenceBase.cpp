@@ -6,5 +6,7 @@ UAnimSequenceBase::UAnimSequenceBase()
 
 UAnimDataModel* UAnimSequenceBase::GetDataModel() const
 {
-    return nullptr;
+    Super::GetDataModel();
+
+    return DataModel;
 }

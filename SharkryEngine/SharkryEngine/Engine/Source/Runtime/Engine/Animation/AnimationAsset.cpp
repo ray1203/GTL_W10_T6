@@ -39,6 +39,11 @@ const FAnimationCurveData& UAnimationAsset::GetCurveData() const
     return DataModel ? DataModel->GetCurveData() : FAnimationCurveData();
 }
 
+const FBoneContainer& UAnimationAsset::GetBoneContainer() const
+{
+    return DataModel ? DataModel->GetBoneContainer() : FBoneContainer();
+}
+
 const TArray<FBoneAnimationTrack>& UAnimationAsset::GetBoneAnimationTracks() const
 {
     return DataModel ? DataModel->GetBoneAnimationTracks() : TArray<FBoneAnimationTrack>();

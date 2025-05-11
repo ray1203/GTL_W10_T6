@@ -21,6 +21,7 @@ public:
     virtual int32 GetNumberOfFrames() const;
     virtual int32 GetNumberOfKeys() const;
     virtual const FAnimationCurveData& GetCurveData() const;
+    virtual const FBoneContainer& GetBoneContainer() const;
     virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
 
 

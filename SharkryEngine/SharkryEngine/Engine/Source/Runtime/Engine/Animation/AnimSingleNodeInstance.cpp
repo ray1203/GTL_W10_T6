@@ -1,5 +1,6 @@
 #include "AnimSingleNodeInstance.h"
 #include "AnimationAsset.h"
+#include "AnimData/AnimDataModel.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -16,6 +17,10 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     }
 
     CurrentPosition = 0.f;
+
+    auto temp = AnimAsset->GetDataModel();
+
+    RequiredBones = AnimAsset->GetDataModel()->GetBoneContainer();
 
     NativeUpdateAnimation(0.f);
 }
