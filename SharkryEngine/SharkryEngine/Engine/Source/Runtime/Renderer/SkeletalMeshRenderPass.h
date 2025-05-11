@@ -40,7 +40,8 @@ public:
     virtual void RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport);
     
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
-  
+    void UpdateBoneBuffer(const TArray<FMatrix>& SkinningMatrices) const;
+
     void UpdateLitUnlitConstant(int32 isLit) const;
 
     void RenderPrimitive(FBX::FSkeletalMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;

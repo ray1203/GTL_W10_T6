@@ -471,3 +471,7 @@ struct FFadeConstants
     FVector padding1;
 };
 
+struct FBoneMatrixBuffer
+{
+    FMatrix BoneMatrices[128]; // 최대 본 개수
+};

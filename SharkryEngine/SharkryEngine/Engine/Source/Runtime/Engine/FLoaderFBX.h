@@ -123,6 +123,9 @@ namespace FBX
         TArray<FFbxMaterialInfo> Materials;           // 이 메시에 사용된 재질 정보 배열
         TArray<FMeshSubset> Subsets;                  // 재질별 인덱스 범위 정보
 
+        // GPU 스키닝용 본 행렬 (BindPose^-1 * Pose)
+        //TArray<FMatrix> SkinningMatrices;
+
         // DirectX 버퍼 포인터 (생성 후 채워짐)
         ID3D11Buffer* DynamicVertexBuffer = nullptr;
         ID3D11Buffer* IndexBuffer = nullptr;
@@ -142,6 +145,7 @@ namespace FBX
             Indices(std::move(Other.Indices)),
             Materials(std::move(Other.Materials)),
             Subsets(std::move(Other.Subsets)), // Subsets 이동 추가
+            //SkinningMatrices(std::move(Other.SkinningMatrices)),
             DynamicVertexBuffer(Other.DynamicVertexBuffer),
             IndexBuffer(Other.IndexBuffer),
             Bounds(Other.Bounds)
@@ -161,6 +165,7 @@ namespace FBX
                 Indices = std::move(Other.Indices);
                 Materials = std::move(Other.Materials);
                 Subsets = std::move(Other.Subsets); // Subsets 이동 추가
+                //SkinningMatrices = std::move(Other.SkinningMatrices);
                 DynamicVertexBuffer = Other.DynamicVertexBuffer;
                 IndexBuffer = Other.IndexBuffer;
                 Bounds = Other.Bounds;

@@ -634,7 +634,7 @@ namespace  FBX {
 
         return true; // 항상 성공 (데이터 없으면 기본값 사용)
     }
-    bool FinalizeVertexDataInternal(const TArray<FVector>& ControlPointPositions, const TArray<int32>& PolygonVertexIndices,
+    /*bool FinalizeVertexDataInternal(const TArray<FVector>& ControlPointPositions, const TArray<int32>& PolygonVertexIndices,
         const TArray<FVector>& ControlPointNormals, const TArray<FVector>& PolygonVertexNormals,
         const TArray<FVector2D>& ControlPointUVs, const TArray<FVector2D>& PolygonVertexUVs,
         const TArray<FControlPointSkinningData>& CpSkinData,
@@ -688,7 +688,7 @@ namespace  FBX {
             else { uint32 NewIndex = static_cast<uint32>(OutSkeletalMesh.BindPoseVertices.Add(CurrentVertex)); UniqueVertices[CurrentVertex] = NewIndex; OutSkeletalMesh.Indices.Add(NewIndex); }
         }
         return !OutSkeletalMesh.BindPoseVertices.IsEmpty() && !OutSkeletalMesh.Indices.IsEmpty();
-    }
+    }*/
     bool CreateMaterialSubsetsInternal(const MeshRawData& RawMeshData, const TMap<FName, int32>& MaterialNameToIndexMap, FSkeletalMeshRenderData& OutSkeletalMesh)
     {
         OutSkeletalMesh.Subsets.Empty();
@@ -1362,7 +1362,9 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const TArray<FBX::MeshRawData>& AllRawMes
         // 컨트롤 포인트 추가 (메시 노드 변환 적용)
         for (const FVector& cp_local_to_mesh_node : CurrentRawMeshData.ControlPoints)
         {
-            CombinedControlPoints_MeshNodeLocal.Add(MeshNodeWorldBindTransform.TransformPosition(cp_local_to_mesh_node));
+            //Transform이 적용 안된 정보 삽입(GPU Skinning용)
+            CombinedControlPoints_MeshNodeLocal.Add(cp_local_to_mesh_node);
+            //CombinedControlPoints_MeshNodeLocal.Add(MeshNodeWorldBindTransform.TransformPosition(cp_local_to_mesh_node));
         }
 
         // 스키닝 데이터 추가 (컨트롤 포인트 인덱스에 GlobalVertexOffset 적용)

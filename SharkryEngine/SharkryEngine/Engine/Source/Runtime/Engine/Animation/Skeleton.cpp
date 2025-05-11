@@ -58,7 +58,7 @@ void USkeleton::AddBone(const FName Name, int32 ParentIdx, const FMatrix& InGlob
 
     // 2. 글로벌 바인드 포즈의 역행렬 계산 -> NewBoneNode.InverseBindTransform 에 저장
     NewBoneNode.InverseBindTransform = FMatrix::Inverse(InGlobalBindPose);
-    NewBoneNode.GeometryOffsetMatrix = InTransformMatrix;
+    NewBoneNode.GeometryOffsetMatrix = InTransformMatrix/* * NewBoneNode.InverseBindTransform*/;
     if (FMath::IsNearlyZero(NewBoneNode.InverseBindTransform.Determinant()))
     {
         NewBoneNode.InverseBindTransform = FMatrix::Identity; // 방어 코드

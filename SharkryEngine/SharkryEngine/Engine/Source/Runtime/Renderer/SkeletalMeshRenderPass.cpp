@@ -282,6 +282,7 @@ void FSkeletalMeshRenderPass::PrepareRenderState(const std::shared_ptr<FViewport
 
     BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FMaterialConstants"), 1, EShaderStage::Vertex);
+    BufferManager->BindConstantBuffer(TEXT("BonesBuffer"), 2, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FObjectConstantBuffer"), 12, EShaderStage::Vertex);
 
 
@@ -329,6 +330,18 @@ void FSkeletalMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, c
     ObjectData.bIsSelected = bIsSelected;
 
     BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
+}
+void FSkeletalMeshRenderPass::UpdateBoneBuffer(const TArray<FMatrix>& SkinningMatrices) const
+{
+    FBoneMatrixBuffer BufferData = {};
+
+    const int32 CopyCount = FMath::Min(SkinningMatrices.Num(), 128);
+    for (int32 i = 0; i < CopyCount; ++i)
+    {
+        BufferData.BoneMatrices[i] = SkinningMatrices[i];
+    }
+
+    BufferManager->UpdateConstantBuffer(TEXT("BonesBuffer"), BufferData);
 }
 
 void FSkeletalMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
@@ -491,7 +504,10 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
-
+        if (bGpu)
+        {
+            UpdateBoneBuffer(Comp->GetSkeletalMesh()->Skeleton->CurrentPose.SkinningMatrices);
+        }
         RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
 
         if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))

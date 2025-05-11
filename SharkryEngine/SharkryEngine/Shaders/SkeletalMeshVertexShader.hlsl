@@ -1,6 +1,6 @@
 #include "ShaderRegisters.hlsl"
-/*#define LIGHTING_MODEL_GOURAUD 1
-#define GPU_SKINNING 1*/
+//#define LIGHTING_MODEL_GOURAUD 1
+#define GPU_SKINNING 1
 #ifdef LIGHTING_MODEL_GOURAUD
 SamplerState DiffuseSampler : register(s0);
 Texture2D DiffuseTexture : register(t0);
@@ -14,9 +14,9 @@ cbuffer MaterialConstants : register(b1)
 #endif
 
 #ifdef GPU_SKINNING
-cbuffer BonesBuffer : register(b0)
+cbuffer BonesBuffer : register(b2)
 {
-    float4x4 boneMatrices[128];
+    row_major float4x4 boneMatrices[128];
 }
 #endif
 
@@ -33,15 +33,21 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
     {
         uint boneIndex = Input.BoneIndices[i];
         float weight = Input.BoneWeights[i];
-        
+        //Weight는 이미 정규화된 값이라 가정
+        SkinnedPos += mul(float4(Input.Position, 1.0),boneMatrices[boneIndex]) * weight;
+
+        SkinnedNormal += mul(Input.Normal,(float3x3) boneMatrices[boneIndex]) * weight;
         // TODO: boneMatrices[boneIndex] * Input.Position
         // TODO: accumulate SkinnedPos, SkinnedNormal
     }
 
     Output.Position = SkinnedPos;
     Output.WorldNormal = SkinnedNormal;
-    Output.Position = float4(Input.Position, 1.0);
-    Output.WorldNormal = Input.Normal;
+    /*if (SkinnedPos==float4(0,0,0,0)){
+        Output.Position = float4(Input.Position, 1.0);
+        Output.WorldNormal = Input.Normal;
+    }*/
+    
 #else
     // CPU Skinning 또는 StaticMesh와 동일 처리
     Output.Position = float4(Input.Position, 1.0);
