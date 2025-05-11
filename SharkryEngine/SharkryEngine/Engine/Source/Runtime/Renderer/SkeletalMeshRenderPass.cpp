@@ -72,6 +72,7 @@ void FSkeletalMeshRenderPass::CreateShader()
     // End Debug Shaders
 #pragma region SkeletalMeshVertexShaders
 
+/*
 // Gouraud + GPU
     D3D_SHADER_MACRO DefinesGouraudGpu[] = {
         { "LIGHTING_MODEL_GOURAUD", "1" },
@@ -100,6 +101,7 @@ void FSkeletalMeshRenderPass::CreateShader()
         ARRAYSIZE(SkeletalMeshLayoutDesc),
         DefinesGouraudCpu);
     if (FAILED(hr)) return;
+    */
 
     // Default (non-Gouraud) + GPU
     D3D_SHADER_MACRO DefinesDefaultGpu[] = {
@@ -449,6 +451,22 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
             FSkeletalMeshDebugger::DrawSkeleton(Comp);
             FSkeletalMeshDebugger::DrawSkeletonAABBs(Comp);
         }
+        // --- [ 새롭게 추가된 VertexShader 분기 처리 ] ---
+        const bool bGpu = Comp->IsUsingGpuSkinning();
+        const EViewModeIndex ViewMode = Viewport->GetViewMode();
+        const bool bGouraud = ViewMode == EViewModeIndex::VMI_Lit_Gouraud;
+
+        FWString ShaderKey;
+        if (bGpu)
+            ShaderKey = bGouraud ? L"GOURAUD_SkeletalMeshVertexShader_GPU" : L"SkeletalMeshVertexShader_GPU";
+        else
+            ShaderKey = bGouraud ? L"GOURAUD_SkeletalMeshVertexShader_CPU" : L"SkeletalMeshVertexShader_CPU";
+
+        ID3D11VertexShader* CompVS = ShaderManager->GetVertexShaderByKey(ShaderKey);
+        ID3D11InputLayout* CompIL = ShaderManager->GetInputLayoutByKey(ShaderKey);
+
+        Graphics->DeviceContext->VSSetShader(CompVS, nullptr, 0);
+        Graphics->DeviceContext->IASetInputLayout(CompIL);
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 

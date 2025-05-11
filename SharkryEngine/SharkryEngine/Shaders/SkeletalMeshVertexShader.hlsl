@@ -1,5 +1,6 @@
 #include "ShaderRegisters.hlsl"
-
+/*#define LIGHTING_MODEL_GOURAUD 1
+#define GPU_SKINNING 1*/
 #ifdef LIGHTING_MODEL_GOURAUD
 SamplerState DiffuseSampler : register(s0);
 Texture2D DiffuseTexture : register(t0);
@@ -39,6 +40,8 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_SkeletalMesh Input)
 
     Output.Position = SkinnedPos;
     Output.WorldNormal = SkinnedNormal;
+    Output.Position = float4(Input.Position, 1.0);
+    Output.WorldNormal = Input.Normal;
 #else
     // CPU Skinning 또는 StaticMesh와 동일 처리
     Output.Position = float4(Input.Position, 1.0);

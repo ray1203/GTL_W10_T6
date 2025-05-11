@@ -166,3 +166,36 @@ void USkinnedMeshComponent::UpdateBoneTransformAndSkinning(int32 BoneIndex, cons
         SkeletalMesh->UpdateAndApplySkinning();
     }
 }
+void USkinnedMeshComponent::SetUseGpuSkinning(bool bEnable)
+{
+    if (bUseGpuSkinning == bEnable)
+        return;
+
+    bUseGpuSkinning = bEnable;
+
+    if (bUseGpuSkinning)
+    {
+        // GPU 전환 → BindPose 복사
+        if (SkeletalMesh)
+        {
+            ID3D11DeviceContext* Context = GEngineLoop.GraphicDevice.DeviceContext;
+
+            D3D11_MAPPED_SUBRESOURCE Mapped;
+            if (SUCCEEDED(Context->Map(SkeletalMesh->GetRenderData()->DynamicVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &Mapped)))
+            {
+                memcpy(Mapped.pData,
+                    SkeletalMesh->GetRenderData()->BindPoseVertices.GetData(),
+                    SkeletalMesh->GetRenderData()->BindPoseVertices.Num() * sizeof(FBX::FSkeletalMeshVertex));
+                Context->Unmap(SkeletalMesh->GetRenderData()->DynamicVertexBuffer, 0);
+            }
+        }
+    }
+    else
+    {
+        // CPU 전환 → 바로 스킨 적용이 필요한 경우만
+        if (SkeletalMesh)
+        {
+            SkeletalMesh->UpdateAndApplySkinning();
+        }
+    }
+}
