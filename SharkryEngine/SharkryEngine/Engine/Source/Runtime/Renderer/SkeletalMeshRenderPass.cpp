@@ -47,6 +47,17 @@ FSkeletalMeshRenderPass ::~FSkeletalMeshRenderPass()
 
 void FSkeletalMeshRenderPass::CreateShader()
 {
+    D3D11_INPUT_ELEMENT_DESC SkeletalMeshLayoutDesc[] = {
+    { "POSITION",        0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COLOR",           0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "NORMAL",          0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TANGENT",         0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD",        0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "MATERIAL_INDEX",  0, DXGI_FORMAT_R32_UINT,           0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "BONEINDEX",       0, DXGI_FORMAT_R32G32B32A32_UINT,  0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "BONEWEIGHT",      0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+
     // Begin Debug Shaders
     HRESULT hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderDepth", L"Shaders/StaticMeshPixelShaderDepth.hlsl", "mainPS");
     if (FAILED(hr))
@@ -59,6 +70,61 @@ void FSkeletalMeshRenderPass::CreateShader()
         return;
     }
     // End Debug Shaders
+#pragma region SkeletalMeshVertexShaders
+
+// Gouraud + GPU
+    D3D_SHADER_MACRO DefinesGouraudGpu[] = {
+        { "LIGHTING_MODEL_GOURAUD", "1" },
+        { "GPU_SKINNING", "1" },
+        { nullptr, nullptr }
+    };
+    hr = ShaderManager->AddVertexShaderAndInputLayout(
+        L"GOURAUD_SkeletalMeshVertexShader_GPU",
+        L"Shaders/SkeletalMeshVertexShader.hlsl",
+        "mainVS",
+        SkeletalMeshLayoutDesc,
+        ARRAYSIZE(SkeletalMeshLayoutDesc),
+        DefinesGouraudGpu);
+    if (FAILED(hr)) return;
+
+    // Gouraud + CPU
+    D3D_SHADER_MACRO DefinesGouraudCpu[] = {
+        { "LIGHTING_MODEL_GOURAUD", "1" },
+        { nullptr, nullptr }
+    };
+    hr = ShaderManager->AddVertexShaderAndInputLayout(
+        L"GOURAUD_SkeletalMeshVertexShader_CPU",
+        L"Shaders/SkeletalMeshVertexShader.hlsl",
+        "mainVS",
+        SkeletalMeshLayoutDesc,
+        ARRAYSIZE(SkeletalMeshLayoutDesc),
+        DefinesGouraudCpu);
+    if (FAILED(hr)) return;
+
+    // Default (non-Gouraud) + GPU
+    D3D_SHADER_MACRO DefinesDefaultGpu[] = {
+        { "GPU_SKINNING", "1" },
+        { nullptr, nullptr }
+    };
+    hr = ShaderManager->AddVertexShaderAndInputLayout(
+        L"SkeletalMeshVertexShader_GPU",
+        L"Shaders/SkeletalMeshVertexShader.hlsl",
+        "mainVS",
+        SkeletalMeshLayoutDesc,
+        ARRAYSIZE(SkeletalMeshLayoutDesc),
+        DefinesDefaultGpu);
+    if (FAILED(hr)) return;
+
+    // Default (non-Gouraud) + CPU
+    hr = ShaderManager->AddVertexShaderAndInputLayout(
+        L"SkeletalMeshVertexShader_CPU",
+        L"Shaders/SkeletalMeshVertexShader.hlsl",
+        "mainVS",
+        SkeletalMeshLayoutDesc,
+        ARRAYSIZE(SkeletalMeshLayoutDesc));
+    if (FAILED(hr)) return;
+
+#pragma endregion SkeletalMeshVertexShaders
 
 #pragma region UberShader
     D3D_SHADER_MACRO DefinesGouraud[] =
@@ -96,8 +162,8 @@ void FSkeletalMeshRenderPass::CreateShader()
 
 #pragma endregion UberShader
 
-    VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
-    InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"SkeletalMeshVertexShader_GPU");
+    InputLayout = ShaderManager->GetInputLayoutByKey(L"SkeletalMeshVertexShader_GPU");
 
     PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
     DebugDepthShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderDepth");
