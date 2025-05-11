@@ -15,6 +15,7 @@ public:
     void SetAnimationAsset(UAnimationAsset* NewAsset, bool bIsLooping, float InPlayRate=1.f);
     void SetPlaying(bool bInPlaying);
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+    FPoseContext& GetOutputPose() { return Output; }
 
 protected:
     float CurrentPosition = 0.f;

@@ -146,6 +146,15 @@ void USkeletalMeshComponent::TickAnimation(float DeltaTime)
     if (SingleNodeInstance)
     {
         SingleNodeInstance->NativeUpdateAnimation(DeltaTime);
+        const FPoseContext& AnimPose = SingleNodeInstance->GetOutputPose();
+
+        for (int i = 0; i < AnimPose.Pose.BoneMatrices.Num(); i++)
+        {
+            SkeletalMesh->SetBoneLocalMatrix(i, AnimPose.Pose.BoneMatrices[i]);
+        }
+
+        SkeletalMesh->UpdateWorldTransforms();
+        SkeletalMesh->UpdateAndApplySkinning();
     }
     else
     {
