@@ -17,7 +17,7 @@ class USkeletalMeshComponent : public USkinnedMeshComponent
     DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
 
 public:
-    USkeletalMeshComponent() = default;
+    USkeletalMeshComponent();
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 
@@ -35,6 +35,8 @@ public:
     void SetAnimation(UAnimationAsset* NewAnimToPlay);
     void Play(bool bLooping = false);
     void Stop();
+
+    void TickAnimation(float DeltaTime);
 
     UAnimSingleNodeInstance* GetSingleNodeInstance();
 private:

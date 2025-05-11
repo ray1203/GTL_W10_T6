@@ -89,14 +89,12 @@ struct FAnimExtractContext
 // 1) 본 계층 정보: 본 개수, 부모 인덱스, 커브 개수 등
 struct FBoneContainer
 {
-    // 각 본의 부모 본 인덱스
-    //   - 루트 본은 ParentIndex = INDEX_NONE 로 표시
-    TArray<int32> ParentIndices;
+    TArray<FName> ParentNames;
 
     // 커브 채널 개수가 있다면 여기에 추가
     int32 NumCurves = 0;
 
-    int32 GetNumBones() const { return ParentIndices.Num(); }
+    int32 GetNumBones() const { return ParentNames.Num(); }
     int32 GetNumCurves() const { return NumCurves; }
 };
 

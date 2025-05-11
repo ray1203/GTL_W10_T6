@@ -11,7 +11,7 @@ public:
     UAnimSingleNodeInstance();
     ~UAnimSingleNodeInstance() = default;
 
-    void InitializeAnimation();
+    virtual void NativeInitializeAnimation() override;
     void SetAnimationAsset(UAnimationAsset* NewAsset, bool bIsLooping, float InPlayRate=1.f);
     void SetPlaying(bool bInPlaying);
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;

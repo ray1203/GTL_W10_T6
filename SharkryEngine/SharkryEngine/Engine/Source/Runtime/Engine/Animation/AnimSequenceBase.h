@@ -14,11 +14,7 @@ public:
 
 public:
     virtual UAnimDataModel* GetDataModel() const override;
-
     /** Animation notifies, sorted by time (earliest notification first). */
     //UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
-
-
-
 };
 

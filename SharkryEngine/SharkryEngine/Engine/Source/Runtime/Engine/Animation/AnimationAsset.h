@@ -15,20 +15,19 @@ public:
 
     virtual void GetAnimationPose(FPoseContext& PoseContext, const FAnimExtractContext& ExtractContext) const;
 
-    // 애니메이션 자산의 길이를 반환합니다.
+    virtual FString GetName() const;
     virtual float GetPlayLength() const;
-    // 애니메이션 자산의 프레임 레이트를 반환합니다.
     virtual FFrameRate GetFrameRate() const;
-    // 애니메이션 자산의 프레임 수를 반환합니다.
     virtual int32 GetNumberOfFrames() const;
-    // 애니메이션 자산의 키 수를 반환합니다.
     virtual int32 GetNumberOfKeys() const;
-    // 애니메이션 자산의 커브 데이터를 반환합니다.
     virtual const FAnimationCurveData& GetCurveData() const;
-    // 애니메이션 자산의 데이터 모델을 반환합니다.
+    virtual const TArray<FBoneAnimationTrack>& GetBoneAnimationTracks() const;
+
+
     virtual UAnimDataModel* GetDataModel() const;
+    virtual void SetDataModel(UAnimDataModel* InDataModel);
 
 protected:
-    UAnimDataModel* DataModel;
+    UAnimDataModel* DataModel = nullptr;
 };
 

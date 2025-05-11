@@ -18,6 +18,7 @@
 #include "Animation/AnimTypes.h"
 
 class USkeletalMeshComponent;
+class UAnimSequence;
 
 
 // --- FBX 로딩 관련 네임스페이스 ---
@@ -271,8 +272,10 @@ public:
 
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
+    static UAnimSequence* GetAnimationSequence(const FWString& name);
+    inline static TMap<FWString, TArray<UAnimSequence*>> FBXAnimSequenceMap;
 private:
-    inline static TMap<FString, TArray<FSkeletalAnimationSequence*>> FBXAnimationSequenceMap;
+
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;

@@ -9,6 +9,11 @@ void UAnimationAsset::GetAnimationPose(FPoseContext& PoseContext, const FAnimExt
 {
 }
 
+FString UAnimationAsset::GetName() const
+{
+    return DataModel ? DataModel->GetName() : FString();
+}
+
 float UAnimationAsset::GetPlayLength() const
 {
     return DataModel ? DataModel->GetPlayLength() : 0.f;
@@ -34,7 +39,17 @@ const FAnimationCurveData& UAnimationAsset::GetCurveData() const
     return DataModel ? DataModel->GetCurveData() : FAnimationCurveData();
 }
 
+const TArray<FBoneAnimationTrack>& UAnimationAsset::GetBoneAnimationTracks() const
+{
+    return DataModel ? DataModel->GetBoneAnimationTracks() : TArray<FBoneAnimationTrack>();
+}
+
 UAnimDataModel* UAnimationAsset::GetDataModel() const
 {
     return DataModel;
+}
+
+void UAnimationAsset::SetDataModel(UAnimDataModel* InDataModel)
+{
+    DataModel = InDataModel;
 }

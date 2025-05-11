@@ -6,6 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "Animation/AnimSingleNodeInstance.h"
 
+USkeletalMeshComponent::USkeletalMeshComponent()
+{
+    AnimScriptInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
+}
+
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
@@ -19,6 +24,8 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
+
+    TickAnimation(DeltaTime);
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -110,21 +117,45 @@ void USkeletalMeshComponent::SetAnimation(UAnimationAsset* NewAnimToPlay)
     UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
     if (SingleNodeInstance)
     {
-        SingleNodeInstance->SetAnimationAsset(NewAnimToPlay, false);
+        SingleNodeInstance->SetAnimationAsset(NewAnimToPlay, true);
         SingleNodeInstance->SetPlaying(false);
     }
 }
 
 void USkeletalMeshComponent::Play(bool bLooping)
 {
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetPlaying(true);
+    }
 }
 
 void USkeletalMeshComponent::Stop()
 {
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetPlaying(false);
+    }
+}
+
+void USkeletalMeshComponent::TickAnimation(float DeltaTime)
+{
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->NativeUpdateAnimation(DeltaTime);
+    }
+    else
+    {
+        // 애니메이션 인스턴스가 없을 경우 처리
+        // 예: 경고 로그 출력
+        UE_LOG(LogLevel::Warning, TEXT("No AnimScriptInstance found for %s"), *GetName());
+    }
 }
 
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
 {
-    AnimScriptInstance = FObjectFactory::ConstructObject<UAnimInstance>(this);
     return Cast<UAnimSingleNodeInstance>(AnimScriptInstance);
 }

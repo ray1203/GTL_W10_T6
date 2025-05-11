@@ -23,6 +23,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "UObject/ObjectFactory.h"    // FManagerFBX 에서 사용
 #include "FSkeletalMeshDebugger.h"   // FSkeletalMeshDebugger 클래스 사용
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimData/AnimDataModel.h" // UAnimDataModel 클래스 사용
 
 namespace  FBX {
     // --- 중간 데이터 구조체 (Internal) ---
@@ -1239,8 +1241,8 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         Scene->SetCurrentAnimationStack(AnimStack);
 
         // 시퀀스 정보 구조체 생성
-        FSkeletalAnimationSequence Seq;
-        Seq.Name = FString(AnimStack->GetName());
+        UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+        AnimDataModel->SetName(FString(AnimStack->GetName()));
 
         // FbxTime을 꺼내서 초 단위로 변환
         FbxTime StartTime = AnimStack->GetLocalTimeSpan().GetStart();
@@ -1249,17 +1251,18 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         // 이 스택의 전체 길이(ms 단위로 제공됨)
         double start = StartTime.GetSecondDouble();
         double stop = StopTime.GetSecondDouble();
-        Seq.SequenceLength = float(stop - start);
+        AnimDataModel->SetPlayLength(float(stop - start));
 
         // 타임라인을 프레임 단위로 바꾸고 싶다면
-        Seq.FrameRate = OutFBXInfo.FrameRate; // 미리 FBXInfo에 세팅해 둔 프레임레이트
+        AnimDataModel->SetFrameRate(OutFBXInfo.FrameRate); // 미리 FBXInfo에 세팅해 둔 프레임레이트
 
         // 레이어(Blend Layer) 순회
         int layerCount = AnimStack->GetMemberCount<FbxAnimLayer>();
         for (int layerIndex = 0; layerIndex < layerCount; ++layerIndex)
         {
             FbxAnimLayer* Layer = AnimStack->GetMember<FbxAnimLayer>(layerIndex);
-
+            TArray<FBoneAnimationTrack> BoneTracks;
+            FBoneContainer BoneContainer;
             // 각 본 노드마다 Pos/Rot/Scale 커브 파싱
             for (auto& BonePair : OutFBXInfo.SkeletonHierarchy)
             {
@@ -1337,14 +1340,18 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
                 }
 
                 // 6) 완성된 본 트랙을 시퀀스에 추가
-                Seq.BoneTracks.Add(std::move(BoneTrack));
+                BoneTracks.Add(std::move(BoneTrack));
+                BoneContainer.ParentNames.Add(BonePair.Value.ParentName);
             }
+            AnimDataModel->SetBoneAnimationTracks(BoneTracks);
+            AnimDataModel->SetBoneContainer(BoneContainer);
         }
 
         // 5) 완성된 시퀀스를 FBXInfo에 추가
-        OutFBXInfo.AnimSequences.Add(std::move(Seq));
+        UAnimSequence* Seq = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+        Seq->SetDataModel(AnimDataModel);
+        FManagerFBX::FBXAnimSequenceMap.FindOrAdd(FBXFilePath.ToWideString()).Add(Seq);
     }
-
 
     return true;
 }
@@ -1905,4 +1912,17 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
         return SkeletalMeshMap[name];
 
     return CreateSkeletalMesh(FString(name.c_str()));
+}
+
+UAnimSequence* FManagerFBX::GetAnimationSequence(const FWString& name)
+{
+    if (FBXAnimSequenceMap.Contains(name))
+    {
+        TArray<UAnimSequence*>* AnimSeqs = FBXAnimSequenceMap.Find(name);
+        if (AnimSeqs && AnimSeqs->Num() > 0)
+        {
+            return (*AnimSeqs)[0]; // 첫 번째 애니메이션 시퀀스 반환
+        }
+    }
+    return nullptr;
 }

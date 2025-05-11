@@ -14,7 +14,9 @@ public:
     void TriggerAnimNotifies(float DeltaSeconds);
     const FBoneContainer& GetRequiredBones() const { return RequiredBones; }
 
-protected:
+    void UpdateAnimation(float DeltaSeconds);
+
+    virtual void NativeInitializeAnimation();
     virtual void NativeUpdateAnimation(float DeltaSeconds);
 
     FBoneContainer RequiredBones; // 본 계층 정보

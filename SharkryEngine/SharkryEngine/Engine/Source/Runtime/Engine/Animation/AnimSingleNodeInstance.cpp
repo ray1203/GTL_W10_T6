@@ -5,8 +5,10 @@ UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
 }
 
-void UAnimSingleNodeInstance::InitializeAnimation()
+void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
+    Super::NativeInitializeAnimation();
+
     if (!AnimAsset)
     {
         UE_LOG(LogLevel::Warning, TEXT("UAnimSingleNodeInstance::InitializeAnimation: AnimAsset is null."));
@@ -14,6 +16,7 @@ void UAnimSingleNodeInstance::InitializeAnimation()
     }
 
     CurrentPosition = 0.f;
+
     NativeUpdateAnimation(0.f);
 }
 
@@ -28,7 +31,7 @@ void UAnimSingleNodeInstance::SetAnimationAsset(UAnimationAsset* NewAsset, bool 
     bLooping = bIsLooping;
     PlayRate = InPlayRate;
 
-    InitializeAnimation();
+    NativeInitializeAnimation();
 }
 
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
