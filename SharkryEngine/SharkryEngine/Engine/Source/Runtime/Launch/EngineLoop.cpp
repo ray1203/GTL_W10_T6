@@ -188,6 +188,8 @@ void FEngineLoop::Tick()
         UIMgr->BeginFrame();
         //UnrealEditor->Render();
         ViewerEditor->Render();
+
+        Console::GetInstance().Draw();
         //EngineProfiler.Render(GraphicDevice.DeviceContext, GraphicDevice.ScreenWidth, GraphicDevice.ScreenHeight);
         UIMgr->EndFrame();
 #else

@@ -147,7 +147,22 @@ void USkinnedMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
         OverrideMaterials.SetNum(value->GetMaterials().Num());
         AABB = FBoundingBox(SkeletalMesh->GetRenderData()->Bounds.min, SkeletalMesh->GetRenderData()->Bounds.max);
         SkeletalMesh->UpdateWorldTransforms();
-        SkeletalMesh->UpdateAndApplySkinning();
+        if (!bUseGpuSkinning) // CPU인 경우만 스킨 적용
+        {
+            SkeletalMesh->UpdateAndApplySkinning();
+        }
 
+    }
+}
+void USkinnedMeshComponent::UpdateBoneTransformAndSkinning(int32 BoneIndex, const FMatrix& NewLocalMatrix)
+{
+    if (!SkeletalMesh) return;
+
+    SkeletalMesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
+    SkeletalMesh->UpdateWorldTransforms();
+
+    if (!bUseGpuSkinning)
+    {
+        SkeletalMesh->UpdateAndApplySkinning();
     }
 }

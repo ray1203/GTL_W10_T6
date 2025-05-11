@@ -182,7 +182,23 @@ void ControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont* IconF
                     }
                 }
             }
+            if (ImGui::MenuItem("FBX"))
+            {
+                char const* lFilterPatterns[1] = { "*.fbx" };
+                const char* FileName = tinyfd_openFileDialog("Open FBX File", "", 1, lFilterPatterns, "FBX(.fbx) file", 0);
 
+                if (FileName != nullptr)
+                {
+                    std::cout << FileName << '\n';
+                    auto SpawnedActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
+                    Cast<ASkeletalMeshActor>(SpawnedActor)->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(FString(FileName).ToWideString()));
+                    SpawnedActor->SetActorLabel(TEXT("OBJ"));/*
+                    if (FManagerOBJ::(FileName) == nullptr)
+                    {
+                        tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
+                    }*/
+                }
+            }
             ImGui::EndMenu();
         }
 

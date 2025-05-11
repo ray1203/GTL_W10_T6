@@ -26,8 +26,13 @@ public:
     
     USkeletalMesh* GetSkeletalMesh() const { return SkeletalMesh; }
     void SetSkeletalMesh(USkeletalMesh* value);
-   
+
+    void UpdateBoneTransformAndSkinning(int32 BoneIndex, const FMatrix& NewLocalMatrix);
+    void SetUseGpuSkinning(bool bEnable) { bUseGpuSkinning = bEnable; }
+    bool IsUsingGpuSkinning() const { return bUseGpuSkinning; }
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     int selectedSubMeshIndex = -1;
+private:
+    bool bUseGpuSkinning = true;
 };
