@@ -71,7 +71,7 @@ void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const F
         const FQuat R0 = Raw.RotKeys.IsValidIndex(Index0) ? Raw.RotKeys[Index0] : DefulatRot;  // 기본생성자가 회전 없는 거라서
         const FQuat R1 = Raw.RotKeys.IsValidIndex(Index1) ? Raw.RotKeys[Index1] : R0;
         FQuat Rotation = FQuat::Slerp(R0, R1, Alpha);
-        Rotation.Normalize();
+        // Slerp에 Normalize가 있음
 
         // 스케일 보간
         const FVector S0 = Raw.ScaleKeys.IsValidIndex(Index0) ? Raw.ScaleKeys[Index0] : DefaultScale;
