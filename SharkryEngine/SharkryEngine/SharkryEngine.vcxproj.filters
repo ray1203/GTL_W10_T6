@@ -832,6 +832,8 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="SharkryEngine.natvis" />
@@ -1104,6 +1106,8 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimCurveTypes.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\IAnimationDataModel.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

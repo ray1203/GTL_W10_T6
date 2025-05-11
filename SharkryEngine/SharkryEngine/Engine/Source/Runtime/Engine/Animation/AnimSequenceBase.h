@@ -1,8 +1,6 @@
 #pragma once
 #include "AnimationAsset.h"
-
-class UAnimDataModel;
-struct FAnimNotifyEvent;
+#include "AnimData/AnimDataModel.h"
 
 class UAnimSequenceBase : public UAnimationAsset
 {
@@ -16,7 +14,7 @@ public:
     UAnimDataModel* GetDataModel() const;
 
     /** Animation notifies, sorted by time (earliest notification first). */
-    UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
+    UPROPERTY(TArray<FAnimNotifyEvent>, Notifies);
 
 
 
