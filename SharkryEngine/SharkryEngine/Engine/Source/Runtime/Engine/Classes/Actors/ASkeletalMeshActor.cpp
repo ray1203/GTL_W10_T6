@@ -5,8 +5,8 @@
 ASkeletalMeshActor::ASkeletalMeshActor()
 {
     SkeletalMeshComponent = AddComponent<USkeletalMeshComponent>("SkeletalMeshComponent_0");
-    //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
-    SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Capoeira.fbx"));
+    SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
+    //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Capoeira.fbx"));
     // 
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/RidenEi-V1.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/SharkryPVM_NoFixed.fbx"));
@@ -28,4 +28,9 @@ UObject* ASkeletalMeshActor::Duplicate(UObject* InOuter)
 USkeletalMeshComponent* ASkeletalMeshActor::GetSkeletalMeshComponent() const
 {
     return SkeletalMeshComponent;
+}
+
+void ASkeletalMeshActor::SetSkeletalMesh(const FWString& SkelName)
+{
+    SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(SkelName));
 }

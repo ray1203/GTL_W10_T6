@@ -304,7 +304,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label= "Fireball",  .OBJ = OBJ_FIREBALL},
             { .Label= "Fog",       .OBJ= OBJ_FOG },
             { .Label = "Spawner",  .OBJ = OBJ_Spawner},
-            { .Label= "Mutant",    .OBJ= OBJ_Mutant }
+            { .Label= "Mutant",    .OBJ= OBJ_Mutant },
+            { .Label= "Boss",      .OBJ= OBJ_Boss}  
         };
 
         for (const auto& primitive : primitives)
@@ -405,6 +406,13 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                     //Cast<ASkeletalMeshActor>(SpawnedActor)->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Mutant"));
+                }
+                case OBJ_Boss:
+                {
+                    SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Boss"));
+                    ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(SpawnedActor);
+                    SkeletalActor->SetSkeletalMesh(L"Contents/Capoeira.fbx");
                 }
                 case OBJ_TRIANGLE:
                 case OBJ_CAMERA:
