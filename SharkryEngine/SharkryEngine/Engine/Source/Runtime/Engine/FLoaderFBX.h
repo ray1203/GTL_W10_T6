@@ -19,6 +19,8 @@
 
 class UAnimationAsset;
 class USkeletalMeshComponent;
+class UAnimDataModel;
+enum class ETransformChannel;
 
 // --- FBX 로딩 관련 네임스페이스 ---
 namespace FBX
@@ -240,11 +242,18 @@ struct FLoaderFBX
     // TODO 아래 함수에 대한 오버로딩으로 Animation 파일만 있는 경우도 대응할것
     static void ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes);
 
+    static void ParseFBXCurveKey(FbxNode* BoneNode, FbxAnimLayer* Layer, UAnimDataModel* AnimDataModel, const FString& PropertyName, ETransformChannel TransformChannel, const char* pChannel);
+
     // TODO 아래 테스트 코드 지우기
     static void GenerateTestAnimationAsset();
 
 private:
     static void CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2);
+    
+    // CurveKey에 사용할 Property
+    static const FString TranslationChannels[3];
+    static const FString RotationChannels[3];
+    static const FString ScalingChannels[3];
 };
 
 struct FManagerFBX
