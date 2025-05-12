@@ -195,7 +195,7 @@ void USkinnedMeshComponent::SetUseGpuSkinning(bool bEnable)
         // CPU 전환 → 바로 스킨 적용이 필요한 경우만
         if (SkeletalMesh)
         {
-            SkeletalMesh->UpdateAndApplySkinning();
+            //SkeletalMesh->UpdateAndApplySkinning();
         }
     }
 }

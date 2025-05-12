@@ -1,6 +1,9 @@
 #include "ShaderRegisters.hlsl"
+/////////////////////////////////////////////
+//실행하기 전 껐는지 확인
+///////////////////////////////////////////////
 //#define LIGHTING_MODEL_GOURAUD 1
-#define GPU_SKINNING 1
+//#define GPU_SKINNING 1
 #ifdef LIGHTING_MODEL_GOURAUD
 SamplerState DiffuseSampler : register(s0);
 Texture2D DiffuseTexture : register(t0);

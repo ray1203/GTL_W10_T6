@@ -285,11 +285,15 @@ bool USkeletalMesh::UpdateAndApplySkinning()
             TotalWeight += Weight;
             
             // 스키닝 행렬 적용
+            //BindVertex에 이미 Geometry가 적용된 것 같음.
+            //일단 이렇게 하고 나중에 Bind 수정
+            //혹은 anim에 Geometry 포함?
             const FMatrix& SkinMatrix = Skeleton->CurrentPose.SkinningMatrices[BoneIndex];
-            
+                //* FMatrix::Inverse(Skeleton->GetGeometryOffsetTransform(BoneIndex));
             // 위치 변환
             SkinnedPosition += SkinMatrix.TransformPosition(BindVertex.Position) * Weight;
             
+            //SkinnedPosition += BindVertex.Position * SkinMatrix * Weight;
             // 법선 변환 (위치 변환과 다름)
             FMatrix NormalMatrix = SkinMatrix;
             NormalMatrix.RemoveTranslation();
