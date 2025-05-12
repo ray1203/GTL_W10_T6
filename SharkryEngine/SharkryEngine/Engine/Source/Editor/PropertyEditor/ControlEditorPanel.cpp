@@ -321,7 +321,8 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
             { .Label= "Fog",       .OBJ= OBJ_FOG },
             { .Label = "Spawner",  .OBJ = OBJ_Spawner},
             { .Label= "Mutant",    .OBJ= OBJ_Mutant },
-            { .Label= "Boss",      .OBJ= OBJ_Boss}  
+            { .Label= "Boss",      .OBJ= OBJ_Boss}  ,
+            {.Label = "Sharkry",      .OBJ = OBJ_Sharkry}
         };
 
         for (const auto& primitive : primitives)
@@ -430,6 +431,14 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Boss"));
                     ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(SpawnedActor);
                     SkeletalActor->SetSkeletalMesh(L"Contents/Capoeira.fbx");
+                    break;
+                }
+                case OBJ_Sharkry:
+                {
+                    SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
+                    SpawnedActor->SetActorLabel(TEXT("OBJ_Sharkry"));
+                    ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(SpawnedActor);
+                    SkeletalActor->SetSkeletalMesh(L"Contents/Sharkry_NoTwist.fbx");
                     break;
                 }
                 case OBJ_TRIANGLE:
