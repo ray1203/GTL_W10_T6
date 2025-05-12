@@ -1253,8 +1253,10 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         double stop = StopTime.GetSecondDouble();
         AnimDataModel->SetPlayLength(float(stop - start));
 
-        // 타임라인을 프레임 단위로 바꾸고 싶다면
-        AnimDataModel->SetFrameRate(OutFBXInfo.FrameRate); // 미리 FBXInfo에 세팅해 둔 프레임레이트
+        // FrameRate 구하기
+        FbxGlobalSettings& Globals = Scene->GetGlobalSettings();
+        FbxTime::EMode TimeMode = Globals.GetTimeMode();
+        AnimDataModel->SetFrameRate(FFrameRate(FbxTime::GetFrameRate(TimeMode), 1));
 
         // 레이어(Blend Layer) 순회
         int layerCount = AnimStack->GetMemberCount<FbxAnimLayer>();
