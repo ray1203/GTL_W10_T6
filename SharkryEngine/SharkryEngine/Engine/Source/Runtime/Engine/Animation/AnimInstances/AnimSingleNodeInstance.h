@@ -17,6 +17,7 @@ public:
 
 protected:
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+    virtual void UpdateNotify(float DeltaSeconds) override;
 
     UAnimSequence* AnimSequence;
     FPoseContext Output;
@@ -26,4 +27,6 @@ protected:
     bool bPlaying = true;
     float PlayRate = 1.0f;
     bool bLooping = true;
+
+    TArray<FAnimNotifyEvent*> PrevFrameNotifies;
 };

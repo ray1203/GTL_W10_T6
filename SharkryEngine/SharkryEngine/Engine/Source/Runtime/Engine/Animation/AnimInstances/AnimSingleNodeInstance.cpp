@@ -1,4 +1,6 @@
 #include "AnimSingleNodeInstance.h"
+#include "Engine/Source/Runtime/Engine/Animation/AnimNotify.h"
+#include "Engine/Classes/Components/SkeletalMeshComponent.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -34,4 +36,78 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
     // Output.Curve = Pose.Curve;
     
 
+}
+
+void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
+{
+    TArray<FAnimNotifyEvent*> CurFrameNotifies;
+
+    // End -> Begin -> Tick 순으로 실행될것임
+    TArray<FAnimNotifyEvent*> NotifyBeginEvent;
+    TArray<FAnimNotifyEvent*> NotifyTickEvent;
+    TArray<FAnimNotifyEvent*> NotifyEndEvent;
+
+    AnimSequence->GetAnimNotifies(CurrentTime, DeltaSeconds, bLooping, CurFrameNotifies);
+
+    for (FAnimNotifyEvent* Notify : CurFrameNotifies) 
+    {
+        if (Notify->NotifyMode == ENotifyMode::Single) 
+        {
+            SkeletalMeshComp->HandleAnimNotify(*Notify);
+            continue;
+        }
+
+        // 현재에는 있는데 예전에는 없으면 -> Begin
+        if (!PrevFrameNotifies.Contains(Notify)) 
+        {
+            NotifyBeginEvent.Add(Notify);
+            continue;
+        }
+        else 
+        {
+            // 현재와 예전 둘 다 있으면 Tick
+            NotifyTickEvent.Add(Notify);
+
+            // Prev에서 해당 제거해서 이후 EndEvent 찾기 쉽도록 하기
+            PrevFrameNotifies.Remove(Notify);
+            continue;
+        }
+    }
+
+    // 앞선 과정에서 Tick은 다 제거 했고 Begin은 Prev에 추가되지 않았으므로
+    // PrevFrameNotifies에 남은 것중 Single이 아닌 것은 전부 End 이벤트
+
+    for (FAnimNotifyEvent* Notify : PrevFrameNotifies)
+    {
+        if (Notify->NotifyMode == ENotifyMode::State)
+        {
+            NotifyEndEvent.Add(Notify);
+        }
+    }
+
+    //Prev를 현재 FrameNotifies로 업데이트
+    PrevFrameNotifies.Empty();
+    for (FAnimNotifyEvent* Notify : CurFrameNotifies) 
+    {
+        PrevFrameNotifies.Add(Notify);
+    }
+
+    // End -> Begin -> Tick 순으로 실행
+    for (FAnimNotifyEvent* Notify : NotifyEndEvent)
+    {
+        Notify->NotifyState = ENotifyState::End;
+        SkeletalMeshComp->HandleAnimNotify(*Notify);
+    }
+
+    for (FAnimNotifyEvent* Notify : NotifyBeginEvent)
+    {
+        Notify->NotifyState = ENotifyState::Begin;
+        SkeletalMeshComp->HandleAnimNotify(*Notify);
+    }
+
+    for (FAnimNotifyEvent* Notify : NotifyTickEvent)
+    {
+        Notify->NotifyState = ENotifyState::Tick;
+        SkeletalMeshComp->HandleAnimNotify(*Notify);
+    }
 }

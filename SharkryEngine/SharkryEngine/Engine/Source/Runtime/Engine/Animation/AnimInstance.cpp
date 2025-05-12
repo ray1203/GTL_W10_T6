@@ -1,5 +1,6 @@
 #include "AnimInstance.h"
 #include "Engine/Source/Runtime/Engine/Animation/Skeleton.h"
+#include "Engine/Classes/Components/SkeletalMeshComponent.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -30,13 +31,25 @@ void UAnimInstance::UpdateAnimation(float DeltaSeconds)
 {
     //PreUpdateAnimation(Δt)
     NativeUpdateAnimation(DeltaSeconds);
+    UpdateNotify(DeltaSeconds);
 }
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+    // 구현은 UAnimSingleNodeInstance에서 처리
+}
+
+void UAnimInstance::UpdateNotify(float DeltaSeconds)
+{
+    // 구현은 UAnimSingleNodeInstance에서 처리
 }
 
 void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
 {
     SkeletalMesh = InSkeletalMesh;
+}
+
+void UAnimInstance::SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp)
+{
+    SkeletalMeshComp = InSkeletalMeshComp;
 }

@@ -3,6 +3,7 @@
 #include "Mesh/SkeletalMesh.h"
 
 class UAnimSingleNodeInstance;
+struct FAnimNotifyEvent;
 
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
@@ -33,6 +34,8 @@ public:
     //virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
 
     //virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
+
+    void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
 private:
     UAnimSingleNodeInstance* AnimInstance= nullptr;
