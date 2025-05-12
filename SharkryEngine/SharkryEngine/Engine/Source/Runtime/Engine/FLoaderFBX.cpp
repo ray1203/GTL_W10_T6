@@ -1036,17 +1036,21 @@ FString FbxTransformToString(const FbxAMatrix& Matrix)
         S[0], S[1], S[2]);
 }
 
+FLoaderFBX::~FLoaderFBX()
+{
+    if (Importer) { Importer->Destroy(); Importer = nullptr; }
+    if (Scene) { Scene->Destroy(); Scene = nullptr; }
+    if (SdkManager) { SdkManager->Destroy(); SdkManager = nullptr; }
+}
+
 bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
 {
     using namespace ::FBX; // Use helpers from anonymous namespace
 
-    FbxManager* SdkManager = FbxManager::Create(); if (!SdkManager) return false;
-    struct SdkManagerGuard { FbxManager*& Mgr; ~SdkManagerGuard() { if (Mgr) Mgr->Destroy(); } } SdkGuard{ SdkManager };
+    SdkManager = FbxManager::Create(); if (!SdkManager) return false;
     FbxIOSettings* IOS = FbxIOSettings::Create(SdkManager, IOSROOT); if (!IOS) return false; SdkManager->SetIOSettings(IOS);
-    FbxScene* Scene = FbxScene::Create(SdkManager, "ImportScene"); if (!Scene) return false;
-    struct SceneGuard { FbxScene*& Scn; ~SceneGuard() { if (Scn) Scn->Destroy(); } } ScnGuard{ Scene };
-    FbxImporter* Importer = FbxImporter::Create(SdkManager, ""); if (!Importer) return false;
-    struct ImporterGuard { FbxImporter*& Imp; ~ImporterGuard() { if (Imp) Imp->Destroy(); } } ImpGuard{ Importer };
+    Scene = FbxScene::Create(SdkManager, "ImportScene"); if (!Scene) return false;
+    Importer = FbxImporter::Create(SdkManager, ""); if (!Importer) return false;
 
 #if USE_WIDECHAR
     std::string FilepathStdString = FBXFilePath.ToAnsiString();
@@ -1235,8 +1239,14 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     }
 
     // Pass 4: Animation Data
+    TArray<FString> BoneNames;
+    for (auto& BoneNodes : AllBoneNodesTemp)
+    {
+        BoneNames.AddUnique(BoneNodes->GetName());
+    }
+    FManagerFBX::SetFBXBoneNames(FBXFilePath, BoneNames);
 
-    ParseFBXAnim(Scene, AllBoneNodesTemp);
+    ParseFBXAnim(FBXFilePath, FBXFilePath);
 
     return true;
 }
@@ -1667,14 +1677,39 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
     }
 }
 
-void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
+void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimParentFBXFilePath)
 {
+#if USE_WIDECHAR
+    std::string FilepathStdString = FBXFilePath.ToAnsiString();
+#else
+    std::string FilepathStdString(*FBXFilePath);
+#endif
+    if (!Importer->Initialize(FilepathStdString.c_str(), -1, SdkManager->GetIOSettings())) return;
+    if (!Importer->Import(Scene)) return;
+
+    FbxAxisSystem TargetAxisSystem(FbxAxisSystem::eZAxis, FbxAxisSystem::eParityOdd, FbxAxisSystem::eLeftHanded);
+    if (Scene->GetGlobalSettings().GetAxisSystem() != TargetAxisSystem)
+        TargetAxisSystem.DeepConvertScene(Scene);
+
+    FbxSystemUnit::m.ConvertScene(Scene);
+
+    TArray<FString> BoneNames;
+    BoneNames = FManagerFBX::GetFBXBoneNames(AnimParentFBXFilePath);
+
+    TArray<FbxNode*> NewBoneNodes;
+    for (auto& Name : BoneNames)
+    {
+        FbxNode* N = Scene->FindNodeByName(*Name);
+        if (N) NewBoneNodes.Add(N);
+    }
+
     int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int i = 0; i < NumStacks; i++) 
     {
         // Stack의 개수만큼 애니메이션의 클립이 있는 것임
         FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
-        FString TakeName = Stack->GetName();
+        Scene->SetCurrentAnimationStack(Stack);
+        FString TakeName = AnimParentFBXFilePath;
 
         // 엔진 내부 구조도 준비
         UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
@@ -1700,7 +1735,7 @@ void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
 
         // 미리구한 Bone 목록을 통해 프레임 정보에 접근
 
-        for (FbxNode* BoneNode : BoneNodes)
+        for (FbxNode* BoneNode : NewBoneNodes)
         {
             FBoneAnimationTrack AnimationTrack;
             AnimationTrack.Name = BoneNode->GetName();
@@ -1749,7 +1784,8 @@ void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
         Sequence->SetDataModel(AnimDataModel);
 
         // 5) 매니저에 등록
-        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
+        Sequence->SetAssetPath(FBXFilePath);
+        FManagerFBX::AddAnimationAssets(TakeName, Sequence);
     }
 }
 
@@ -2002,7 +2038,8 @@ void FLoaderFBX::GenerateTestAnimationAsset()
 
     // 5) 매니저에 등록
     //    "TestAnim" 이라는 이름으로 등록합니다.
-    FManagerFBX::AddAnimationAsset(TEXT("TestAnim"), Sequence);
+
+    FManagerFBX::AddAnimationAssets(TEXT("TestAnim"), Sequence);
 }
 
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }
@@ -2110,17 +2147,40 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
     return CreateSkeletalMesh(FString(name.c_str()));
 }
 
-UAnimationAsset* FManagerFBX::GetAnimationAsset(const FString& name)
+TArray<UAnimationAsset*> FManagerFBX::GetAnimationAssets(const FString& name)
 {
     if (AnimationAssetMap.Contains(name)) 
     {
         return AnimationAssetMap[name];
     }
 
-    return nullptr;
+    return TArray<UAnimationAsset*>();
 }
 
-void FManagerFBX::AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset)
+void FManagerFBX::AddAnimationAssets(const FString& name, UAnimationAsset* AnimationAsset)
 {
-    AnimationAssetMap.Add(name, AnimationAsset);
+    AnimationAssetMap[name].Add(AnimationAsset);
+}
+
+void FManagerFBX::SetFBXBoneNames(const FString& name, TArray<FString> node)
+{
+    FBXBoneNameMap.Add(name, node);
+}
+
+TArray<FString> FManagerFBX::GetFBXBoneNames(const FString& name)
+{
+    if (FBXBoneNameMap.Contains(name))
+    {
+        return FBXBoneNameMap[name];
+    }
+    return TArray<FString>();
+}
+
+void FManagerFBX::CreateAnimationAsset(const FWString& name, const FWString& AnimParentFBXFilePath)
+{
+    FLoaderFBX::ParseFBXAnim(FString(name.c_str()), FString(AnimParentFBXFilePath.c_str()));
+}
+
+void FManagerFBX::SetAnimationAsset(const FString& name)
+{
 }

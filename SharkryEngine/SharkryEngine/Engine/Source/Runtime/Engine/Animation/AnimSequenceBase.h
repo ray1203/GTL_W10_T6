@@ -24,7 +24,7 @@ public:
     UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
 
 protected:
-    UAnimDataModel* AnimDataModel;
+    UAnimDataModel* AnimDataModel = nullptr;
 
 };
 

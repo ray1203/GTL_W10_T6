@@ -92,7 +92,7 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         UE_LOG(LogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
     }
 }
-
+ 
 void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
 {
     if (AnimInstance == nullptr) 
@@ -102,9 +102,9 @@ void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
         AnimInstance->SetSkeletalMesh(SkeletalMesh);
     }
 
-    UAnimationAsset* AnimationAsset = FManagerFBX::GetAnimationAsset(AnimName);
+    TArray<UAnimationAsset*> AnimationAsset = FManagerFBX::GetAnimationAssets(AnimName);
 
-    UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset);
+    UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset[4]);
 
     if (AnimSequence == nullptr) return;
     

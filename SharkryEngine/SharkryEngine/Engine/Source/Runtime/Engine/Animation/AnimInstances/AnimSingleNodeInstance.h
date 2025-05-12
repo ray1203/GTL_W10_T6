@@ -18,7 +18,7 @@ public:
 protected:
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-    UAnimSequence* AnimSequence;
+    UAnimSequence* AnimSequence = nullptr;
     FPoseContext Output;
 
     float CurrentTime = 0.0f;

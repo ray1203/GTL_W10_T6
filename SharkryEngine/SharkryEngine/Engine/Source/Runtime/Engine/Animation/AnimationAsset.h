@@ -9,6 +9,12 @@ class UAnimationAsset : public UObject
 public:
     UAnimationAsset();
     ~UAnimationAsset() = default;
+    
+    const FString& GetAssetPath() const { return AssetPath; }
 
+    void SetAssetPath(const FString& InAssetPath){ AssetPath = InAssetPath; }
+
+protected:
+    FString AssetPath;
 };
 

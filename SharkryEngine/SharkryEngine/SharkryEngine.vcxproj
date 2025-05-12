@@ -474,6 +474,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstances\AnimSingleNodeInstance.cpp" />
@@ -794,6 +795,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameNumber.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.h" />
