@@ -21,13 +21,13 @@ class FSkeletalMeshRenderPass : public IRenderPass
 {
 public:
     FSkeletalMeshRenderPass();
-    
+
     virtual ~FSkeletalMeshRenderPass();
-    
+
     virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager) override;
-    
+
     void InitializeShadowManager(class FShadowManager* InShadowManager);
-    
+
     virtual void PrepareRenderArr() override;
 
     virtual void Render(const std::shared_ptr<FViewportClient>& Viewport) override;
@@ -38,19 +38,24 @@ public:
     virtual void PrepareRenderState(const std::shared_ptr<FViewportClient>& Viewport);
 
     virtual void RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>& Viewport);
-    
+
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
-  
+    void UpdateBoneBuffer(const TArray<FMatrix>& SkinningMatrices) const;
+
     void UpdateLitUnlitConstant(int32 isLit) const;
 
-    void RenderPrimitive(FBX::FSkeletalMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
-    
+    void RenderPrimitive(
+        ID3D11Buffer* VertexBuffer,
+        FBX::FSkeletalMeshRenderData* RenderData,
+        TArray<FStaticMaterial*> Materials,
+        TArray<UMaterial*> OverrideMaterials,
+        int SelectedSubMeshIndex) const;
     // Shader 관련 함수 (생성/해제 등)
     void CreateShader();
     void ReleaseShader();
 
     void ChangeViewMode(EViewModeIndex ViewModeIndex);
-    
+
 protected:
 
 
@@ -58,7 +63,7 @@ protected:
 
     ID3D11VertexShader* VertexShader;
     ID3D11InputLayout* InputLayout;
-    
+
     ID3D11PixelShader* PixelShader;
     ID3D11PixelShader* DebugDepthShader;
     ID3D11PixelShader* DebugWorldNormalShader;
@@ -66,7 +71,7 @@ protected:
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
     FDXDShaderManager* ShaderManager;
-    
+
     FShadowManager* ShadowManager;
     FLoaderFBX* FBXLoader;
 };

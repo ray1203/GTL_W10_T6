@@ -1,5 +1,5 @@
 #include "AnimSequenceBase.h"
-
+#include "AnimData/AnimDataModel.h"
 UAnimSequenceBase::UAnimSequenceBase()
 {
 }

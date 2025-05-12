@@ -31,7 +31,6 @@ public:
     bool SetBoneLocalMatrix(uint32 BoneIndex, const FMatrix& NewLocalMatrix);
     bool SetBoneRotation(uint32 BoneIndex, const FMatrix& RotationMatrix);
     void UpdateWorldTransforms();
-    bool UpdateAndApplySkinning();
     bool GetBoneNames(TArray<FName>& OutBoneNames) const;
     //ObjectName은 경로까지 포함
     FWString GetObjectName() const;

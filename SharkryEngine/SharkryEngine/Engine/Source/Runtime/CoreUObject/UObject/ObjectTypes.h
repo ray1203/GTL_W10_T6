@@ -19,6 +19,7 @@ enum OBJECTS : uint8
     OBJ_Spawner,
     OBJ_Mutant,
     OBJ_Boss,
+    OBJ_Sharkry,
     OBJ_END
 };
 
