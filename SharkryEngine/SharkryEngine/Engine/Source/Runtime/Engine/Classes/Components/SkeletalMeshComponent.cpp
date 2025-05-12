@@ -117,6 +117,7 @@ void USkeletalMeshComponent::SetAnimation(UAnimationAsset* NewAnimToPlay)
     UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
     if (SingleNodeInstance)
     {
+        SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
         SingleNodeInstance->SetAnimationAsset(NewAnimToPlay, true);
         SingleNodeInstance->SetPlaying(false);
     }

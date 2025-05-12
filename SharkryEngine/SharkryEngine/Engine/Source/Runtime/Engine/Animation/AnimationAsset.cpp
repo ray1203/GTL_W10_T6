@@ -36,17 +36,32 @@ int32 UAnimationAsset::GetNumberOfKeys() const
 
 const FAnimationCurveData& UAnimationAsset::GetCurveData() const
 {
-    return DataModel ? DataModel->GetCurveData() : FAnimationCurveData();
+    if (DataModel)
+    {
+        return DataModel->GetCurveData();
+    }
+
+    return FAnimationCurveData();
 }
 
 const FBoneContainer& UAnimationAsset::GetBoneContainer() const
 {
-    return DataModel ? DataModel->GetBoneContainer() : FBoneContainer();
+    if (DataModel)
+    {
+        return DataModel->GetBoneContainer();
+    }
+
+    return FBoneContainer();
 }
 
 const TArray<FBoneAnimationTrack>& UAnimationAsset::GetBoneAnimationTracks() const
 {
-    return DataModel ? DataModel->GetBoneAnimationTracks() : TArray<FBoneAnimationTrack>();
+    if (DataModel)
+    {
+        return DataModel->GetBoneAnimationTracks();
+    }
+
+    return TArray<FBoneAnimationTrack>();
 }
 
 UAnimDataModel* UAnimationAsset::GetDataModel() const

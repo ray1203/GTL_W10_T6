@@ -1,5 +1,7 @@
 #include "AnimSequence.h"
 #include "AnimData/AnimDataModel.h"
+#include "AnimInstance.h"
+#include "Components/Mesh/SkeletalMesh.h"
 
 UAnimSequence::UAnimSequence()
 {
@@ -13,9 +15,11 @@ void UAnimSequence::GetAnimationPose(FPoseContext& PoseContext, const FAnimExtra
 
     for (int32 i = 0; i < Tracks.Num(); ++i)
     {
+        int BoneIndex = PoseContext.AnimInstance->GetSkeletalMesh()->Skeleton->GetBoneIndex(Tracks[i].Name);
+        if (BoneIndex == -1) continue;
         SamplePose(
             Tracks[i].InternalTrack,
-            PoseContext.Pose.BoneMatrices[i],
+            PoseContext.Pose.BoneMatrices[BoneIndex],
             CurrentTime,
             FR
         );

@@ -1,4 +1,5 @@
 #include "AnimInstance.h"
+#include "Components/Mesh/SkeletalMesh.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -6,6 +7,11 @@ UAnimInstance::UAnimInstance()
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaSeconds)
 {
+}
+
+const FBoneContainer& UAnimInstance::GetRequiredBones() const
+{
+    return RequiredBones;
 }
 
 void UAnimInstance::UpdateAnimation(float DeltaSeconds)
@@ -23,4 +29,14 @@ void UAnimInstance::NativeInitializeAnimation()
 
 void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
+}
+
+void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
+{
+    SkeletalMesh = InSkeletalMesh;
+}
+
+USkeletalMesh* UAnimInstance::GetSkeletalMesh() const
+{
+    return SkeletalMesh;
 }

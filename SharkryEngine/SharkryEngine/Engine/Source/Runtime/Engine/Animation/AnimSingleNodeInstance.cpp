@@ -1,6 +1,7 @@
 #include "AnimSingleNodeInstance.h"
 #include "AnimationAsset.h"
 #include "AnimData/AnimDataModel.h"
+#include "Components/Mesh/SkeletalMesh.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -18,10 +19,12 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 
     CurrentPosition = 0.f;
 
-    auto temp = AnimAsset->GetDataModel();
+    FBoneContainer BoneContainer;
+    TArray<FBoneNode> BoneTrees = SkeletalMesh->Skeleton->BoneTree;
+    for (auto& BonTree : BoneTrees)
+        BoneContainer.ParentIndices.Add(BonTree.ParentIndex);
 
-    RequiredBones = AnimAsset->GetDataModel()->GetBoneContainer();
-
+    RequiredBones = BoneContainer;
     NativeUpdateAnimation(0.f);
 }
 

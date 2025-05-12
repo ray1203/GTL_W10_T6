@@ -89,12 +89,12 @@ struct FAnimExtractContext
 // 1) 본 계층 정보: 본 개수, 부모 인덱스, 커브 개수 등
 struct FBoneContainer
 {
-    TArray<FName> ParentNames;
+    TArray<int32> ParentIndices;
 
     // 커브 채널 개수가 있다면 여기에 추가
     int32 NumCurves = 0;
 
-    int32 GetNumBones() const { return ParentNames.Num(); }
+    int32 GetNumBones() const { return ParentIndices.Num(); }
     int32 GetNumCurves() const { return NumCurves; }
 };
 
@@ -134,6 +134,7 @@ struct FPoseContext
     FCompactPose       Pose;
     FBlendedCurve      Curve;
     const FBoneContainer& BoneContainer;
+    const UAnimInstance* AnimInstance;
 
     // 생성자에서 BoneContainer 레퍼런스를 받아,
     // Pose와 Curve를 적절한 크기로 초기화합니다.

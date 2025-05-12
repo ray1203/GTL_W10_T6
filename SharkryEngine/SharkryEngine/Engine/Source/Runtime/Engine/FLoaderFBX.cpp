@@ -1341,10 +1341,8 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
 
                 // 6) 완성된 본 트랙을 시퀀스에 추가
                 BoneTracks.Add(std::move(BoneTrack));
-                BoneContainer.ParentNames.Add(BonePair.Value.ParentName);
             }
             AnimDataModel->SetBoneAnimationTracks(BoneTracks);
-            AnimDataModel->SetBoneContainer(BoneContainer);
         }
 
         // 5) 완성된 시퀀스를 FBXInfo에 추가

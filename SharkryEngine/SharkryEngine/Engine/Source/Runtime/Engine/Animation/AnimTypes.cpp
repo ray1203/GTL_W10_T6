@@ -13,4 +13,5 @@ FPoseContext::FPoseContext(const UAnimInstance* AnimInst)
     , Curve(AnimInst->GetRequiredBones().GetNumCurves())
     , BoneContainer(AnimInst->GetRequiredBones())
 {
+    AnimInstance = AnimInst;
 }
