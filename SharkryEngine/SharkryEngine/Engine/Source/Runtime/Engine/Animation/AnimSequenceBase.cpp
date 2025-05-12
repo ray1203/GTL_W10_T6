@@ -6,5 +6,9 @@ UAnimSequenceBase::UAnimSequenceBase()
 
 UAnimDataModel* UAnimSequenceBase::GetDataModel() const
 {
-    return nullptr;
+    return AnimDataModel;
+}
+
+void UAnimSequenceBase::GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext)
+{
 }

@@ -24,6 +24,14 @@
 #include "UObject/ObjectFactory.h"    // FManagerFBX 에서 사용
 #include "FSkeletalMeshDebugger.h"   // FSkeletalMeshDebugger 클래스 사용
 
+#include "Engine/Animation/AnimSequence.h"
+#include "Engine/Animation/AnimData/AnimDataModel.h"
+#include "Engine/Source/Runtime/Engine/Animation/AnimationAsset.h"
+
+#include "Core/Math/JungleMath.h"
+
+#include "Core/Math/MathUtility.h"
+
 namespace  FBX {
     // --- 중간 데이터 구조체 (Internal) ---
     struct MeshRawData
@@ -1225,6 +1233,11 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
         FString BoneInfo = FbxTransformToString(ConvertFMatrixToFbxAMatrix(BoneNode.GlobalBindPose));
         UE_LOG(LogLevel::Display, TEXT("[%s] %s"), *BoneName.ToString(), *BoneInfo);
     }
+
+    // Pass 4: Animation Data
+
+    ParseFBXAnim(Scene, AllBoneNodesTemp);
+
     return true;
 }
 
@@ -1254,7 +1267,8 @@ bool FLoaderFBX::ConvertToSkeletalMesh(const TArray<FBX::MeshRawData>& AllRawMes
         FullFBXInfo.SkeletonHierarchy.GetKeys(RelevantBoneNames);
     }
 
-    TArray<FName> BonesToInclude = RelevantBoneNames;
+    TArray<FName> BonesToInclude;
+    FullFBXInfo.SkeletonHierarchy.GetKeys(BonesToInclude);
     int32 CheckIndex = 0;
     while (CheckIndex < BonesToInclude.Num())
     {
@@ -1653,6 +1667,344 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
     }
 }
 
+void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
+{
+    int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
+    for (int i = 0; i < NumStacks; i++) 
+    {
+        // Stack의 개수만큼 애니메이션의 클립이 있는 것임
+        FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
+        FString TakeName = Stack->GetName();
+
+        // 엔진 내부 구조도 준비
+        UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+        // FrameRate 구하기
+        FbxGlobalSettings& Globals = Scene->GetGlobalSettings();
+        FbxTime::EMode TimeMode = Globals.GetTimeMode();
+        AnimDataModel->FrameRate = FFrameRate(FbxTime::GetFrameRate(TimeMode), 1);
+        // NubmerOfFrames 구하기, 커브가 들어가면 수정 필요할수도있음
+        FbxTimeSpan Span = Stack->GetLocalTimeSpan();
+        double DurationSeconds = Span.GetDuration().GetSecondDouble();
+        AnimDataModel->NumberOfFrames = int32(FMath::FloorToDouble(DurationSeconds * AnimDataModel->FrameRate.AsDecimal() + 0.5f));
+        // PlayLength 값 구하기
+        AnimDataModel->PlayLength = AnimDataModel->NumberOfFrames / AnimDataModel->FrameRate.AsDecimal();
+
+        
+        AnimDataModel->NumberOfKeys = AnimDataModel->NumberOfFrames;
+
+        // Stack 내부에서 레이어 꺼내서 사용
+        // 일단은 단일 레이어로 가정하여 0번에서 가져다가 사용
+        // 이후 다중 레이어 고려해야하고 그 땐 curveNode->GetCurveRecursive() 사용 고려해볼것
+        // TODO 다중 레이어 대응
+        FbxAnimLayer* Layer = Stack->GetMember<FbxAnimLayer>(0);
+
+        // 미리구한 Bone 목록을 통해 프레임 정보에 접근
+
+        for (FbxNode* BoneNode : BoneNodes)
+        {
+            FBoneAnimationTrack AnimationTrack;
+            AnimationTrack.Name = BoneNode->GetName();
+
+            for (int j = 0; j < AnimDataModel->NumberOfKeys; ++j)
+            {
+                // 1) 시간 셋업
+                FbxTime time;
+                time.SetFrame(j, Scene->GetGlobalSettings().GetTimeMode());
+
+                // 2) 로컬(Parent-relative) 변환 한 방에 평가
+                FbxAMatrix localXform = BoneNode->EvaluateLocalTransform(time);
+
+                // 3) Translation
+                FbxVector4 t = localXform.GetT();
+                AnimationTrack.InternalTrack.PosKeys.Add(
+                    FVector(static_cast<float>(t[0]),
+                        static_cast<float>(t[1]),
+                        static_cast<float>(t[2])));
+
+                // 4) Rotation (Quat)
+                //    FBX 쿼터니언 (X,Y,Z,W) 순서와 언리얼 FQuat 생성자 순서가 같습니다.
+                FbxQuaternion fq = localXform.GetQ();
+                FQuat  uq(
+                    static_cast<float>(fq[3]),
+                    static_cast<float>(fq[0]),
+                    static_cast<float>(fq[1]),
+                    static_cast<float>(fq[2])
+                );
+                AnimationTrack.InternalTrack.RotKeys.Add(uq);
+
+                // 5) Scale
+                FbxVector4 s = localXform.GetS();
+                AnimationTrack.InternalTrack.ScaleKeys.Add(
+                    FVector(static_cast<float>(s[0]),
+                        static_cast<float>(s[1]),
+                        static_cast<float>(s[2])));
+            }
+
+            // 마지막에 트랙 추가
+            AnimDataModel->BoneAnimationTracks.Add(AnimationTrack);
+        }
+        
+        // 4) UAnimSequence 생성 및 DataModel 연결
+        UAnimSequence* Sequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+        Sequence->SetDataModel(AnimDataModel);
+
+        // 5) 매니저에 등록
+        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
+    }
+}
+
+void FLoaderFBX::GenerateTestAnimationAsset()
+{
+    // 1) DataModel 생성
+   //    Outer 는 TransientPackage 로 대체했습니다.
+    UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+
+    // 2) 간단한 Root 본 트랙 하나 세팅
+    FBoneAnimationTrack RootTrack;
+    RootTrack.Name = FName("mixamorig:Spine");
+
+    FBoneAnimationTrack RootTrack1;
+    RootTrack1.Name = FName("mixamorig:Neck");
+
+    FRawAnimSequenceTrack& Raw = RootTrack.InternalTrack;
+    FRawAnimSequenceTrack& Raw1 = RootTrack1.InternalTrack;
+
+
+    // 완전히 테스트 코드
+
+    // 완전 하드코딩된 46프레임(0~45) Pos/Rot/Scale 키 리스트
+
+    //Raw.PosKeys = {
+    //    // Frame 0..15: (0→15,0,0)
+    //    FVector(0.0f,  0.0f,  0.0f),  //  0
+    //    FVector(1.0f,  0.0f,  0.0f),  //  1
+    //    FVector(2.0f,  0.0f,  0.0f),  //  2
+    //    FVector(3.0f,  0.0f,  0.0f),  //  3
+    //    FVector(4.0f,  0.0f,  0.0f),  //  4
+    //    FVector(5.0f,  0.0f,  0.0f),  //  5
+    //    FVector(6.0f,  0.0f,  0.0f),  //  6
+    //    FVector(7.0f,  0.0f,  0.0f),  //  7
+    //    FVector(8.0f,  0.0f,  0.0f),  //  8
+    //    FVector(9.0f,  0.0f,  0.0f),  //  9
+    //    FVector(10.0f,  0.0f,  0.0f),  // 10
+    //    FVector(11.0f,  0.0f,  0.0f),  // 11
+    //    FVector(12.0f,  0.0f,  0.0f),  // 12
+    //    FVector(13.0f,  0.0f,  0.0f),  // 13
+    //    FVector(14.0f,  0.0f,  0.0f),  // 14
+    //    FVector(15.0f,  0.0f,  0.0f),  // 15
+
+    //    // Frame 16..30: (15,0,0)→(0,15,0)
+    //    FVector(14.0f,  1.0f,  0.0f),  // 16
+    //    FVector(13.0f,  2.0f,  0.0f),  // 17
+    //    FVector(12.0f,  3.0f,  0.0f),  // 18
+    //    FVector(11.0f,  4.0f,  0.0f),  // 19
+    //    FVector(10.0f,  5.0f,  0.0f),  // 20
+    //    FVector(9.0f,  6.0f,  0.0f),  // 21
+    //    FVector(8.0f,  7.0f,  0.0f),  // 22
+    //    FVector(7.0f,  8.0f,  0.0f),  // 23
+    //    FVector(6.0f,  9.0f,  0.0f),  // 24
+    //    FVector(5.0f, 10.0f,  0.0f),  // 25
+    //    FVector(4.0f, 11.0f,  0.0f),  // 26
+    //    FVector(3.0f, 12.0f,  0.0f),  // 27
+    //    FVector(2.0f, 13.0f,  0.0f),  // 28
+    //    FVector(1.0f, 14.0f,  0.0f),  // 29
+    //    FVector(0.0f, 15.0f,  0.0f),  // 30
+
+    //    // Frame 31..45: (0,15,0)→(0,0,15)
+    //    FVector(0.0f, 14.0f,  0.0f),  // 31
+    //    FVector(0.0f, 13.0f,  0.0f),  // 32
+    //    FVector(0.0f, 12.0f,  0.0f),  // 33
+    //    FVector(0.0f, 11.0f,  0.0f),  // 34
+    //    FVector(0.0f, 10.0f,  0.0f),  // 35
+    //    FVector(0.0f,  9.0f,  0.0f),  // 36
+    //    FVector(0.0f,  8.0f,  0.0f),  // 37
+    //    FVector(0.0f,  7.0f,  0.0f),  // 38
+    //    FVector(0.0f,  6.0f,  0.0f),  // 39
+    //    FVector(0.0f,  5.0f, 0.0f),  // 40
+    //    FVector(0.0f,  4.0f, 0.0f),  // 41
+    //    FVector(0.0f,  3.0f, 0.0f),  // 42
+    //    FVector(0.0f,  2.0f, 0.0f),  // 43
+    //    FVector(0.0f,  1.0f, 0.0f),  // 44
+    //    FVector(0.0f,  0.0f, 0.0f)   // 45
+    //};
+
+
+    Raw.PosKeys = {
+        // Frame 0..15: (0→15,0,0)
+        FVector(5.0f,  0.0f,  0.0f),  //  0
+        FVector(5.0f,  0.0f,  0.0f),  //  1
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+        FVector(5.0f,  0.0f,  0.0f),
+
+        // Frame 16..30: (15,0,0)→(0,15,0)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(0.0f,  0.0f,  0.0f),  //  1
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+
+        // Frame 31..45: (0,15,0)→(0,0,15)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(0.0f,  0.0f,  0.0f),  //  1
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+
+        FVector(0.0f,  0.0f,  0.0f)
+    };
+
+    Raw1.PosKeys = {
+        // Frame 0..15: (0→15,0,0)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(0.0f,  0.0f,  0.0f),  //  1
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+
+        // Frame 16..30: (15,0,0)→(0,15,0)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(0.0f,  0.0f,  0.0f),  //  1
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+
+        // Frame 31..45: (0,15,0)→(0,0,15)
+        FVector(0.0f,  0.0f,  0.0f),  //  0
+        FVector(0.0f,  0.0f,  0.0f),  //  1
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+        FVector(0.0f,  0.0f,  0.0f),
+
+        FVector(0.0f,  0.0f,  0.0f)
+    };
+
+    float framePerRot = 1.0f;
+    int frameNum = 46;
+
+    float curAngle = 0.0f;
+    
+    for (int i = 0; i < frameNum; i++) 
+    {
+        curAngle += framePerRot;
+        float curRadian = FMath::DegreesToRadians(curAngle);
+        FQuat quat = FQuat(FVector(0, 0, 1), curRadian);
+        FQuat quat1 = FQuat(FVector(0, 0, 1), curRadian * 2.0f);
+        Raw.RotKeys.Add(quat);
+        Raw1.RotKeys.Add(quat1);
+    }
+
+
+    Raw.ScaleKeys = {
+        // 46개 모두 FVector(1,1,1) 로
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f)
+    };
+
+    Raw1.ScaleKeys = {
+        // 46개 모두 FVector(1,1,1) 로
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f),
+        FVector(1.f,1.f,1.f), FVector(1.f,1.f,1.f)
+    };
+
+    AnimDataModel->BoneAnimationTracks.Add(RootTrack);
+    AnimDataModel->BoneAnimationTracks.Add(RootTrack1);
+
+    // 3) 메타데이터(길이, 프레임레이트 등) 세팅
+    AnimDataModel->FrameRate = FFrameRate(30, 1);// 30fps
+    AnimDataModel->NumberOfFrames = 45;              // 1초 * 30fps
+    AnimDataModel->PlayLength = AnimDataModel->NumberOfFrames / AnimDataModel->FrameRate.AsDecimal();
+    AnimDataModel->NumberOfKeys = Raw.PosKeys.Num();// 2
+
+    // (커브는 이 예제에선 사용하지 않으므로 비워 둡니다.)
+
+    // 4) UAnimSequence 생성 및 DataModel 연결
+    UAnimSequence* Sequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+    Sequence->SetDataModel(AnimDataModel);
+
+    // 5) 매니저에 등록
+    //    "TestAnim" 이라는 이름으로 등록합니다.
+    FManagerFBX::AddAnimationAsset(TEXT("TestAnim"), Sequence);
+}
+
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }
 
 
@@ -1756,4 +2108,19 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
         return SkeletalMeshMap[name];
 
     return CreateSkeletalMesh(FString(name.c_str()));
+}
+
+UAnimationAsset* FManagerFBX::GetAnimationAsset(const FString& name)
+{
+    if (AnimationAssetMap.Contains(name)) 
+    {
+        return AnimationAssetMap[name];
+    }
+
+    return nullptr;
+}
+
+void FManagerFBX::AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset)
+{
+    AnimationAssetMap.Add(name, AnimationAsset);
 }

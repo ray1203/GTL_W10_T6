@@ -289,3 +289,92 @@ FQuat JungleMath::QInterpConstantTo(const FQuat& Current, const FQuat& Target, f
 
     return FQuat::Slerp(Current, Target, Alpha);
 }
+
+FVector JungleMath::DecomposeTranslation(const FMatrix& M)
+{
+    // CreateModelMatrix 에서 translation 은 M[3][0..2] 에 저장했습니다.
+    return FVector(
+        M.M[3][0],
+        M.M[3][1],
+        M.M[3][2]
+    );
+}
+
+FQuat JungleMath::DecomposeRotation(const FMatrix& M)
+{
+    // 먼저 scale 로부터 3x3 회전 요소만 분리
+    FVector scale = DecomposeScale(M);
+
+    // 정규화된 회전 행렬 R
+    float r00 = M.M[0][0] / scale.X;
+    float r01 = M.M[0][1] / scale.Y;
+    float r02 = M.M[0][2] / scale.Z;
+    float r10 = M.M[1][0] / scale.X;
+    float r11 = M.M[1][1] / scale.Y;
+    float r12 = M.M[1][2] / scale.Z;
+    float r20 = M.M[2][0] / scale.X;
+    float r21 = M.M[2][1] / scale.Y;
+    float r22 = M.M[2][2] / scale.Z;
+
+    // 회전 매트릭스 → 쿼터니언 변환 (표준 알고리즘)
+    float trace = r00 + r11 + r22;
+    float qw, qx, qy, qz;
+
+    if (trace > 0.0f)
+    {
+        float s = std::sqrt(trace + 1.0f) * 2.0f; // s=4*qw
+        qw = 0.25f * s;
+        qx = (r21 - r12) / s;
+        qy = (r02 - r20) / s;
+        qz = (r10 - r01) / s;
+    }
+    else if ((r00 > r11) && (r00 > r22))
+    {
+        float s = std::sqrt(1.0f + r00 - r11 - r22) * 2.0f; // s=4*qx
+        qw = (r21 - r12) / s;
+        qx = 0.25f * s;
+        qy = (r01 + r10) / s;
+        qz = (r02 + r20) / s;
+    }
+    else if (r11 > r22)
+    {
+        float s = std::sqrt(1.0f + r11 - r00 - r22) * 2.0f; // s=4*qy
+        qw = (r02 - r20) / s;
+        qx = (r01 + r10) / s;
+        qy = 0.25f * s;
+        qz = (r12 + r21) / s;
+    }
+    else
+    {
+        float s = std::sqrt(1.0f + r22 - r00 - r11) * 2.0f; // s=4*qz
+        qw = (r10 - r01) / s;
+        qx = (r02 + r20) / s;
+        qy = (r12 + r21) / s;
+        qz = 0.25f * s;
+    }
+
+    FQuat q(qx, qy, qz, qw);
+    q.Normalize();
+    return q;
+}
+
+FVector JungleMath::DecomposeScale(const FMatrix& M)
+{
+    // Scale 은 상위 3x3 매트릭스의 각 열 벡터 길이로부터 구합니다.
+    float scaleX = std::sqrt(
+        M.M[0][0] * M.M[0][0] +
+        M.M[1][0] * M.M[1][0] +
+        M.M[2][0] * M.M[2][0]
+    );
+    float scaleY = std::sqrt(
+        M.M[0][1] * M.M[0][1] +
+        M.M[1][1] * M.M[1][1] +
+        M.M[2][1] * M.M[2][1]
+    );
+    float scaleZ = std::sqrt(
+        M.M[0][2] * M.M[0][2] +
+        M.M[1][2] * M.M[1][2] +
+        M.M[2][2] * M.M[2][2]
+    );
+    return FVector(scaleX, scaleY, scaleZ);
+}
