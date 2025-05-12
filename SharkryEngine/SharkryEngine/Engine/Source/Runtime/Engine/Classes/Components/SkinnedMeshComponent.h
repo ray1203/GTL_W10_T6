@@ -1,6 +1,14 @@
 #pragma once
 #include "Components/MeshComponent.h"
-#include "Mesh/SkeletalMesh.h"
+
+
+namespace FBX
+{
+    struct FSkeletalMeshInstanceRenderData;
+}
+
+class USkeletalMesh;
+
 
 class USkinnedMeshComponent : public UMeshComponent
 {
@@ -8,7 +16,7 @@ class USkinnedMeshComponent : public UMeshComponent
 
 public:
     USkinnedMeshComponent() = default;
-
+    ~USkinnedMeshComponent();
     virtual UObject* Duplicate(UObject* InOuter) override;
 
     virtual void TickComponent(float DeltaTime) override;
@@ -29,10 +37,13 @@ public:
 
     void UpdateBoneTransformAndSkinning(int32 BoneIndex, const FMatrix& NewLocalMatrix);
     void SetUseGpuSkinning(bool bEnable);
-    bool IsUsingGpuSkinning() const { return bUseGpuSkinning; }
+    bool IsUsingGpuSkinning() const;
+    FBX::FSkeletalMeshInstanceRenderData* GetInstanceRenderData();
+    bool UpdateAndApplySkinning();
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     int selectedSubMeshIndex = -1;
 private:
-    bool bUseGpuSkinning = false;
+    FBX::FSkeletalMeshInstanceRenderData* InstanceRenderData= nullptr;
+    //bool bUseGpuSkinning = false;
 };

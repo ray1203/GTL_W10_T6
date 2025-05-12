@@ -351,25 +351,19 @@ void FSkeletalMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FSkeletalMeshRenderPass::RenderPrimitive(FBX::FSkeletalMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
-{
+void FSkeletalMeshRenderPass::RenderPrimitive(
+    ID3D11Buffer* VertexBuffer,
+    FBX::FSkeletalMeshRenderData* RenderData,
+    TArray<FStaticMaterial*> Materials,
+    TArray<UMaterial*> OverrideMaterials,
+    int SelectedSubMeshIndex) const {
     // 정점 스트라이드 변경: FStaticMeshVertex -> FBX::FSkeletalMeshVertex
     UINT Stride = sizeof(FBX::FSkeletalMeshVertex);
     UINT Offset = 0;
 
     // 버퍼 설정 (DynamicVertexBuffer 사용)
-    if (!RenderData || !RenderData->DynamicVertexBuffer) return; // 유효성 검사
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &RenderData->DynamicVertexBuffer, &Stride, &Offset);
-
-    // 인덱스 버퍼 설정
-    if (RenderData->IndexBuffer)
-    {
-        Graphics->DeviceContext->IASetIndexBuffer(RenderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    }
-    else
-    {
-        return;
-    }
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexBuffer, &Stride, &Offset);
+    Graphics->DeviceContext->IASetIndexBuffer(RenderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
     if (RenderData->Subsets.IsEmpty())
     {
@@ -403,42 +397,31 @@ void FSkeletalMeshRenderPass::RenderPrimitive(FBX::FSkeletalMeshRenderData* Rend
 
     for (int SubMeshIndex = 0; SubMeshIndex < RenderData->Subsets.Num(); ++SubMeshIndex)
     {
-        // 서브셋 정보 접근 (RenderData->Subsets 사용)
-        const FBX::FMeshSubset& CurrentSubset = RenderData->Subsets[SubMeshIndex];
-        uint32 MaterialIndex = CurrentSubset.MaterialIndex; // 서브셋에 저장된 재질 인덱스
+        const FBX::FMeshSubset& Subset = RenderData->Subsets[SubMeshIndex];
+        uint32 MaterialIndex = Subset.MaterialIndex;
 
         FSubMeshConstants SubMeshData;
-        SubMeshData.bIsSelectedSubMesh = (SubMeshIndex == SelectedSubMeshIndex) ? 1.0f : 0.0f; // bool -> float 변환
+        SubMeshData.bIsSelectedSubMesh = (SubMeshIndex == SelectedSubMeshIndex) ? 1.0f : 0.0f;
         BufferManager->UpdateConstantBuffer(TEXT("FSubMeshConstants"), SubMeshData);
 
-        // 사용할 재질 결정 (Override 우선)
         UMaterial* MaterialToUse = nullptr;
-        if (OverrideMaterials.IsValidIndex(MaterialIndex) && OverrideMaterials[MaterialIndex] != nullptr)
+        if (OverrideMaterials.IsValidIndex(MaterialIndex) && OverrideMaterials[MaterialIndex])
         {
             MaterialToUse = OverrideMaterials[MaterialIndex];
         }
-        else if (Materials.IsValidIndex(MaterialIndex) && Materials[MaterialIndex] != nullptr && Materials[MaterialIndex]->Material != nullptr)
+        else if (Materials.IsValidIndex(MaterialIndex) && Materials[MaterialIndex] && Materials[MaterialIndex]->Material)
         {
-            // Materials 배열은 FStaticMaterial* 배열이므로 -> 사용
             MaterialToUse = Materials[MaterialIndex]->Material;
         }
 
-        // 재질 상수 버퍼 업데이트 및 텍스처 바인딩
         if (MaterialToUse)
         {
             MaterialUtils::UpdateMaterial(BufferManager, Graphics, MaterialToUse->GetMaterialInfo());
         }
-        else
-        {
-            // TODO: 유효한 재질이 없을 경우 기본 재질 처리
-        }
 
-        // 현재 서브셋의 인덱스 범위만 그리기
-        uint32 StartIndex = CurrentSubset.IndexStart;
-        uint32 IndexCount = CurrentSubset.IndexCount;
-        if (IndexCount > 0)
+        if (Subset.IndexCount > 0)
         {
-            Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+            Graphics->DeviceContext->DrawIndexed(Subset.IndexCount, Subset.IndexStart, 0);
         }
     }
 }
@@ -449,25 +432,22 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
 
     for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
     {
-        if (!Comp || !Comp->GetSkeletalMesh())
-        {
-            continue;
-        }
+        if (!Comp || !Comp->GetSkeletalMesh()) continue;
 
-        FBX::FSkeletalMeshRenderData* RenderData = Comp->GetSkeletalMesh()->GetRenderData();
-        if (RenderData == nullptr)
-        {
-            continue;
-        }
+        USkeletalMesh* SkeletalMesh = Comp->GetSkeletalMesh();
+        FBX::FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetRenderData();
+        FBX::FSkeletalMeshInstanceRenderData* InstanceData = Comp->GetInstanceRenderData();
+        if (!RenderData || !InstanceData) continue;
 
-        if (ShowFlag & EEngineShowFlags::SF_Bone) {
-            FSkeletalMeshDebugger::DrawSkeleton(Comp);
-            FSkeletalMeshDebugger::DrawSkeletonAABBs(Comp);
-        }
-        // --- [ 새롭게 추가된 VertexShader 분기 처리 ] ---
         const bool bGpu = Comp->IsUsingGpuSkinning();
         const EViewModeIndex ViewMode = Viewport->GetViewMode();
         const bool bGouraud = ViewMode == EViewModeIndex::VMI_Lit_Gouraud;
+
+        if (ShowFlag & EEngineShowFlags::SF_Bone)
+        {
+            FSkeletalMeshDebugger::DrawSkeleton(Comp);
+            FSkeletalMeshDebugger::DrawSkeletonAABBs(Comp);
+        }
 
         FWString ShaderKey;
         if (bGpu)
@@ -485,37 +465,31 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
 
         USceneComponent* SelectedComponent = Engine->GetSelectedComponent();
         AActor* SelectedActor = Engine->GetSelectedActor();
-
-        USceneComponent* TargetComponent = nullptr;
-
-        if (SelectedComponent != nullptr)
-        {
-            TargetComponent = SelectedComponent;
-        }
-        else if (SelectedActor != nullptr)
-        {
-            TargetComponent = SelectedActor->GetRootComponent();
-        }
+        USceneComponent* TargetComponent = SelectedComponent ? SelectedComponent : SelectedActor ? SelectedActor->GetRootComponent() : nullptr;
 
         const bool bIsSelected = (Engine && TargetComponent == Comp);
-
-
-        FMatrix WorldMatrix = Comp->GetWorldMatrix();
-        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
+        const FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        const FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
 
         UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+
         if (bGpu)
         {
-            UpdateBoneBuffer(Comp->GetSkeletalMesh()->Skeleton->CurrentPose.SkinningMatrices);
+            UpdateBoneBuffer(SkeletalMesh->Skeleton->CurrentPose.SkinningMatrices);
+            RenderPrimitive(RenderData->SharedVertexBuffer, RenderData, SkeletalMesh->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
         }
-        RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+        else
+        {
+            RenderPrimitive(InstanceData->DynamicVertexBuffer_CPU, RenderData, SkeletalMesh->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+        }
 
-        if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
+        if (ShowFlag & EEngineShowFlags::SF_AABB)
         {
             FEngineLoop::PrimitiveDrawBatch.AddAABBToBatch(Comp->GetBoundingBox(), WorldMatrix);
         }
     }
 }
+
 
 void FSkeletalMeshRenderPass::Render(const std::shared_ptr<FViewportClient>& Viewport)
 {
@@ -558,6 +532,7 @@ void FSkeletalMeshRenderPass::ClearRenderArr()
 }
 
 
+/*
 void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FViewportClient>&Viewport, UPointLightComponent * &PointLight)
 {
     for (USkeletalMeshComponent* Comp : SkeletalMeshComponents)
@@ -576,3 +551,4 @@ void FSkeletalMeshRenderPass::RenderAllSkeletalMeshes(const std::shared_ptr<FVie
         RenderPrimitive(RenderData, Comp->GetSkeletalMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
     }
 }
+*/

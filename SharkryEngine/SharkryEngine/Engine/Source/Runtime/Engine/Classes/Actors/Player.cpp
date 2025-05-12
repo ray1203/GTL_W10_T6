@@ -440,7 +440,7 @@ void UEditorPlayer::ControlRotation(USceneComponent* Component, UGizmoBaseCompon
         // 6. 스켈레톤 전체 월드 변환 업데이트 (로컬 변경 후 필수)
         SkeletalMesh->UpdateWorldTransforms();
         if (!SkeletalComp->IsUsingGpuSkinning())
-            SkeletalMesh->UpdateAndApplySkinning();
+            SkeletalComp->UpdateAndApplySkinning();
     }
 #else
     // 쿼터니언의 곱 순서는 delta * current 가 맞음.

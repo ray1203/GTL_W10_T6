@@ -110,7 +110,17 @@ namespace FBX
         uint32 MaterialIndex = 0; // FSkeletalMeshRenderData::Materials 배열 내 인덱스
         // FString MaterialName; // 필요 시 추가 (디버깅용)
     };
-
+    struct FSkeletalMeshInstanceRenderData
+    {
+        // 각 USkinnedMeshComponent 전용 (CPU 스키닝용)
+        ID3D11Buffer* DynamicVertexBuffer_CPU = nullptr;
+        bool bUseGpuSkinning = true; // 렌더링 시 분기 결정용
+        ~FSkeletalMeshInstanceRenderData() { ReleaseBuffers(); }
+        void ReleaseBuffers()
+        {
+            if (DynamicVertexBuffer_CPU) { DynamicVertexBuffer_CPU->Release(); DynamicVertexBuffer_CPU = nullptr; }
+        }
+    };
     // 최종 렌더링 데이터 구조체
     struct FSkeletalMeshRenderData
     {
@@ -127,7 +137,7 @@ namespace FBX
         //TArray<FMatrix> SkinningMatrices;
 
         // DirectX 버퍼 포인터 (생성 후 채워짐)
-        ID3D11Buffer* DynamicVertexBuffer = nullptr;
+        ID3D11Buffer* SharedVertexBuffer; // 불변
         ID3D11Buffer* IndexBuffer = nullptr;
 
         FBoundingBox Bounds;                          // 메시의 AABB
@@ -146,11 +156,11 @@ namespace FBX
             Materials(std::move(Other.Materials)),
             Subsets(std::move(Other.Subsets)), // Subsets 이동 추가
             //SkinningMatrices(std::move(Other.SkinningMatrices)),
-            DynamicVertexBuffer(Other.DynamicVertexBuffer),
+            SharedVertexBuffer(Other.SharedVertexBuffer),
             IndexBuffer(Other.IndexBuffer),
             Bounds(Other.Bounds)
         {
-            Other.DynamicVertexBuffer = nullptr;
+            Other.SharedVertexBuffer = nullptr;
             Other.IndexBuffer = nullptr;
         }
 
@@ -166,10 +176,10 @@ namespace FBX
                 Materials = std::move(Other.Materials);
                 Subsets = std::move(Other.Subsets); // Subsets 이동 추가
                 //SkinningMatrices = std::move(Other.SkinningMatrices);
-                DynamicVertexBuffer = Other.DynamicVertexBuffer;
+                SharedVertexBuffer = Other.SharedVertexBuffer;
                 IndexBuffer = Other.IndexBuffer;
                 Bounds = Other.Bounds;
-                Other.DynamicVertexBuffer = nullptr;
+                Other.SharedVertexBuffer = nullptr;
                 Other.IndexBuffer = nullptr;
             }
             return *this;
@@ -177,7 +187,7 @@ namespace FBX
 
         void ReleaseBuffers()
         {
-            if (DynamicVertexBuffer) { DynamicVertexBuffer->Release(); DynamicVertexBuffer = nullptr; }
+            if (SharedVertexBuffer) { SharedVertexBuffer->Release(); SharedVertexBuffer = nullptr; }
             if (IndexBuffer) { IndexBuffer->Release(); IndexBuffer = nullptr; }
         }
 
