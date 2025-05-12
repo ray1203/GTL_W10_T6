@@ -16,10 +16,10 @@ USkeletalMesh::~USkeletalMesh()
 {
     if (SkeletalMeshRenderData == nullptr) return;
 
-    if (SkeletalMeshRenderData->DynamicVertexBuffer)
+    if (SkeletalMeshRenderData->SharedVertexBuffer)
     {
-        SkeletalMeshRenderData->DynamicVertexBuffer->Release();
-        SkeletalMeshRenderData->DynamicVertexBuffer = nullptr;
+        SkeletalMeshRenderData->SharedVertexBuffer->Release();
+        SkeletalMeshRenderData->SharedVertexBuffer = nullptr;
     }
 
     if (SkeletalMeshRenderData->IndexBuffer)
@@ -227,106 +227,6 @@ void USkeletalMesh::UpdateWorldTransforms()
     }
 }
 
-bool USkeletalMesh::UpdateAndApplySkinning()
-{
-    if (!SkeletalMeshRenderData || !SkeletalMeshRenderData->DynamicVertexBuffer ||
-        SkeletalMeshRenderData->BindPoseVertices.IsEmpty() || !Skeleton || Skeleton->BoneTree.IsEmpty())
-    {
-        return false;
-    }
-
-    ID3D11DeviceContext* DeviceContext = GEngineLoop.GraphicDevice.DeviceContext;
-    // 버퍼 매핑
-    D3D11_MAPPED_SUBRESOURCE MappedResource;
-    HRESULT hr = DeviceContext->Map(SkeletalMeshRenderData->DynamicVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    if (FAILED(hr)) return false;
-
-    FBX::FSkeletalMeshVertex* SkinnedVertices = static_cast<FBX::FSkeletalMeshVertex*>(MappedResource.pData);
-    const TArray<FBX::FSkeletalMeshVertex>& BindVertices = SkeletalMeshRenderData->BindPoseVertices;
-    const int32 VertexCount = BindVertices.Num();
-
-    // 스키닝 계산
-    for (int32 i = 0; i < VertexCount; ++i)
-    {
-        const FBX::FSkeletalMeshVertex& BindVertex = BindVertices[i];
-        FBX::FSkeletalMeshVertex& SkinnedVertex = SkinnedVertices[i];
-        
-        // 초기화: 바인드 포즈 정점의 속성 복사
-        SkinnedVertex = BindVertex;
-        
-        // 해당 정점에 영향을 주는 본이 없으면 바인드 포즈 그대로 사용
-        bool bHasInfluence = false;
-        for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
-        {
-            if (BindVertex.BoneWeights[j] > KINDA_SMALL_NUMBER &&
-                Skeleton->BoneTree.IsValidIndex(static_cast<int32>(BindVertex.BoneIndices[j])))
-            {
-                bHasInfluence = true;
-                break;
-            }
-        }
-        
-        if (!bHasInfluence) continue;
-        
-        // 가중 합산을 위한 초기화
-        FVector SkinnedPosition = FVector::ZeroVector;
-        FVector SkinnedNormal = FVector::ZeroVector;
-        
-        // 각 본의 영향력을 합산
-        float TotalWeight = 0.0f;
-        for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
-        {
-            float Weight = BindVertex.BoneWeights[j];
-            if (Weight <= KINDA_SMALL_NUMBER) continue;
-            
-            int32 BoneIndex = static_cast<int32>(BindVertex.BoneIndices[j]);
-            if (!Skeleton->BoneTree.IsValidIndex(BoneIndex)) continue;
-            
-            TotalWeight += Weight;
-            
-            // 스키닝 행렬 적용
-            const FMatrix& SkinMatrix = Skeleton->CurrentPose.SkinningMatrices[BoneIndex];
-            
-            // 위치 변환
-            SkinnedPosition += SkinMatrix.TransformPosition(BindVertex.Position) * Weight;
-            
-            // 법선 변환 (위치 변환과 다름)
-            FMatrix NormalMatrix = SkinMatrix;
-            NormalMatrix.RemoveTranslation();
-            
-            if (FMath::Abs(NormalMatrix.Determinant()) > SMALL_NUMBER)
-            {
-                // 법선 벡터 변환을 위한 역전치(inverse transpose) 행렬 계산
-                FMatrix InvTranspose = FMatrix::Transpose(FMatrix::Inverse(NormalMatrix));
-                SkinnedNormal += FMatrix::TransformVector(BindVertex.Normal, InvTranspose) * Weight;
-            }
-            else
-            {
-                SkinnedNormal += BindVertex.Normal * Weight;
-            }
-        }
-        
-        // 가중치 합이 1에 가까워야 함 (부동소수점 오차 허용)
-        if (TotalWeight > KINDA_SMALL_NUMBER)
-        {
-            if (!FMath::IsNearlyEqual(TotalWeight, 1.0f))
-            {
-                // 가중치 합이 1이 아니면 정규화
-                float InvWeight = 1.0f / TotalWeight;
-                SkinnedPosition *= InvWeight;
-                SkinnedNormal *= InvWeight;
-            }
-            
-            // 최종 결과 적용
-            SkinnedVertex.Position = SkinnedPosition;
-            SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal();
-        }
-    }
-
-    // 버퍼 언매핑
-    DeviceContext->Unmap(SkeletalMeshRenderData->DynamicVertexBuffer, 0);
-    return true;
-}
 
 bool USkeletalMesh::GetBoneNames(TArray<FName>& OutBoneNames) const
 {
@@ -366,8 +266,10 @@ void USkeletalMesh::SetData(FBX::FSkeletalMeshRenderData* renderData)
     uint32 verticeNum = SkeletalMeshRenderData->BindPoseVertices.Num();
 
     if (verticeNum <= 0) return;
-
-    SkeletalMeshRenderData->DynamicVertexBuffer = FEngineLoop::Renderer.CreateDynamicVertexBuffer(SkeletalMeshRenderData->MeshName, SkeletalMeshRenderData->BindPoseVertices);
+    ID3D11Buffer* SharedVertexBuffer = FEngineLoop::Renderer.CreateImmutableVertexBuffer(
+        SkeletalMeshRenderData->MeshName,
+        SkeletalMeshRenderData->BindPoseVertices);
+    SkeletalMeshRenderData->SharedVertexBuffer = SharedVertexBuffer;
 
     uint32 indexNum = SkeletalMeshRenderData->Indices.Num();
     if (indexNum > 0)

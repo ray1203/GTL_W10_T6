@@ -1,6 +1,8 @@
 #include "Console.h"
 #include <cstdarg>
 #include <cstdio>
+
+#include "Components/SkeletalMeshComponent.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "Engine/Engine.h"
 #include "Renderer/UpdateLightBufferPass.h"
@@ -377,6 +379,24 @@ void Console::ExecuteCommand(const std::string& Command)
     else if (Command.starts_with("stat "))
     {
         Overlay.ToggleStat(Command);
+    }
+    //TODO: 명령어를 좀 더 직관적으로 바꾸기
+    else if (Command == "GPU")
+    {
+        for (const auto iter : TObjectRange<USkeletalMeshComponent>())
+        {
+            iter->SetUseGpuSkinning(true);
+        }
+    }
+    else if (Command == "CPU")
+    {
+        for (const auto iter : TObjectRange<USkeletalMeshComponent>())
+        {
+            iter->SetUseGpuSkinning(false);
+            /*if (auto SkeletalMesh = iter->GetSkeletalMesh())
+                SkeletalMesh->UpdateAndApplySkinning();*/
+            
+        }
     }
     else
     {

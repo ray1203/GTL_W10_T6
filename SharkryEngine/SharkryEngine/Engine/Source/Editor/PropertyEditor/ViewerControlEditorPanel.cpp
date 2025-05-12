@@ -106,10 +106,43 @@ void ViewerControlEditorPanel::CreateMenuButton(const ImVec2 ButtonSize, ImFont*
                     }
                 }
             }
+            if (ImGui::MenuItem("FBX"))
+            {
+                char const* lFilterPatterns[1] = { "*.fbx" };
+                const char* FileName = tinyfd_openFileDialog("Open FBX File", "", 1, lFilterPatterns, "FBX(.fbx) file", 0);
 
+                if (FileName != nullptr)
+                {
+                    std::cout << FileName << '\n';
+                    auto SpawnedActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
+                    Cast<ASkeletalMeshActor>(SpawnedActor)->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(FString(FileName).ToWideString()));
+                    SpawnedActor->SetActorLabel(TEXT("OBJ"));
+                    if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SpawnedActor->GetSkeletalMeshComponent()))
+                    {
+                        FVector Center = (Primitive->GetBoundingBox().min + Primitive->GetBoundingBox().max) * 0.5f;
+                        FVector Extents = (Primitive->GetBoundingBox().max - Primitive->GetBoundingBox().min) * 0.5f;
+                        float Radius = Extents.Length();
+
+                        float FOV = 90.0f; // 기본 시야각
+                        float VerticalFOV = FMath::DegreesToRadians(FOV);
+                        float Distance = Radius / FMath::Tan(VerticalFOV * 0.5f);
+
+                        if (std::shared_ptr<FEditorViewportClient> ViewClient = GEngineLoop.GetLevelEditor()->GetActiveViewportClient())
+                        {
+                            FViewportCamera& Cam = ViewClient->GetPerspectiveCamera();
+                            FVector Forward = Cam.GetForwardVector();
+                            Cam.SetLocation(Center - Forward * Distance);
+                        }
+                    }
+                    /*
+                    if (FManagerOBJ::(FileName) == nullptr)
+                    {
+                        tinyfd_messageBox("Error", "파일을 불러올 수 없습니다.", "ok", "error", 1);
+                    }*/
+                }
+            }
             ImGui::EndMenu();
         }
-
         ImGui::Separator();
 
         if (ImGui::MenuItem("Quit"))

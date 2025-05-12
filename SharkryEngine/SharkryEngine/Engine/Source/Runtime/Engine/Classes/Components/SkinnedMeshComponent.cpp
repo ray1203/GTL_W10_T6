@@ -7,6 +7,21 @@
 
 #include "GameFramework/Actor.h"
 
+USkinnedMeshComponent::~USkinnedMeshComponent()
+{
+    if (InstanceRenderData)
+    {
+        if (InstanceRenderData->DynamicVertexBuffer_CPU)
+        {
+            InstanceRenderData->DynamicVertexBuffer_CPU->Release();
+            InstanceRenderData->DynamicVertexBuffer_CPU = nullptr;
+        }
+        delete InstanceRenderData;
+        InstanceRenderData = nullptr;
+    }
+
+}
+
 UObject* USkinnedMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
@@ -136,18 +151,182 @@ int USkinnedMeshComponent::CheckRayIntersection(const FVector& InRayOrigin, cons
 
 void USkinnedMeshComponent::SetSkeletalMesh(USkeletalMesh* value)
 {
-    SkeletalMesh = value;
+     SkeletalMesh = value;
+
     if (SkeletalMesh == nullptr)
     {
         OverrideMaterials.SetNum(0);
         AABB = FBoundingBox(FVector::ZeroVector, FVector::ZeroVector);
+
+        if (InstanceRenderData)
+        {
+            delete InstanceRenderData;
+            InstanceRenderData = nullptr;
+        }
+
+        return;
+    }
+
+    if (!InstanceRenderData)
+    {
+        InstanceRenderData = new FBX::FSkeletalMeshInstanceRenderData();
+
+        if (!InstanceRenderData->bUseGpuSkinning)
+        {
+            InstanceRenderData->DynamicVertexBuffer_CPU =
+                FEngineLoop::Renderer.CreateDynamicVertexBuffer(
+                    SkeletalMesh->GetRenderData()->MeshName + "_CPU_" + FString::FromInt(GetUUID()),
+                    SkeletalMesh->GetRenderData()->BindPoseVertices
+                );
+        }
+    }
+
+    OverrideMaterials.SetNum(SkeletalMesh->GetMaterials().Num());
+    AABB = FBoundingBox(SkeletalMesh->GetRenderData()->Bounds.min, SkeletalMesh->GetRenderData()->Bounds.max);
+    SkeletalMesh->UpdateWorldTransforms();
+
+    if (!InstanceRenderData->bUseGpuSkinning)
+    {
+        UpdateAndApplySkinning();
     }
     else
     {
-        OverrideMaterials.SetNum(value->GetMaterials().Num());
-        AABB = FBoundingBox(SkeletalMesh->GetRenderData()->Bounds.min, SkeletalMesh->GetRenderData()->Bounds.max);
-        SkeletalMesh->UpdateWorldTransforms();
-        SkeletalMesh->UpdateAndApplySkinning();
-
+        SetUseGpuSkinning(true);
     }
+}
+
+void USkinnedMeshComponent::UpdateBoneTransformAndSkinning(int32 BoneIndex, const FMatrix& NewLocalMatrix)
+{
+    if (!SkeletalMesh) return;
+
+    SkeletalMesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
+    SkeletalMesh->UpdateWorldTransforms();
+
+    if (!InstanceRenderData->bUseGpuSkinning)
+    {
+        UpdateAndApplySkinning();
+    }
+}
+void USkinnedMeshComponent::SetUseGpuSkinning(bool bEnable)
+{
+    if (InstanceRenderData == nullptr)return;
+    if (InstanceRenderData->bUseGpuSkinning == bEnable)
+        return;
+
+    InstanceRenderData->bUseGpuSkinning = bEnable;
+
+    if (InstanceRenderData->bUseGpuSkinning)
+    {
+    }
+    else
+    {
+        // CPU 전환 → 바로 스킨 적용이 필요한 경우만
+        if (SkeletalMesh)
+        {
+            UpdateAndApplySkinning();
+        }
+    }
+}
+
+bool USkinnedMeshComponent::IsUsingGpuSkinning() const
+{
+    return InstanceRenderData->bUseGpuSkinning;
+}
+
+bool USkinnedMeshComponent::UpdateAndApplySkinning()
+{
+    if (!InstanceRenderData || !SkeletalMesh || !SkeletalMesh->Skeleton || SkeletalMesh->GetRenderData()->BindPoseVertices.IsEmpty())
+    {
+        return false;
+    }
+    if (!InstanceRenderData->DynamicVertexBuffer_CPU)
+    {
+        InstanceRenderData->DynamicVertexBuffer_CPU =
+            FEngineLoop::Renderer.CreateDynamicVertexBuffer(
+                SkeletalMesh->GetRenderData()->MeshName + "_CPU_" + FString::FromInt(GetUUID()),
+                SkeletalMesh->GetRenderData()->BindPoseVertices
+            );
+    }
+    ID3D11DeviceContext* DeviceContext = GEngineLoop.GraphicDevice.DeviceContext;
+    D3D11_MAPPED_SUBRESOURCE MappedResource;
+    HRESULT hr = DeviceContext->Map(InstanceRenderData->DynamicVertexBuffer_CPU, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
+    if (FAILED(hr)) return false;
+
+    FBX::FSkeletalMeshVertex* SkinnedVertices = static_cast<FBX::FSkeletalMeshVertex*>(MappedResource.pData);
+    const TArray<FBX::FSkeletalMeshVertex>& BindVertices = SkeletalMesh->GetRenderData()->BindPoseVertices;
+    const int32 VertexCount = BindVertices.Num();
+    const TArray<FMatrix>& SkinMatrices = SkeletalMesh->Skeleton->CurrentPose.SkinningMatrices;
+
+    for (int32 i = 0; i < VertexCount; ++i)
+    {
+        const FBX::FSkeletalMeshVertex& BindVertex = BindVertices[i];
+        FBX::FSkeletalMeshVertex& SkinnedVertex = SkinnedVertices[i];
+
+        SkinnedVertex = BindVertex;
+
+        bool bHasInfluence = false;
+        for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
+        {
+            if (BindVertex.BoneWeights[j] > KINDA_SMALL_NUMBER &&
+                SkeletalMesh->Skeleton->BoneTree.IsValidIndex(static_cast<int32>(BindVertex.BoneIndices[j])))
+            {
+                bHasInfluence = true;
+                break;
+            }
+        }
+
+        if (!bHasInfluence) continue;
+
+        FVector SkinnedPosition = FVector::ZeroVector;
+        FVector SkinnedNormal = FVector::ZeroVector;
+
+        float TotalWeight = 0.0f;
+        for (int32 j = 0; j < MAX_BONE_INFLUENCES; ++j)
+        {
+            float Weight = BindVertex.BoneWeights[j];
+            if (Weight <= KINDA_SMALL_NUMBER) continue;
+
+            int32 BoneIndex = static_cast<int32>(BindVertex.BoneIndices[j]);
+            if (!SkeletalMesh->Skeleton->BoneTree.IsValidIndex(BoneIndex)) continue;
+
+            TotalWeight += Weight;
+
+            const FMatrix& SkinMatrix = SkinMatrices[BoneIndex];
+            SkinnedPosition += SkinMatrix.TransformPosition(BindVertex.Position) * Weight;
+
+            FMatrix NormalMatrix = SkinMatrix;
+            NormalMatrix.RemoveTranslation();
+
+            if (FMath::Abs(NormalMatrix.Determinant()) > SMALL_NUMBER)
+            {
+                FMatrix InvTranspose = FMatrix::Transpose(FMatrix::Inverse(NormalMatrix));
+                SkinnedNormal += FMatrix::TransformVector(BindVertex.Normal, InvTranspose) * Weight;
+            }
+            else
+            {
+                SkinnedNormal += BindVertex.Normal * Weight;
+            }
+        }
+
+        if (TotalWeight > KINDA_SMALL_NUMBER)
+        {
+            if (!FMath::IsNearlyEqual(TotalWeight, 1.0f))
+            {
+                float InvWeight = 1.0f / TotalWeight;
+                SkinnedPosition *= InvWeight;
+                SkinnedNormal *= InvWeight;
+            }
+
+            SkinnedVertex.Position = SkinnedPosition;
+            SkinnedVertex.Normal = SkinnedNormal.GetSafeNormal();
+        }
+    }
+
+    DeviceContext->Unmap(InstanceRenderData->DynamicVertexBuffer_CPU, 0);
+    return true;
+}
+
+FBX::FSkeletalMeshInstanceRenderData* USkinnedMeshComponent::GetInstanceRenderData()
+{
+    return InstanceRenderData;
 }
