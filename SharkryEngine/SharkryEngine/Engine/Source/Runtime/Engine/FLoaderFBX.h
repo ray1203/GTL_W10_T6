@@ -16,6 +16,8 @@
 #include <unordered_map> 
 #include "FSkeletalMeshDebugger.h" // FSkeletalMeshDebugger 클래스 선언을 사용하기 위해 포함
 
+
+class UAnimationAsset;
 class USkeletalMeshComponent;
 
 // --- FBX 로딩 관련 네임스페이스 ---
@@ -250,6 +252,12 @@ struct FLoaderFBX
 
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 
+    // TODO 아래 함수에 대한 오버로딩으로 Animation 파일만 있는 경우도 대응할것
+    static void ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes);
+
+    // TODO 아래 테스트 코드 지우기
+    static void GenerateTestAnimationAsset();
+
 private:
     static void CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2);
 };
@@ -281,8 +289,12 @@ public:
 
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
+    static UAnimationAsset* GetAnimationAsset(const FString& name);
+    static void AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset);
+
 private:
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
+    inline static TMap<FString, UAnimationAsset*> AnimationAssetMap;
 };

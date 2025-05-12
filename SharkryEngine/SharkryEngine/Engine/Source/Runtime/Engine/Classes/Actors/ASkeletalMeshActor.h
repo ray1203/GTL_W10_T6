@@ -15,6 +15,8 @@ public:
 
     USkeletalMeshComponent* GetSkeletalMeshComponent() const;
 
+    void SetSkeletalMesh(const FWString& SkelName);
+
 protected:
     UPROPERTY
     (USkeletalMeshComponent*, SkeletalMeshComponent, = nullptr);

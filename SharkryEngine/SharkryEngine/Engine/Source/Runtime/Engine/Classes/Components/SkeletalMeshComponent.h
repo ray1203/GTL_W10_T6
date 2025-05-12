@@ -2,6 +2,8 @@
 #include "Components/SkinnedMeshComponent.h"
 #include "Mesh/SkeletalMesh.h"
 
+class UAnimSingleNodeInstance;
+
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
     DECLARE_CLASS(USkeletalMeshComponent, USkinnedMeshComponent)
@@ -19,6 +21,11 @@ public:
     void SetselectedSubMeshIndex(const int& value) { selectedSubMeshIndex = value; }
     int GetselectedSubMeshIndex() const { return selectedSubMeshIndex; };
 
+    void SetAnimAsset(const FString& AnimName);
+
+    void TickAnimation(float DeltaTime, bool bNeedsValidRootMotion);
+    void RefreshBoneTransforms();
+
     //virtual uint32 GetNumMaterials() const override;
     //virtual UMaterial* GetMaterial(uint32 ElementIndex) const override;
     //virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;
@@ -26,4 +33,7 @@ public:
     //virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
 
     //virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
+
+private:
+    UAnimSingleNodeInstance* AnimInstance= nullptr;
 };

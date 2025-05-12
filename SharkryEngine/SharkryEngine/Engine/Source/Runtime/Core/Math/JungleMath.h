@@ -25,4 +25,9 @@ public:
     static FQuat QInterpTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed);
     /** Interpolate quaternion from Current to Target with constant step (in radians) */
     static FQuat QInterpConstantTo(const FQuat& Current, const FQuat& Target, float DeltaTime, float InterpSpeed);
+
+
+    static FVector DecomposeTranslation(const FMatrix& M);
+    static FQuat DecomposeRotation(const FMatrix& M);
+    static FVector DecomposeScale(const FMatrix& M);
 };

@@ -7,6 +7,8 @@
 
 #include "GameFramework/Actor.h"
 
+#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
@@ -20,6 +22,8 @@ UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
+    TickAnimation(DeltaTime, false);
+
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -87,4 +91,45 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         // SetStaticMesh(nullptr); // 또는 아무것도 안 함
         UE_LOG(LogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
     }
+}
+
+void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
+{
+    if (AnimInstance == nullptr) 
+    {
+        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
+        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        AnimInstance->SetSkeletalMesh(SkeletalMesh);
+    }
+
+    UAnimationAsset* AnimationAsset = FManagerFBX::GetAnimationAsset(AnimName);
+
+    UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset);
+
+    if (AnimSequence == nullptr) return;
+    
+    AnimInstance->SetAnimSequence(AnimSequence);
+
+}
+
+void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRootMotion)
+{
+    if (AnimInstance != nullptr) 
+    {
+        AnimInstance->UpdateAnimation(DeltaTime);
+        RefreshBoneTransforms();
+    }
+}
+
+void USkeletalMeshComponent::RefreshBoneTransforms()
+{
+    const FPoseContext& AnimPose = AnimInstance->GetOutput();
+    
+    for (int i = 0; i < AnimPose.Pose.BoneTransforms.Num(); i++) 
+    {
+        SkeletalMesh->SetBoneLocalMatrix(i, AnimPose.Pose.BoneTransforms[i]);
+    }
+
+    SkeletalMesh->UpdateWorldTransforms();
+    SkeletalMesh->UpdateAndApplySkinning();
 }
