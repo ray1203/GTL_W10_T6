@@ -393,8 +393,8 @@ void Console::ExecuteCommand(const std::string& Command)
         for (const auto iter : TObjectRange<USkeletalMeshComponent>())
         {
             iter->SetUseGpuSkinning(false);
-            if (auto SkeletalMesh = iter->GetSkeletalMesh())
-                SkeletalMesh->UpdateAndApplySkinning();
+            /*if (auto SkeletalMesh = iter->GetSkeletalMesh())
+                SkeletalMesh->UpdateAndApplySkinning();*/
             
         }
     }

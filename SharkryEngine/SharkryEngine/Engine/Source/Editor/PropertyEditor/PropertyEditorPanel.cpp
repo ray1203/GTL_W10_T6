@@ -1536,7 +1536,11 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
 
         ImGui::Text("Skeletal Mesh: %s", *MeshName);
         ImGui::Separator();
-
+        bool IsUsingGpuSkinning = SkeletalMeshComp->IsUsingGpuSkinning();
+        if (ImGui::Checkbox("GPU Skinning",&IsUsingGpuSkinning))
+        {
+            SkeletalMeshComp->SetUseGpuSkinning(IsUsingGpuSkinning);
+        }
         if (ImGui::Button("Open in EngineSIU_Viewer"))
         {
             WCHAR ExePath[MAX_PATH];

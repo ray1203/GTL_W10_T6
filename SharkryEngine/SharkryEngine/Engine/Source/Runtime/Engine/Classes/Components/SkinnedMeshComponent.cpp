@@ -12,6 +12,7 @@ UObject* USkinnedMeshComponent::Duplicate(UObject* InOuter)
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
     NewComponent->selectedSubMeshIndex = selectedSubMeshIndex;
     NewComponent->SkeletalMesh = SkeletalMesh;
+    NewComponent->SetUseGpuSkinning(bUseGpuSkinning);
     return NewComponent;
 }
 
@@ -195,7 +196,7 @@ void USkinnedMeshComponent::SetUseGpuSkinning(bool bEnable)
         // CPU 전환 → 바로 스킨 적용이 필요한 경우만
         if (SkeletalMesh)
         {
-            //SkeletalMesh->UpdateAndApplySkinning();
+            SkeletalMesh->UpdateAndApplySkinning();
         }
     }
 }

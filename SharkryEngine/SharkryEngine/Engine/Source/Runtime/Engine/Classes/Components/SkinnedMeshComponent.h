@@ -34,5 +34,5 @@ protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     int selectedSubMeshIndex = -1;
 private:
-    bool bUseGpuSkinning = true;
+    bool bUseGpuSkinning = false;
 };
