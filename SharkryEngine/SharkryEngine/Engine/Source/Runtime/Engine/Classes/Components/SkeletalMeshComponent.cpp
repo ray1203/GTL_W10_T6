@@ -23,7 +23,6 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
     TickAnimation(DeltaTime, false);
-
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -99,16 +98,38 @@ void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
     {
         // 이후 SingleNode만 사용하지 않는 경우 수정 필요
         AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        AnimInstance->NativeInitializeAnimation();
         AnimInstance->SetSkeletalMesh(SkeletalMesh);
     }
 
     TArray<UAnimationAsset*> AnimationAsset = FManagerFBX::GetAnimationAssets(AnimName);
+    for (auto& Anim : AnimationAsset)
+    {
+        if (Anim == nullptr) continue;
+        
+        if (Anim->GetAssetPath() == "Contents/Idle.fbx")
+        {
+            AnimInstance->IdleAnimSequence = Cast<UAnimSequence>(Anim);
+        }
+        else if (Anim->GetAssetPath() == "Contents/Walking.fbx")
+        {
+            AnimInstance->WalkAnimSequence = Cast<UAnimSequence>(Anim);
+        }
+        else if (Anim->GetAssetPath() == "Contents/Running.fbx")
+        {
+            AnimInstance->RunAnimSequence = Cast<UAnimSequence>(Anim);
+        }
+        else if (Anim->GetAssetPath() == "Contents/Jumping.fbx")
+        {
+            AnimInstance->JumpAnimSequence = Cast<UAnimSequence>(Anim);
+        }
+    }
 
-    UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset[4]);
+    //UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset[1]);
 
-    if (AnimSequence == nullptr) return;
-    
-    AnimInstance->SetAnimSequence(AnimSequence);
+    //if (AnimSequence == nullptr) return;
+    //
+    //AnimInstance->SetAnimSequence(AnimSequence);
 
 }
 

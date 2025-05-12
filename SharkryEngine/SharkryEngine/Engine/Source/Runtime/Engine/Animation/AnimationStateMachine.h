@@ -5,11 +5,12 @@
 enum EAnimState 
 {
     AS_Idle,
-    AS_Work,
+    AS_Walk,
     AS_Run,
-    AS_Fly,
+    AS_Jump,
 };
 
+class APawn;
 class UAnimationStateMachine : public UObject
 {
     DECLARE_CLASS(UAnimationStateMachine, UObject)
@@ -18,5 +19,12 @@ public:
     UAnimationStateMachine();
     ~UAnimationStateMachine() = default;
     void ProcessState();
+    void SetPawn(APawn* InPawn) { Pawn = InPawn; }
+
+    EAnimState CurrentState;
+    EAnimState PreviousState;
+
+private:
+    APawn* Pawn = nullptr;
 };
 

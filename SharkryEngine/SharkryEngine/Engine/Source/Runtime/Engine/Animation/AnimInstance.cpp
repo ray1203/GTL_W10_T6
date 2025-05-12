@@ -1,11 +1,20 @@
 #include "AnimInstance.h"
 #include "Engine/Source/Runtime/Engine/Animation/Skeleton.h"
 
+
 UAnimInstance::UAnimInstance()
 {
 }
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaSeconds)
+{
+}
+
+void UAnimInstance::NativeInitializeAnimation()
+{
+}
+
+void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 }
 
@@ -32,9 +41,7 @@ void UAnimInstance::UpdateAnimation(float DeltaSeconds)
     NativeUpdateAnimation(DeltaSeconds);
 }
 
-void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
-{
-}
+
 
 void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
 {

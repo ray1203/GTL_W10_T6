@@ -4,6 +4,7 @@
 class UInputComponent;
 class AController;
 class UStaticMeshComponent;
+class USkeletalMeshComponent;
 class UCapsuleComponent;
 
 class ACharacter : public APawn
@@ -27,6 +28,9 @@ public:
 protected:
     UPROPERTY
     (UStaticMeshComponent*, BodyMesh, = nullptr);
+
+    UPROPERTY
+    (USkeletalMeshComponent*, SkeletalBodyMesh, = nullptr);
 
     UPROPERTY
     (UCapsuleComponent*, CollisionCapsule, = nullptr);
