@@ -61,6 +61,12 @@ public:
     float GetRunSpeed() const { return RunSpeed; }
 
     FVector PendingMovement;
+
+    UPROPERTY
+    (float, GravityZ, = -9.8f) // 중력 가속도
+
+    UPROPERTY
+    (bool, bIsJumping, = false) // 점프 중인지 여부
 protected:
     UPROPERTY
     (AController*, Controller, = nullptr) // 현재 조종 중인 컨트롤러
@@ -70,9 +76,14 @@ protected:
     (float, MoveSpeed, = 6.0f)
 
     UPROPERTY
+    (float, VerticalVelocity, = 0.0f)
+
+    UPROPERTY
     (float, WalkSpeed, = 6.0f) // 걷는 속도
 
     UPROPERTY
     (float, RunSpeed, = 12.0f) // 뛰는 속도
+
+
 };
 

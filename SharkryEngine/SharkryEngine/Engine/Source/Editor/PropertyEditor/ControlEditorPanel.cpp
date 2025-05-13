@@ -438,7 +438,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Sharkry"));
                     ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(SpawnedActor);
-                    SkeletalActor->SetSkeletalMesh(L"Contents/Sharkry_NoTwist.fbx");
+                    SkeletalActor->SetSkeletalMesh(L"Contents/SharkryAnimation.fbx");
                     break;
                 }
                 case OBJ_TRIANGLE:
