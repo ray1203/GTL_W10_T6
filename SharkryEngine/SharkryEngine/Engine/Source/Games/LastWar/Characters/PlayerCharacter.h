@@ -33,6 +33,10 @@ public:
     void MoveRight(float Value);
     void Jump();
     void UpdateVerticalMovement(float DeltaTime);
+    void MoveForwardPress();
+    void MoveForwardRelease();
+    void MoveRightPress();
+    void MoveRightRelease();
 
     void HandleOverlap(AActor* OtherActor);
 
@@ -83,5 +87,8 @@ private:
 
     UPROPERTY
     (float, AttackDamage, = 10.0f)
+
+    bool bIsMoveForwardPressed = false;
+    bool bIsMoveRightPressed = false;
 };
 
