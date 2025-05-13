@@ -9,6 +9,8 @@ UAnimationStateMachine::UAnimationStateMachine()
 
 void UAnimationStateMachine::ProcessState()
 {
+    if (!Pawn) return;
+
     PreviousState = CurrentState;
 
     if (Pawn->PendingMovement.IsNearlyZero())
@@ -42,6 +44,8 @@ void UAnimationStateMachine::Update(float DeltaSeconds)
 
 void UAnimationStateMachine::ApplyStateChange()
 {
+    if (!Pawn) return;
+
     USkeletalMeshComponent* MeshComp = Pawn->GetComponentByClass<USkeletalMeshComponent>();
     if (!MeshComp) return;
 
