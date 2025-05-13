@@ -21,6 +21,7 @@
 #include "Actors/CameraActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/FLoaderFBX.h"
+#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -30,9 +31,10 @@ APlayerCharacter::APlayerCharacter()
     FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx", L"Contents/Mutant.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx", L"Contents/Mutant.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx", L"Contents/Mutant.fbx");
+    BodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
-    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
+    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 1.5f));
 }
 
 UObject* APlayerCharacter::Duplicate(UObject* InOuter)
@@ -56,6 +58,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    UpdateVerticalMovement(DeltaTime);
+
     if (!LastWarUI::bShowGameOver && Health <= 0)
     {
         EnableInput(Cast<APlayerController>(Controller));
@@ -72,6 +76,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     // Bind input actions and axes here  
     PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
+    PlayerInputComponent->BindAction("Jump", [this]() { Jump(); });
 }
 
 void APlayerCharacter::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -108,6 +113,15 @@ void APlayerCharacter::MoveForward(float Value)
     if (Value != 0.0f)
     {
         AddMovementInput(GetActorForwardVector(), Value);
+
+        if (Value >= 0.0f)
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+        }
+        else
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
+        }
     }
 }
 
@@ -118,9 +132,47 @@ void APlayerCharacter::MoveRight(float Value)
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
-
         SetActorLocation(Location);
+        if (Value >= 0.0f)
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+        }
+        else
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
+        }
     }
+}
+
+void APlayerCharacter::Jump()
+{
+    if (Controller && !bIsJumping)
+    {
+        bIsJumping = true;
+        VerticalVelocity = 8.0f;
+    }
+}
+
+void APlayerCharacter::UpdateVerticalMovement(float DeltaTime)
+{
+    if (!bIsJumping)
+        return;
+
+    // 중력 적용
+    VerticalVelocity += GravityZ * DeltaTime;
+
+    // 위치 계산
+    FVector Loc = GetActorLocation();
+    Loc.Z += VerticalVelocity * DeltaTime;
+
+    // 바닥 체크
+    if (Loc.Z <= 0.0f)
+    {
+        Loc.Z = 0.0f;
+        VerticalVelocity = 0.f;
+        bIsJumping = false;
+    }
+    SetActorLocation(Loc);
 }
 
 void APlayerCharacter::HandleOverlap(AActor* OtherActor)

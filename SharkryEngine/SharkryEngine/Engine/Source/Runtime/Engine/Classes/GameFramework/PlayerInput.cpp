@@ -9,6 +9,7 @@ void UPlayerInput::InitializeDefaultMappings()
     AddAxisMapping({ "MoveForward", EKeys::S, -1.f });
     AddAxisMapping({ "MoveRight",   EKeys::D,  1.f });
     AddAxisMapping({ "MoveRight",   EKeys::A, -1.f });
+    AddActionMapping({ "Jump", EKeys::SpaceBar });
 }
 
 void UPlayerInput::AddActionMapping(const FInputActionKeyMapping& Mapping)
