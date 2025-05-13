@@ -11,18 +11,15 @@ ACharacter::ACharacter()
 {  
     CollisionCapsule = AddComponent<UCapsuleComponent>("CollisionCapsule");
     RootComponent = CollisionCapsule;
-    BodyMesh = AddComponent<UStaticMeshComponent>("BodyMesh");
+    BodyMesh = AddComponent<USkeletalMeshComponent>("SkeletalBodyMesh");
     BodyMesh->SetupAttachment(RootComponent);
-    SkeletalBodyMesh = AddComponent<USkeletalMeshComponent>("SkeletalBodyMesh");
-    SkeletalBodyMesh->SetupAttachment(RootComponent);
 }
 
 UObject* ACharacter::Duplicate(UObject* InOuter)
 {
     UObject* NewActor = Super::Duplicate(InOuter);
     ACharacter* PlayerCharacter = Cast<ACharacter>(NewActor);
-    PlayerCharacter->BodyMesh = GetComponentByFName<UStaticMeshComponent>("BodyMesh");
-    PlayerCharacter->SkeletalBodyMesh = GetComponentByFName<USkeletalMeshComponent>("SkeletalBodyMesh");
+    PlayerCharacter->BodyMesh = GetComponentByFName<USkeletalMeshComponent>("SkeletalBodyMesh");
 
     return NewActor;
 }

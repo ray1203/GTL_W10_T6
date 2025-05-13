@@ -17,7 +17,15 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
     if (StateMachine == nullptr)
     {
         StateMachine = FObjectFactory::ConstructObject<UAnimationStateMachine>(this);
-        StateMachine->SetPawn(GEngine->ActiveWorld->GetFirstPlayerController()->GetPawn());
+        TArray<AActor*> ActorsCopy = GEngine->ActiveWorld->GetActiveLevel()->Actors;
+        for (AActor* Actor : ActorsCopy)
+        {
+            if (Actor && Actor->IsA<APawn>())
+            {
+                StateMachine->SetPawn(Cast<APawn>(Actor));
+                break;
+            }
+        }
     }
     // 애니메이션 시퀀스 초기화
     if (AnimSequence == nullptr)

@@ -74,7 +74,7 @@ void UEditorEngine::Init()
     FString ScenePath = FEditorConfigManager::GetValueFromConfig<std::string>(Config, "ScenePath", "Saved/DefaultLevel.scene");
 
     // 테스트용 캐릭터
-    PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
+    //PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
 #ifndef _DEBUG_VIEWER
     LoadLevel(ScenePath);
 #endif // DEBUG_VIEWER
@@ -252,6 +252,7 @@ void UEditorEngine::StartPIE()
     ActiveWorld->AddPlayerController(PC);
 
     // 2) Character Possess
+    PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
     PIEWorld->BeginPlay();

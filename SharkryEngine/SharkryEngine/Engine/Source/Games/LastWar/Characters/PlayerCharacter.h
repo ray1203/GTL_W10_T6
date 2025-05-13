@@ -4,6 +4,7 @@
 
 class UCameraComponent;
 class UInputComponent;
+class UStaticMeshComponent;
 
 DECLARE_MULTICAST_DELEGATE(FOnCharacterDeath);
 
