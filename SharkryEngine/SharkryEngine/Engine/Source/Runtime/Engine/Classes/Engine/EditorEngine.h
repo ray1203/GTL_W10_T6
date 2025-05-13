@@ -12,8 +12,7 @@ class AActor;
 class USceneComponent;
 class UPrimitiveComponent;
 struct FBoneNode;
-
-
+class APlayerCharacter;
 
 class UEditorEngine : public UEngine
 {
@@ -88,6 +87,8 @@ public:
     
 private:
     UEditorPlayer* EditorPlayer = nullptr;
+    // 에디터 시작 시 컨트롤러 즉시 주입을 위한 캐릭터 생성(테스트용)
+    APlayerCharacter* PlayerCharacter = nullptr;
 
 };
 

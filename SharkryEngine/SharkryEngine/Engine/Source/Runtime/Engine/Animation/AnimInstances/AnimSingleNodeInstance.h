@@ -1,32 +1,37 @@
 #pragma once
 
-#include "Engine/Animation/AnimInstance.h"
-#include "Engine/Source/Runtime/Engine/Animation/AnimSequence.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimationStateMachine.h"
+#include "Animation/AnimTypes.h"
 
+class FAnimNotifyEvent;
 class UAnimSingleNodeInstance : public UAnimInstance 
 {
-    DECLARE_CLASS(UAnimSingleNodeInstance, UObject)
+    DECLARE_CLASS(UAnimSingleNodeInstance, UAnimInstance)
 
 public:
     UAnimSingleNodeInstance();
     ~UAnimSingleNodeInstance() = default;
 
-    void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; }
-
     FPoseContext GetOutput() { return Output; }
 
-protected:
+    virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
     virtual void UpdateNotify(float DeltaSeconds) override;
+    void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    void SetPlaying(bool bInPlaying);
 
-    UAnimSequence* AnimSequence;
+    UAnimationStateMachine* StateMachine = nullptr;
+
+    EAnimState CurrentState = AS_Idle;
+    EAnimState PreviousState = AS_Idle;
+protected:
+    UAnimSequence* AnimSequence = nullptr;
     FPoseContext Output;
-
     float CurrentTime = 0.0f;
-    
-    bool bPlaying = true;
+    bool bIsPlaying = true;
     float PlayRate = 1.0f;
-    bool bLooping = true;
+    bool bIsLooping = true;
 
     TArray<FAnimNotifyEvent*> PrevFrameNotifies;
 };

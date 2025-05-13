@@ -245,6 +245,7 @@ namespace FBX { struct FSkeletalMeshRenderData; }
 
 struct FLoaderFBX
 {
+    ~FLoaderFBX();
     static bool ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo);
 
     // Convert the Raw data to Cooked data (FSkeletalMeshRenderData)
@@ -255,16 +256,19 @@ struct FLoaderFBX
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 
     // TODO 아래 함수에 대한 오버로딩으로 Animation 파일만 있는 경우도 대응할것
-    static void ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes);
+    static void ParseFBXAnim(const FString& FBXFilePath, const FString& AnimParentFBXFilePath);
 
     static void ParseFBXCurveKey(FbxNode* BoneNode, FbxAnimLayer* Layer, UAnimDataModel* AnimDataModel, const FString& PropertyName, ETransformChannel TransformChannel, const char* pChannel);
 
     // TODO 아래 테스트 코드 지우기
     static void GenerateTestAnimationAsset();
 
+    inline static FbxManager* SdkManager = nullptr;
+    inline static FbxImporter* Importer = nullptr;
+    inline static FbxScene* Scene = nullptr;
+
 private:
     static void CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2);
-    
     // CurveKey에 사용할 Property
     static const FString TranslationChannels[3];
     static const FString RotationChannels[3];
@@ -298,12 +302,18 @@ public:
 
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
-    static UAnimationAsset* GetAnimationAsset(const FString& name);
-    static void AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset);
+    static TArray<UAnimationAsset*> GetAnimationAssets(const FString& name);
+    static void AddAnimationAssets(const FString& name, UAnimationAsset* AnimationAsset);
+
+    static void SetFBXBoneNames(const FString& name, TArray<FString> node);
+    static TArray<FString> GetFBXBoneNames(const FString& name);
+
+    static void CreateAnimationAsset(const FWString& name, const FWString& AnimParentFBXFilePath);
 
 private:
+    inline static TMap<FString, TArray<FString>> FBXBoneNameMap; // FBX BoneNode를 들고오기 위한 NameMap
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
-    inline static TMap<FString, UAnimationAsset*> AnimationAssetMap;
+    inline static TMap<FString, TArray<UAnimationAsset*>> AnimationAssetMap;
 };
