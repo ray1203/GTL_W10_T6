@@ -37,8 +37,6 @@ UObject* ASkeletalMeshActor::Duplicate(UObject* InOuter)
 void ASkeletalMeshActor::BeginPlay()
 {
     Super::BeginPlay();
-
-    SetAnimationAsset();
 }
 
 USkeletalMeshComponent* ASkeletalMeshActor::GetSkeletalMeshComponent() const
