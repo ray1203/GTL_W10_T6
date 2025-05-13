@@ -256,12 +256,15 @@ struct FLoaderFBX
     static void ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 
     // TODO 아래 함수에 대한 오버로딩으로 Animation 파일만 있는 경우도 대응할것
-    static void ParseFBXAnim(const FString& FBXFilePath, const FString& AnimParentFBXFilePath);
+    static void ParseFBXAnim(const FString& FBXFilePath);
 
     static void ParseFBXCurveKey(FbxNode* BoneNode, FbxAnimLayer* Layer, UAnimDataModel* AnimDataModel, const FString& PropertyName, ETransformChannel TransformChannel, const char* pChannel);
 
     // TODO 아래 테스트 코드 지우기
     static void GenerateTestAnimationAsset();
+
+    // SkeletonBoneNode 재귀적으로 구하는 함수
+    static void CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& OutBones);
 
     inline static FbxManager* SdkManager = nullptr;
     inline static FbxImporter* Importer = nullptr;
@@ -302,18 +305,15 @@ public:
 
     static int GetSkeletalMeshNum() { return SkeletalMeshMap.Num(); }
 
-    static TArray<UAnimationAsset*> GetAnimationAssets(const FString& name);
-    static void AddAnimationAssets(const FString& name, UAnimationAsset* AnimationAsset);
+    static UAnimationAsset* GetAnimationAsset(const FString& name);
+    static void AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset);
+    static TMap<FString, UAnimationAsset*>& GetAnimationAssets() { return AnimationAssetMap; }
 
-    static void SetFBXBoneNames(const FString& name, TArray<FString> node);
-    static TArray<FString> GetFBXBoneNames(const FString& name);
-
-    static void CreateAnimationAsset(const FWString& name, const FWString& AnimParentFBXFilePath);
+    static void CreateAnimationAsset(const FWString& name);
 
 private:
-    inline static TMap<FString, TArray<FString>> FBXBoneNameMap; // FBX BoneNode를 들고오기 위한 NameMap
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
-    inline static TMap<FString, TArray<UAnimationAsset*>> AnimationAssetMap;
+    inline static TMap<FString, UAnimationAsset*> AnimationAssetMap;
 };
