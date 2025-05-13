@@ -150,6 +150,18 @@ void FEditorViewportClient::InputKey(const FKeyEvent& InKeyEvent)
                     }
                     break;
                 }
+                case 32: // Space
+                {
+                    if (InKeyEvent.GetInputEvent() == IE_Pressed)
+                    {
+                        PC->InputKey(EKeys::SpaceBar, IE_Pressed);
+                    }
+                    else if (InKeyEvent.GetInputEvent() == IE_Released)
+                    {
+                        PC->InputKey(EKeys::SpaceBar, IE_Released);
+                    }
+                    break;
+                }
                 }
             }
         }

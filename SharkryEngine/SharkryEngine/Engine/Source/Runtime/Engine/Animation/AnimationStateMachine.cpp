@@ -13,7 +13,11 @@ void UAnimationStateMachine::ProcessState()
 
     PreviousState = CurrentState;
 
-    if (Pawn->PendingMovement.IsNearlyZero())
+    if (Pawn->bIsJumping)
+    {
+        CurrentState = AS_Jump;
+    }
+    else if (Pawn->PendingMovement.IsNearlyZero())
     {
         CurrentState = AS_Idle;
     }
@@ -27,7 +31,7 @@ void UAnimationStateMachine::ProcessState()
     }
     else
     {
-        CurrentState = AS_Jump;
+        CurrentState = AS_Idle;
     }
 }
 
