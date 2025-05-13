@@ -1770,6 +1770,7 @@ void FLoaderFBX::ParseFBXAnim(FbxScene* Scene, TArray<FbxNode*>& BoneNodes)
         Sequence->SetDataModel(AnimDataModel);
 
         // 5) 매니저에 등록
+        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *TakeName);
         FManagerFBX::AddAnimationAsset(TakeName, Sequence);
     }
 }
