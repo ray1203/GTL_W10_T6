@@ -26,7 +26,8 @@ UObject* USkinnedMeshComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
     NewComponent->selectedSubMeshIndex = selectedSubMeshIndex;
-    NewComponent->SkeletalMesh = SkeletalMesh;
+    NewComponent->SetSkeletalMesh(SkeletalMesh);
+    NewComponent->SetUseGpuSkinning(IsUsingGpuSkinning());
     return NewComponent;
 }
 
