@@ -1244,9 +1244,8 @@ bool FLoaderFBX::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXInfo)
     {
         BoneNames.AddUnique(BoneNodes->GetName());
     }
-    FManagerFBX::SetFBXBoneNames(FBXFilePath, BoneNames);
 
-    ParseFBXAnim(FBXFilePath, FBXFilePath);
+    ParseFBXAnim(FBXFilePath);
 
     return true;
 }
@@ -1679,7 +1678,7 @@ void FLoaderFBX::ComputeBoundingBox(const TArray<FBX::FSkeletalMeshVertex>& InVe
     }
 }
 
-void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimParentFBXFilePath)
+void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath)
 {
 #if USE_WIDECHAR
     std::string FilepathStdString = FBXFilePath.ToAnsiString();
@@ -1695,15 +1694,9 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
 
     FbxSystemUnit::m.ConvertScene(Scene);
 
-    TArray<FString> BoneNames;
-    BoneNames = FManagerFBX::GetFBXBoneNames(AnimParentFBXFilePath);
-
-    TArray<FbxNode*> NewBoneNodes;
-    for (auto& Name : BoneNames)
-    {
-        FbxNode* N = Scene->FindNodeByName(*Name);
-        if (N) NewBoneNodes.Add(N);
-    }
+    TArray<FbxNode*> BoneNodes;
+    FbxNode* Root = Scene->GetRootNode();
+    CollectSkeletonNodes(Root, BoneNodes);
 
     int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int i = 0; i < NumStacks; i++) 
@@ -1711,7 +1704,7 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
         // Stack의 개수만큼 애니메이션의 클립이 있는 것임
         FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
         Scene->SetCurrentAnimationStack(Stack);
-        FString TakeName = AnimParentFBXFilePath;
+        FString TakeName = FBXFilePath;
 
         // 엔진 내부 구조도 준비
         UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
@@ -1737,7 +1730,7 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
 
         // 미리구한 Bone 목록을 통해 프레임 정보에 접근
 
-        for (FbxNode* BoneNode : NewBoneNodes)
+        for (FbxNode* BoneNode : BoneNodes)
         {
             // FBoneAnimationTrack 추출
 
@@ -1806,7 +1799,7 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
 
         // 5) 매니저에 등록
         Sequence->SetAssetPath(FBXFilePath);
-        FManagerFBX::AddAnimationAssets(TakeName, Sequence);
+        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
         UE_LOG(LogLevel::Warning, "Animation ADD : %s", *TakeName);
     }
 }
@@ -2144,7 +2137,26 @@ void FLoaderFBX::GenerateTestAnimationAsset()
     // 5) 매니저에 등록
     //    "TestAnim" 이라는 이름으로 등록합니다.
 
-    FManagerFBX::AddAnimationAssets(TEXT("TestAnim"), Sequence);
+    FManagerFBX::AddAnimationAsset(TEXT("TestAnim"), Sequence);
+}
+
+void FLoaderFBX::CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& OutBones)
+{
+    if (!Node) return;
+
+    // 1) 이 노드가 Skeleton 속성을 가지고 있으면 배열에 추가
+    FbxNodeAttribute* Attr = Node->GetNodeAttribute();
+    if (Attr && Attr->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+    {
+        OutBones.Add(Node);
+    }
+
+    // 2) 자식 노드들도 재귀 순회
+    const int ChildCount = Node->GetChildCount();
+    for (int i = 0; i < ChildCount; ++i)
+    {
+        CollectSkeletonNodes(Node->GetChild(i), OutBones);
+    }
 }
 
 void FLoaderFBX::CalculateTangent(FBX::FSkeletalMeshVertex& PivotVertex, const FBX::FSkeletalMeshVertex& Vertex1, const FBX::FSkeletalMeshVertex& Vertex2) { /* TODO: Implement if needed */ }
@@ -2252,36 +2264,22 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& name)
     return CreateSkeletalMesh(FString(name.c_str()));
 }
 
-TArray<UAnimationAsset*> FManagerFBX::GetAnimationAssets(const FString& name)
+UAnimationAsset* FManagerFBX::GetAnimationAsset(const FString& name)
 {
     if (AnimationAssetMap.Contains(name)) 
     {
         return AnimationAssetMap[name];
     }
 
-    return TArray<UAnimationAsset*>();
+    return nullptr;
 }
 
-void FManagerFBX::AddAnimationAssets(const FString& name, UAnimationAsset* AnimationAsset)
+void FManagerFBX::AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset)
 {
-    AnimationAssetMap[name].Add(AnimationAsset);
+    AnimationAssetMap[name] = AnimationAsset;
 }
 
-void FManagerFBX::SetFBXBoneNames(const FString& name, TArray<FString> node)
+void FManagerFBX::CreateAnimationAsset(const FWString& name)
 {
-    FBXBoneNameMap.Add(name, node);
-}
-
-TArray<FString> FManagerFBX::GetFBXBoneNames(const FString& name)
-{
-    if (FBXBoneNameMap.Contains(name))
-    {
-        return FBXBoneNameMap[name];
-    }
-    return TArray<FString>();
-}
-
-void FManagerFBX::CreateAnimationAsset(const FWString& name, const FWString& AnimParentFBXFilePath)
-{
-    FLoaderFBX::ParseFBXAnim(FString(name.c_str()), FString(AnimParentFBXFilePath.c_str()));
+    FLoaderFBX::ParseFBXAnim(FString(name.c_str()));
 }

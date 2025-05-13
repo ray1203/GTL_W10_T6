@@ -1570,19 +1570,19 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
 
         }
 
-        TArray<UAnimationAsset*> AnimAssets = FManagerFBX::GetAnimationAssets(FilePath);
+        TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
         static TArray<const char*> ItemPtrs;
         ItemPtrs.Empty(AnimAssets.Num());
         for (const auto& Asset : AnimAssets)
         {
-            ItemPtrs.Add(*Asset->GetAssetPath());
+            ItemPtrs.Add(*Asset.Key);
         }
 
         static int CurrentIndex = 0;
 
         if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num()))
         {
-            Cast<USkeletalMeshComponent>(SkeletalMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[CurrentIndex]), true);
+            Cast<USkeletalMeshComponent>(SkeletalMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[ItemPtrs[CurrentIndex]]), true);
         }
 
         ImGui::Spacing();
