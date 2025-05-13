@@ -473,5 +473,5 @@ struct FFadeConstants
 
 struct FBoneMatrixBuffer
 {
-    FMatrix BoneMatrices[128]; // 최대 본 개수
+    FMatrix BoneMatrices[512]; // 최대 본 개수
 };

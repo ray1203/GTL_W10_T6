@@ -3,11 +3,20 @@
 #include "Engine/Classes/Components/SkeletalMeshComponent.h"
 #include "AnimTypes.h"
 
+
 UAnimInstance::UAnimInstance()
 {
 }
 
 void UAnimInstance::TriggerAnimNotifies(float DeltaSeconds)
+{
+}
+
+void UAnimInstance::NativeInitializeAnimation()
+{
+}
+
+void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 }
 
@@ -33,11 +42,6 @@ void UAnimInstance::UpdateAnimation(float DeltaSeconds)
     //PreUpdateAnimation(Δt)
     NativeUpdateAnimation(DeltaSeconds);
     UpdateNotify(DeltaSeconds);
-}
-
-void UAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
-{
-    // 구현은 UAnimSingleNodeInstance에서 처리
 }
 
 void UAnimInstance::UpdateNotify(float DeltaSeconds)

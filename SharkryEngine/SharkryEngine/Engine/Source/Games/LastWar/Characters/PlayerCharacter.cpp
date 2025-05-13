@@ -19,10 +19,17 @@
 #include "Camera/CameraModifier/CameraShakeModifier.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Actors/CameraActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/FLoaderFBX.h"
 
 APlayerCharacter::APlayerCharacter()
 {
-    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
+    //BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
+    Cast<USkeletalMeshComponent>(BodyMesh)->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
+    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx", L"Contents/Mutant.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx", L"Contents/Mutant.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx", L"Contents/Mutant.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx", L"Contents/Mutant.fbx");
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
     FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
@@ -41,7 +48,8 @@ void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
-    SetCharacterMeshCount(1);
+    Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimAsset("Contents/Mutant.fbx");
+    //SetCharacterMeshCount(1);
 }
   
 void APlayerCharacter::Tick(float DeltaTime)

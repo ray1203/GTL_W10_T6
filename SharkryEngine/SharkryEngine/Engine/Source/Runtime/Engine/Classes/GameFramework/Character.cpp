@@ -5,13 +5,14 @@
 #include "Components/LuaScriptComponent.h"
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/Animation/AnimNotify.h"
 
 ACharacter::ACharacter()  
 {  
     CollisionCapsule = AddComponent<UCapsuleComponent>("CollisionCapsule");
     RootComponent = CollisionCapsule;
-    BodyMesh = AddComponent<UStaticMeshComponent>("BodyMesh");
+    BodyMesh = AddComponent<USkeletalMeshComponent>("SkeletalBodyMesh");
     BodyMesh->SetupAttachment(RootComponent);
 }
 
@@ -19,7 +20,7 @@ UObject* ACharacter::Duplicate(UObject* InOuter)
 {
     UObject* NewActor = Super::Duplicate(InOuter);
     ACharacter* PlayerCharacter = Cast<ACharacter>(NewActor);
-    PlayerCharacter->BodyMesh = GetComponentByFName<UStaticMeshComponent>("BodyMesh");
+    PlayerCharacter->BodyMesh = GetComponentByFName<USkeletalMeshComponent>("SkeletalBodyMesh");
 
     return NewActor;
 }

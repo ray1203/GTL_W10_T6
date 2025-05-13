@@ -3,7 +3,7 @@
 
 class UInputComponent;
 class AController;
-class UStaticMeshComponent;
+class UMeshComponent;
 class UCapsuleComponent;
 struct FAnimNotifyEvent;
 
@@ -29,7 +29,7 @@ public:
 
 protected:
     UPROPERTY
-    (UStaticMeshComponent*, BodyMesh, = nullptr);
+    (UMeshComponent*, BodyMesh, = nullptr);
 
     UPROPERTY
     (UCapsuleComponent*, CollisionCapsule, = nullptr);
