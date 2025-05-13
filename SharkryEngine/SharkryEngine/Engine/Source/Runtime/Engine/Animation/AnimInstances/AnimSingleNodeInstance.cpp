@@ -7,7 +7,7 @@
 #include "Animation/AnimNotify.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {

@@ -1,5 +1,7 @@
 #include "ASkeletalMeshActor.h"
-#include "FLoaderFBX.h"
+
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
 #include "Animation/AnimSequence.h"

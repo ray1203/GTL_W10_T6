@@ -37,8 +37,11 @@
 #include "Engine/CurveManager.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimSequence.h"
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FBXStructs.h"
+#include "Renderer/DepthPrePass.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -1564,11 +1567,6 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             );
         }
 
-        if (ImGui::Button("Generate Test Animation")) 
-        {
-            FLoaderFBX::GenerateTestAnimationAsset();
-
-        }
 
         TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
         static TArray<const char*> ItemPtrs;

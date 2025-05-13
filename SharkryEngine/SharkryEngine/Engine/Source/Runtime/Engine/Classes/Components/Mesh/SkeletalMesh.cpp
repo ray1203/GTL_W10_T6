@@ -1,7 +1,10 @@
 #include "SkeletalMesh.h"
+
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FBXStructs.h"
 #include "Engine/FLoaderOBJ.h"
 #include "UObject/Casts.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Container/String.h"
 #include "UObject/ObjectFactory.h"
 //#include " Skeleton.h" // USkeleton 클래스 포함

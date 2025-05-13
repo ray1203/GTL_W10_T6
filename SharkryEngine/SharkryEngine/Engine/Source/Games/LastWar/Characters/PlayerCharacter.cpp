@@ -20,8 +20,9 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Actors/CameraActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 APlayerCharacter::APlayerCharacter()
 {

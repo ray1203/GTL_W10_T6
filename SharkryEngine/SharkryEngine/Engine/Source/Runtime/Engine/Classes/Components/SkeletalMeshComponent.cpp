@@ -1,5 +1,5 @@
 #include "Components/SkeletalMeshComponent.h"
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
@@ -8,6 +8,7 @@
 #include "Engine/Classes/GameFramework/Character.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimNotify.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
