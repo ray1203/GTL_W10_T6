@@ -123,6 +123,10 @@ void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
         {
             AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim));
         }
+        else
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim));
+        }
     }
 
     AnimInstance->NativeInitializeAnimation();
