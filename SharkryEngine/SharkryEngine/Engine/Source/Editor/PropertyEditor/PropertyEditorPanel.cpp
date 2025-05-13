@@ -38,6 +38,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "FLoaderFBX.h"
+#include "Animation/AnimSequence.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -1569,23 +1570,19 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
 
         }
 
-        // 1) Buffer to hold user‐entered animation asset name
-        static char AnimAssetBuffer[256] = "mixamo.com";
-
-        // 2) InputText for the animation asset name
-        ImGui::InputText("Animation Asset Name", AnimAssetBuffer, IM_ARRAYSIZE(AnimAssetBuffer));
-
-        // 3) When button is clicked, convert to FString and call SetAnimAsset
-        if (ImGui::Button("Set Anim Asset"))
+        TArray<UAnimationAsset*> AnimAssets = FManagerFBX::GetAnimationAssets(FilePath);
+        static TArray<const char*> ItemPtrs;
+        ItemPtrs.Empty(AnimAssets.Num());
+        for (const auto& Asset : AnimAssets)
         {
-            // Convert UTF-8 char buffer to Unreal's TCHAR
-            FString AnimName = AnimAssetBuffer;
-            
-            if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(SkeletalMeshComp)) 
-            {
-                SkeletalMesh->SetAnimAsset(AnimName);
-            }
-            
+            ItemPtrs.Add(*Asset->GetAssetPath());
+        }
+
+        static int CurrentIndex = 0;
+
+        if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num()))
+        {
+            Cast<USkeletalMeshComponent>(SkeletalMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[CurrentIndex]), true);
         }
 
         ImGui::Spacing();
