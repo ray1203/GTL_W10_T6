@@ -11,6 +11,8 @@ void ViewerEd::Initialize()
 
     auto SkeletonPanel = std::make_shared<SkeletonDataPanel>();
     Panels["SkeletonDataPanel"] = SkeletonPanel;
+
+
 }
 
 void ViewerEd::Render() const

@@ -152,5 +152,5 @@ void USkeletalMeshComponent::RefreshBoneTransforms()
     }
 
     SkeletalMesh->UpdateWorldTransforms();
-    SkeletalMesh->UpdateAndApplySkinning();
+    UpdateAndApplySkinning();
 }

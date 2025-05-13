@@ -56,6 +56,7 @@ void SkeletonDataPanel::Render()
 
     USkeletalMesh* SkeletalMesh = SkeletalComp->GetSkeletalMesh();
 
+
     if (!SkeletalMesh) 
     {
         ImGui::Text("No Skeletal Mesh Asset");
@@ -86,7 +87,6 @@ void SkeletonDataPanel::Render()
         const int32 ParentIdx = RefSkeleton.BoneInfo[BoneIdx].ParentIndex;
         ParentToChildren.FindOrAdd(ParentIdx).Add(BoneIdx);
     }
-
     /* 계층 구조 표시 */
     ImGui::BeginChild("BoneTree", ImVec2(0, 0), true);
 
@@ -223,9 +223,8 @@ void SkeletonDataPanel::DrawBoneTransformPanel() const
                         FMatrix::GetRotationMatrix(LocalRot) *
                         FMatrix::GetTranslationMatrix(LocalPos);
 
-                    Mesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
-                    Mesh->UpdateWorldTransforms();
-                    Mesh->UpdateAndApplySkinning();
+                    SkeletalComp->UpdateBoneTransformAndSkinning(BoneIndex, NewLocalMatrix);
+
                 }
 
                 if (bGlobalChanged)
@@ -246,9 +245,8 @@ void SkeletonDataPanel::DrawBoneTransformPanel() const
 
                     FMatrix NewLocalMatrix = NewGlobalMatrix * ParentGlobalInverse;
 
-                    Mesh->SetBoneLocalMatrix(BoneIndex, NewLocalMatrix);
-                    Mesh->UpdateWorldTransforms();
-                    Mesh->UpdateAndApplySkinning();
+                    SkeletalComp->UpdateBoneTransformAndSkinning(BoneIndex, NewLocalMatrix);
+
                 }
             }
         }

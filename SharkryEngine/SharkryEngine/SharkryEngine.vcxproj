@@ -263,20 +263,20 @@ REM lua.dll 복사
 xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
 
 REM Shaders 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+xcopy /Y /I /E "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
 
 REM Scripts 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+xcopy /Y /I /E "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
 
 REM Font 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+xcopy /Y /I /E "$(ProjectDir)Font" "$(OutDir)Font\"
 
 REM font.dds 복사
 xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
 xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
 
 REM Contents 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+xcopy /Y /I /E "$(ProjectDir)Contents" "$(OutDir)Contents\"
 
 REM Icon Textures 복사
 xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
@@ -318,20 +318,20 @@ REM lua.dll 복사
 xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
 
 REM Shaders 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+xcopy /Y /I /E "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
 
 REM Scripts 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+xcopy /Y /I /E "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
 
 REM Font 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+xcopy /Y /I /E "$(ProjectDir)Font" "$(OutDir)Font\"
 
 REM font.dds 복사
 xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
 xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
 
 REM Contents 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+xcopy /Y /I /E "$(ProjectDir)Contents" "$(OutDir)Contents\"
 
 REM Icon Textures 복사
 xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
@@ -380,20 +380,20 @@ REM lua.dll 복사
 xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
 
 REM Shaders 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+xcopy /Y /I /E "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
 
 REM Scripts 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+xcopy /Y /I /E "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
 
 REM Font 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+xcopy /Y /I /E "$(ProjectDir)Font" "$(OutDir)Font\"
 
 REM font.dds 복사
 xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
 xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
 
 REM Contents 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+xcopy /Y /I /E "$(ProjectDir)Contents" "$(OutDir)Contents\"
 
 REM Icon Textures 복사
 xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
@@ -442,20 +442,20 @@ REM lua.dll 복사
 xcopy /Y /I "$(ProjectDir)Engine\Source\ThirdParty\Lua\lib\lua.dll" "$(OutDir)"
 
 REM Shaders 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
+xcopy /Y /I /E "$(ProjectDir)Shaders" "$(OutDir)Shaders\"
 
 REM Scripts 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
+xcopy /Y /I /E "$(ProjectDir)Scripts" "$(OutDir)Scripts\"
 
 REM Font 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Font" "$(OutDir)Font\"
+xcopy /Y /I /E "$(ProjectDir)Font" "$(OutDir)Font\"
 
 REM font.dds 복사
 xcopy /Y /I "$(ProjectDir)Assets\Texture\font.dds" "$(OutDir)Assets\Texture\"
 xcopy /Y /I "$(ProjectDir)Assets\Texture\UUID_Font.dds" "$(OutDir)Assets\Texture\"
 
 REM Contents 폴더 전체 복사
-xcopy /Y /I /E /D "$(ProjectDir)Contents" "$(OutDir)Contents\"
+xcopy /Y /I /E "$(ProjectDir)Contents" "$(OutDir)Contents\"
 
 REM Icon Textures 복사
 xcopy /Y /I "$(ProjectDir)Assets\Editor\Icon\DirectionalLight_64x.png" "$(OutDir)Assets\Editor\Icon\"
@@ -773,6 +773,12 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Release|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="Shaders\StaticMeshVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Release|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="Shaders\SkeletalMeshVertexShader.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Viewer_Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
