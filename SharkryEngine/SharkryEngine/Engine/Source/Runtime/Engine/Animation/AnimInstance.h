@@ -3,6 +3,8 @@
 #include "UObject/ObjectMacros.h"
 #include "Engine/Source/Runtime/Engine/Classes/Components/Mesh/SkeletalMesh.h"
 
+class USkeletalMeshComponent;
+
 class UAnimInstance : public UObject
 {
     DECLARE_CLASS(UAnimInstance, UObject)
@@ -21,12 +23,17 @@ public:
 
     virtual void NativeUpdateAnimation(float DeltaSeconds);
 
+    virtual void UpdateNotify(float DeltaSeconds);
+
     void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh);
 
     USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
 
+    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
 
-private:
+
+protected:
     USkeletalMesh* SkeletalMesh = nullptr;
+    USkeletalMeshComponent* SkeletalMeshComp = nullptr;
 };
 
