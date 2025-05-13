@@ -37,7 +37,7 @@
 #include "Engine/CurveManager.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimSequence.h"
 
 void PropertyEditorPanel::Render()

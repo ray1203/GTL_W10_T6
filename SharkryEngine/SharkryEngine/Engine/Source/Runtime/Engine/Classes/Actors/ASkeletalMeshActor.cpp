@@ -1,5 +1,5 @@
 #include "ASkeletalMeshActor.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Components/SkeletalMeshComponent.h"
 
 ASkeletalMeshActor::ASkeletalMeshActor()

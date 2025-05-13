@@ -27,7 +27,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "Components/Light/PointLightComponent.h"
 
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "FSkeletalMeshDebugger.h"
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
