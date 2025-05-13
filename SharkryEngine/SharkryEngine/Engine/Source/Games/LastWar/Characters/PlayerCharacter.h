@@ -31,6 +31,8 @@ public:
     // === 이동 관련 ===
     void MoveForward(float Value);
     void MoveRight(float Value);
+    void Jump();
+    void UpdateVerticalMovement(float DeltaTime);
 
     void HandleOverlap(AActor* OtherActor);
 
@@ -50,7 +52,6 @@ public:
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
     void SetAttackDamage(float NewAttackDamage) { AttackDamage = NewAttackDamage; }
     void AddCharacterMeshCount(int32 InCount);
-
 
     void SetCharacterMeshCount(int32 InCount);
     
