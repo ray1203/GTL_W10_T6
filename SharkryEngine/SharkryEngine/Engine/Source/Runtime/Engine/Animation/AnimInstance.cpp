@@ -1,6 +1,7 @@
 #include "AnimInstance.h"
 #include "Engine/Source/Runtime/Engine/Animation/Skeleton.h"
 #include "Engine/Classes/Components/SkeletalMeshComponent.h"
+#include "AnimTypes.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -52,4 +53,9 @@ void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
 void UAnimInstance::SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp)
 {
     SkeletalMeshComp = InSkeletalMeshComp;
+}
+
+FPoseContext UAnimInstance::GetOutput() const
+{
+    return Output;
 }

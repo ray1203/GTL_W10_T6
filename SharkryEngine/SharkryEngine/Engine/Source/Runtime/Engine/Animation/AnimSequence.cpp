@@ -2,6 +2,7 @@
 #include "Engine/Animation/AnimData/AnimDataModel.h"
 #include "Engine/Source/Runtime/Core/Math/JungleMath.h"
 #include "Engine/Source/Runtime/Engine/Animation/AnimNotify.h"
+#include "AnimInstance.h"
 
 UAnimSequence::UAnimSequence()
 {

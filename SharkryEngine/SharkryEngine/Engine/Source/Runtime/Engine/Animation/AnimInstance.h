@@ -2,6 +2,7 @@
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
 #include "Engine/Source/Runtime/Engine/Classes/Components/Mesh/SkeletalMesh.h"
+#include "Engine/Animation/AnimTypes.h"
 
 class USkeletalMeshComponent;
 
@@ -31,9 +32,11 @@ public:
 
     void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
 
-
+    FPoseContext GetOutput() const;
+     
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     USkeletalMeshComponent* SkeletalMeshComp = nullptr;
+    FPoseContext Output;
 };
 
