@@ -6,7 +6,7 @@ local FVector = EngineTypes.FVector
 function ReturnTable:BeginPlay()
 
     print("BeginPlay ", self.Name)
-    self.this:SetCharacterMeshCount(1)
+    -- self.this:SetCharacterMeshCount(1)
 end
 
 -- Tick: 매 프레임마다 호출

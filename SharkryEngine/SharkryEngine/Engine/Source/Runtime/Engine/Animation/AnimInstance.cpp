@@ -58,8 +58,3 @@ void UAnimInstance::SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalM
 {
     SkeletalMeshComp = InSkeletalMeshComp;
 }
-
-FPoseContext UAnimInstance::GetOutput() const
-{
-    return Output;
-}

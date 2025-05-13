@@ -159,12 +159,13 @@ void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
     }
 }
 
-void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
+void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping, float BlendDuration, float InPlayRate)
 {
     SetAnimationMode(EAnimationMode::AnimationSingleNode);
-    SetAnimation(NewAnimToPlay);
+    SetAnimation(NewAnimToPlay, BlendDuration, InPlayRate);
     Play(bLooping);
 }
+
 
 void USkeletalMeshComponent::SetAnimationMode(EAnimationMode NewMode)
 {
@@ -176,13 +177,23 @@ EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
     return AnimationMode;
 }
 
-void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay)
+void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float BlendDuration, float InPlayRate)
 {
     UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
     if (SingleNodeInstance)
     {
+        /*if (BlendDuration > 0.f && NewAnimToPlay != SingleNodeInstance->GetCurrentAnimSequnece())
+        {
+            SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
+            SingleNodeInstance->StartCrossfade(NewAnimToPlay, BlendDuration, false, InPlayRate);
+        }
+        else
+        {
+            SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
+            SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true, InPlayRate);
+        }*/
         SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true, InPlayRate);
         SingleNodeInstance->SetPlaying(false);
     }
 }
