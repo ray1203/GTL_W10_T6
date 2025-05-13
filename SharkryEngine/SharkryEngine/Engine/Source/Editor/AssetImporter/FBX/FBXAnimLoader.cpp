@@ -12,7 +12,7 @@
 #include "Animation/AnimData/AnimDataModel.h"
 #include "UObject/NameTypes.h"
 
-void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimParentFBXFilePath)
+void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
 {
     FbxManager* SdkManager = FBXSceneLoader::GetSdkManager();
     FbxScene* Scene = FBXSceneLoader::GetScene();
@@ -32,15 +32,9 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath, const FString&
 
     FbxSystemUnit::m.ConvertScene(Scene);
 
-    TArray<FString> BoneNames;
-    BoneNames = FManagerFBX::GetFBXBoneNames(AnimParentFBXFilePath);
-
-    TArray<FbxNode*> NewBoneNodes;
-    for (auto& Name : BoneNames)
-    {
-        FbxNode* N = Scene->FindNodeByName(*Name);
-        if (N) NewBoneNodes.Add(N);
-    }
+    TArray<FbxNode*> BoneNodes;
+    FbxNode* Root = Scene->GetRootNode();
+    CollectSkeletonNodes(Root, BoneNodes);
 
     int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int i = 0; i < NumStacks; i++)
@@ -48,7 +42,7 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath, const FString&
         // Stack의 개수만큼 애니메이션의 클립이 있는 것임
         FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
         Scene->SetCurrentAnimationStack(Stack);
-        FString TakeName = AnimParentFBXFilePath;
+        FString TakeName = FBXFilePath;
 
         // 엔진 내부 구조도 준비
         UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
@@ -74,7 +68,7 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath, const FString&
 
         // 미리구한 Bone 목록을 통해 프레임 정보에 접근
 
-        for (FbxNode* BoneNode : NewBoneNodes)
+        for (FbxNode* BoneNode : BoneNodes)
         {
             // FBoneAnimationTrack 추출
 
@@ -143,7 +137,7 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath, const FString&
 
         // 5) 매니저에 등록
         Sequence->SetAssetPath(FBXFilePath);
-        FManagerFBX::AddAnimationAssets(TakeName, Sequence);
+        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
         UE_LOG(LogLevel::Warning, "Animation ADD : %s", *TakeName);
     }
 }
@@ -234,4 +228,23 @@ void FBX::FBXAnimLoader::ParseFBXCurveKey(
 
     AnimDataModel->CurveData.Channels.Add(AnimationCurveChannel);
 
+}
+
+void FBX::FBXAnimLoader::CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& OutBones)
+{
+    if (!Node) return;
+
+    // 1) 이 노드가 Skeleton 속성을 가지고 있으면 배열에 추가
+    FbxNodeAttribute* Attr = Node->GetNodeAttribute();
+    if (Attr && Attr->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+    {
+        OutBones.Add(Node);
+    }
+
+    // 2) 자식 노드들도 재귀 순회
+    const int ChildCount = Node->GetChildCount();
+    for (int i = 0; i < ChildCount; ++i)
+    {
+        CollectSkeletonNodes(Node->GetChild(i), OutBones);
+    }
 }

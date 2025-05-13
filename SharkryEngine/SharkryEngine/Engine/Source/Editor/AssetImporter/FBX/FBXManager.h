@@ -25,12 +25,10 @@ public:
     static USkeletalMesh* GetSkeletalMesh(const FWString& Name);
     static int GetSkeletalMeshNum();
 
-    static TArray<UAnimationAsset*> GetAnimationAssets(const FString& Name);
-    static void AddAnimationAssets(const FString& Name, UAnimationAsset* AnimationAsset);
-    static void CreateAnimationAsset(const FWString& Name, const FWString& AnimParentFBXFilePath);
-
-    static void SetFBXBoneNames(const FString& Name, TArray<FString> Node);
-    static TArray<FString> GetFBXBoneNames(const FString& Name);
+    static UAnimationAsset* GetAnimationAsset(const FString& name);
+    static void AddAnimationAsset(const FString& name, UAnimationAsset* AnimationAsset);
+    static TMap<FString, UAnimationAsset*>& GetAnimationAssets() { return AnimationAssetMap; }
+    static void CreateAnimationAsset(const FWString& name);
 
     static UMaterial* CreateMaterial(const FBX::FFbxMaterialInfo& MaterialInfo);
     static TMap<FString, UMaterial*>& GetMaterials();
@@ -38,9 +36,8 @@ public:
     static int GetMaterialNum();
 
 private:
-    inline static TMap<FString, TArray<FString>> FBXBoneNameMap;
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> MaterialMap;
-    inline static TMap<FString, TArray<UAnimationAsset*>> AnimationAssetMap;
+    inline static TMap<FString, UAnimationAsset*> AnimationAssetMap;
 };

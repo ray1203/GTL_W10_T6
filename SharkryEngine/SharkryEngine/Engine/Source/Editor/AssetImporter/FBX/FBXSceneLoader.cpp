@@ -113,10 +113,9 @@ bool FBXSceneLoader::ParseFBX(const FString& FBXFilePath, FBX::FBXInfo& OutFBXIn
     TArray<FString> BoneNames;
     for (const auto& Pair : OutFBXInfo.SkeletonHierarchy)
         BoneNames.Add(Pair.Key.ToString());
-    FManagerFBX::SetFBXBoneNames(FBXFilePath, BoneNames);
 
     // --- 애니메이션 파싱 ---
-    FBX::FBXAnimLoader::ParseFBXAnim(FBXFilePath, FBXFilePath);
+    FBX::FBXAnimLoader::ParseFBXAnim(FBXFilePath);
 
     return true;
 }

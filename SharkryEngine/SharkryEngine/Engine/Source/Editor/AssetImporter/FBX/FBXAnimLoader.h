@@ -13,10 +13,7 @@ namespace FBX
     {
     public:
         /// FBX 파일로부터 애니메이션을 파싱합니다 (스켈레톤 이름 기반으로 자동 연결)
-        static void ParseFBXAnim(
-            const FString& FBXFilePath,
-            const FString& AnimParentFBXFilePath
-        );
+        static void ParseFBXAnim(const FString& FBXFilePath);
 
         /// FBX 애니메이션 커브 키를 추출하여 AnimDataModel에 기록합니다
         static void ParseFBXCurveKey(
@@ -27,6 +24,8 @@ namespace FBX
             ETransformChannel TransformChannel,
             const char* pChannel
         );
+
+        static void CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& OutBones);
 
 
     private:

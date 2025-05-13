@@ -64,29 +64,22 @@ USkeletalMesh* FManagerFBX::GetSkeletalMesh(const FWString& Name)
     return CreateSkeletalMesh(FString(Name.c_str()));
 }
 
-TArray<UAnimationAsset*> FManagerFBX::GetAnimationAssets(const FString& Name)
+UAnimationAsset* FManagerFBX::GetAnimationAsset(const FString& Name)
 {
-    return AnimationAssetMap.Contains(Name) ? AnimationAssetMap[Name] : TArray<UAnimationAsset*>();
+    if (AnimationAssetMap.Contains(Name)) return AnimationAssetMap[Name];
+    return nullptr;
 }
 
-void FManagerFBX::AddAnimationAssets(const FString& Name, UAnimationAsset* AnimationAsset)
+void FManagerFBX::AddAnimationAsset(const FString& Name, UAnimationAsset* AnimationAsset)
 {
-    AnimationAssetMap.FindOrAdd(Name).Add(AnimationAsset);
+    AnimationAssetMap[Name] = AnimationAsset;
 }
 
-void FManagerFBX::CreateAnimationAsset(const FWString& Name, const FWString& AnimParentFBXFilePath)
+void FManagerFBX::CreateAnimationAsset(const FWString& Name)
 {
-    FBX::FBXAnimLoader::ParseFBXAnim(FString(Name.c_str()), FString(AnimParentFBXFilePath.c_str()));
-}
+    if (AnimationAssetMap.Contains(FString(Name.c_str()))) return;
 
-void FManagerFBX::SetFBXBoneNames(const FString& Name, TArray<FString> Node)
-{
-    FBXBoneNameMap.Add(Name, Node);
-}
-
-TArray<FString> FManagerFBX::GetFBXBoneNames(const FString& Name)
-{
-    return FBXBoneNameMap.Contains(Name) ? FBXBoneNameMap[Name] : TArray<FString>();
+    FBX::FBXAnimLoader::ParseFBXAnim(FString(Name.c_str()));
 }
 
 UMaterial* FManagerFBX::CreateMaterial(const FBX::FFbxMaterialInfo& MaterialInfo)
