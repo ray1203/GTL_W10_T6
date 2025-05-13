@@ -19,7 +19,7 @@ cbuffer MaterialConstants : register(b1)
 #ifdef GPU_SKINNING
 cbuffer BonesBuffer : register(b2)
 {
-    row_major float4x4 boneMatrices[128];
+    row_major float4x4 boneMatrices[512];
 }
 #endif
 
