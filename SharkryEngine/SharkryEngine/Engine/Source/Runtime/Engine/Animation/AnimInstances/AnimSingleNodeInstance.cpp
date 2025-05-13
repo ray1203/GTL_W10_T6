@@ -4,8 +4,10 @@
 #include "Engine/Engine.h"
 #include "World/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Engine/Source/Runtime/Engine/Animation/AnimNotify.h"
-#include "Engine/Classes/Components/SkeletalMeshComponent.h"
+#include "Animation/AnimNotify.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
+#include "Engine/FLoaderFBX.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -15,6 +17,7 @@ UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
+
     // 애니메이션 상태 머신 초기화
     if (StateMachine == nullptr)
     {
@@ -43,37 +46,14 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     if (!StateMachine) return;
 
-    StateMachine->ProcessState();
+    StateMachine->Update(DeltaSeconds);
 
-    CurrentState = StateMachine->CurrentState;
-    PreviousState = StateMachine->PreviousState;
-
-    if (CurrentState != PreviousState)
-    {
-        PreviousState = CurrentState;
-        switch (CurrentState)
-        {
-        case AS_Idle:
-            AnimSequence = IdleAnimSequence;
-            break;
-        case AS_Walk:
-            AnimSequence = WalkAnimSequence;
-            break;
-        case AS_Run:
-            AnimSequence = RunAnimSequence;
-            break;
-        case AS_Jump:
-            AnimSequence = JumpAnimSequence;
-            break;
-        }
-    }
-
-    if (bPlaying && AnimSequence)
+    if (bIsPlaying && AnimSequence)
     {
         // 재생 속도(PlayRate)를 곱해서야 제대로 속도 조절이 됩니다.
         CurrentTime += DeltaSeconds * PlayRate;
 
-        if (bLooping)
+        if (bIsLooping)
         {
             // 시퀀스 길이를 넘어가면 맨 앞으로 되돌리기
             CurrentTime = FMath::Fmod(CurrentTime, AnimSequence->GetPlayLength());
@@ -91,6 +71,14 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     AnimSequence->GetAnimationPose(Pose, Extract);
 
+    if (Pose.Pose.BoneTransforms.Num() > 0)
+    {
+        FMatrix& RootLocal = Pose.Pose.BoneTransforms[0];
+        RootLocal.M[3][0] = 0.f;
+        RootLocal.M[3][1] = 0.f;
+        RootLocal.M[3][2] = 0.f;
+    }
+
     Output.Pose = Pose.Pose;
     // Output.Curve = Pose.Curve;
     
@@ -106,7 +94,7 @@ void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
     TArray<FAnimNotifyEvent*> NotifyTickEvent;
     TArray<FAnimNotifyEvent*> NotifyEndEvent;
 
-    AnimSequence->GetAnimNotifies(CurrentTime, DeltaSeconds, bLooping, CurFrameNotifies);
+    AnimSequence->GetAnimNotifies(CurrentTime, DeltaSeconds, bIsLooping, CurFrameNotifies);
 
     for (FAnimNotifyEvent* Notify : CurFrameNotifies) 
     {
@@ -169,4 +157,21 @@ void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
         Notify->NotifyState = ENotifyState::Tick;
         SkeletalMeshComp->HandleAnimNotify(*Notify);
     }
+}
+
+void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+{
+    if (NewSequence == nullptr || NewSequence == AnimSequence)
+    {
+        return;
+    }
+
+    AnimSequence = NewSequence;
+    bLooping = bIsLooping;
+    PlayRate = InPlayRate;
+}
+
+void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
+{
+    bIsPlaying = bInPlaying;
 }

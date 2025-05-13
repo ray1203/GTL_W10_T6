@@ -48,6 +48,7 @@ void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
+    Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimAsset("Contents/Mutant.fbx");
     //SetCharacterMeshCount(1);
 }
   

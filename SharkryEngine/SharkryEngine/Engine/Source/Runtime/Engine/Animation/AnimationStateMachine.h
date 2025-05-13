@@ -19,6 +19,9 @@ public:
     UAnimationStateMachine();
     ~UAnimationStateMachine() = default;
     void ProcessState();
+    void Update(float DeltaSeconds);
+    void ApplyStateChange();
+
     void SetPawn(APawn* InPawn) { Pawn = InPawn; }
 
     EAnimState CurrentState;

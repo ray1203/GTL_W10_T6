@@ -17,6 +17,7 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx", L"Contents/Mutant.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx", L"Contents/Mutant.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx", L"Contents/Mutant.fbx");
+    SkeletalMeshComponent->SetAnimAsset("Contents/Mutant.fbx");
     SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
 }

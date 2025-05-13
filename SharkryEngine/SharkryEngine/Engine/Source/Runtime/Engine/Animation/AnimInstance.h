@@ -1,7 +1,7 @@
 #pragma once
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
-#include "Engine/Source/Runtime/Engine/Classes/Components/Mesh/SkeletalMesh.h"
+#include "Components/Mesh/SkeletalMesh.h"
 
 class UAnimSequence;
 class USkeletalMeshComponent;
@@ -29,18 +29,24 @@ public:
     void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh);
 
     USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
+    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
+
+    void SetIdleAnimSequence(UAnimSequence* InIdleAnimSequence) { IdleAnimSequence = InIdleAnimSequence; }
+    void SetWalkAnimSequence(UAnimSequence* InWalkAnimSequence) { WalkAnimSequence = InWalkAnimSequence; }
+    void SetRunAnimSequence(UAnimSequence* InRunAnimSequence) { RunAnimSequence = InRunAnimSequence; }
+    void SetJumpAnimSequence(UAnimSequence* InJumpAnimSequence) { JumpAnimSequence = InJumpAnimSequence; }
+    UAnimSequence* GetIdleAnimSequence() { return IdleAnimSequence; }
+    UAnimSequence* GetWalkAnimSequence() { return WalkAnimSequence; }
+    UAnimSequence* GetRunAnimSequence() { return RunAnimSequence; }
+    UAnimSequence* GetJumpAnimSequence() { return JumpAnimSequence; }
+
+protected:
+    USkeletalMesh* SkeletalMesh = nullptr;
+    USkeletalMeshComponent* SkeletalMeshComp = nullptr;
 
     UAnimSequence* IdleAnimSequence = nullptr;
     UAnimSequence* WalkAnimSequence = nullptr;
     UAnimSequence* RunAnimSequence = nullptr;
     UAnimSequence* JumpAnimSequence = nullptr;
-protected:
-    USkeletalMesh* SkeletalMesh = nullptr;
-    USkeletalMeshComponent* SkeletalMeshComp = nullptr;
-
-private:
-    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
-
-
 };
 
