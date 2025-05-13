@@ -29,8 +29,6 @@ public:
     void SetselectedSubMeshIndex(const int& value) { selectedSubMeshIndex = value; }
     int GetselectedSubMeshIndex() const { return selectedSubMeshIndex; };
 
-    void SetAnimAsset(const FString& AnimName);
-
     void TickAnimation(float DeltaTime, bool bNeedsValidRootMotion);
     void RefreshBoneTransforms();
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
@@ -42,6 +40,7 @@ public:
     void Play(bool bLooping = false);
     void Stop();
     UAnimSingleNodeInstance* GetSingleNodeInstance();
+    void SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance);
 private:
     EAnimationMode AnimationMode = EAnimationMode::AnimationSingleNode;
     UAnimSingleNodeInstance* AnimInstance = nullptr;

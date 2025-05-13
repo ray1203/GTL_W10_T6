@@ -92,46 +92,6 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         UE_LOG(LogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
     }
 }
- 
-void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
-{
-    if (AnimInstance == nullptr) 
-    {
-        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
-        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
-        AnimInstance->SetSkeletalMesh(SkeletalMesh);
-        AnimInstance->SetSkeletalMeshComponent(this);
-    }
-
-    TArray<UAnimationAsset*> AnimationAsset = FManagerFBX::GetAnimationAssets(AnimName);
-    for (auto& Anim : AnimationAsset)
-    {
-        if (Anim == nullptr) continue;
-        
-        if (Anim->GetAssetPath() == "Contents/Idle.fbx")
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Walking.fbx")
-        {
-            AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Running.fbx")
-        {
-            AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Jumping.fbx")
-        {
-            AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-    }
-
-    AnimInstance->NativeInitializeAnimation();
-}
 
 void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRootMotion)
 {
@@ -213,4 +173,14 @@ void USkeletalMeshComponent::Stop()
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
 {
     return Cast<UAnimSingleNodeInstance>(AnimInstance);
+}
+
+void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance)
+{
+    AnimInstance = InAnimInstance;
+    if (AnimInstance)
+    {
+        AnimInstance->SetSkeletalMesh(SkeletalMesh);
+        AnimInstance->SetSkeletalMeshComponent(this);
+    }
 }
