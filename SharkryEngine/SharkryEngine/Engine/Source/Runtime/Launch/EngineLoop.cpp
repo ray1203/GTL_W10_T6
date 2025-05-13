@@ -18,7 +18,7 @@
 #include "GameFramework/Actor.h"
 #include "Classes/Actors/ASkeletalMeshActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include <resource.h>
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

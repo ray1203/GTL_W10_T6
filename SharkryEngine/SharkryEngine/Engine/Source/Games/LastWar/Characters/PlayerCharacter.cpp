@@ -20,17 +20,18 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Actors/CameraActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 APlayerCharacter::APlayerCharacter()
 {
     //BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
     Cast<USkeletalMeshComponent>(BodyMesh)->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
-    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx", L"Contents/Mutant.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx");
     BodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
@@ -50,7 +51,6 @@ void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
-    Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimAsset("Contents/Mutant.fbx");
     //SetCharacterMeshCount(1);
 }
   

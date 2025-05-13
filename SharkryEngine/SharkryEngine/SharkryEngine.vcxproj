@@ -473,6 +473,14 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXAnimLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXConversionUtil.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXManager.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXMaterialLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXMeshLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXSceneLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.cpp" />
@@ -585,7 +593,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerController.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerInput.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Level.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\FLoaderFBX.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\OverlapInfo.h" />
     <ClCompile Include="Engine\Source\Runtime\Engine\UnrealClient.cpp" />
@@ -798,6 +806,14 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXAnimLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXConversionUtil.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXManager.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXMaterialLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXMeshLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXSceneLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameNumber.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.h" />
@@ -941,7 +957,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\GameFramework\PlayerInput.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Level.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Math\ShapeInfo.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\FLoaderFBX.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\FSkeletalMeshDebugger.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\UnrealClient.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\UserInterface\Console.h" />

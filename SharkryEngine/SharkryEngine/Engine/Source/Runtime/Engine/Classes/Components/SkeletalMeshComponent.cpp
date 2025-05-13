@@ -1,5 +1,5 @@
 #include "Components/SkeletalMeshComponent.h"
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
@@ -8,6 +8,7 @@
 #include "Engine/Classes/GameFramework/Character.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimNotify.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
@@ -90,42 +91,6 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
         // SetStaticMesh(nullptr); // 또는 아무것도 안 함
         UE_LOG(LogLevel::Display, TEXT("StaticMeshPath key not found for %s, mesh unchanged."), *GetName());
     }
-}
- 
-void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
-{
-    if (AnimInstance == nullptr) 
-    {
-        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
-        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
-        AnimInstance->SetSkeletalMesh(SkeletalMesh);
-        AnimInstance->SetSkeletalMeshComponent(this);
-    }
-
-    TArray<UAnimationAsset*> AnimationAsset = FManagerFBX::GetAnimationAssets(AnimName);
-    for (auto& Anim : AnimationAsset)
-    {
-        if (Anim == nullptr) continue;
-        
-        if (Anim->GetAssetPath() == "Contents/Idle.fbx")
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Walking.fbx")
-        {
-            AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Running.fbx")
-        {
-            AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-        else if (Anim->GetAssetPath() == "Contents/Jumping.fbx")
-        {
-            AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim));
-        }
-    }
-
-    AnimInstance->NativeInitializeAnimation();
 }
 
 void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRootMotion)
@@ -219,4 +184,14 @@ void USkeletalMeshComponent::Stop()
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
 {
     return Cast<UAnimSingleNodeInstance>(AnimInstance);
+}
+
+void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance)
+{
+    AnimInstance = InAnimInstance;
+    if (AnimInstance)
+    {
+        AnimInstance->SetSkeletalMesh(SkeletalMesh);
+        AnimInstance->SetSkeletalMeshComponent(this);
+    }
 }

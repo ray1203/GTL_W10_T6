@@ -1,6 +1,10 @@
 #include "ASkeletalMeshActor.h"
-#include "FLoaderFBX.h"
+
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Animation/AnimSequence.h"
 
 ASkeletalMeshActor::ASkeletalMeshActor()
 {
@@ -13,13 +17,14 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Sharkry_NoTwist.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/rp_nathan_animated_003_walking.fbx"));
     SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
-    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx", L"Contents/Mutant.fbx");
-    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx", L"Contents/Mutant.fbx");
-    SkeletalMeshComponent->SetAnimAsset("Contents/Mutant.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx");
     SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
+
+    SetAnimationAsset();
 }
 
 UObject* ASkeletalMeshActor::Duplicate(UObject* InOuter)
@@ -31,6 +36,11 @@ UObject* ASkeletalMeshActor::Duplicate(UObject* InOuter)
     return NewActor;
 }
 
+void ASkeletalMeshActor::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
 USkeletalMeshComponent* ASkeletalMeshActor::GetSkeletalMeshComponent() const
 {
     return SkeletalMeshComponent;
@@ -39,4 +49,42 @@ USkeletalMeshComponent* ASkeletalMeshActor::GetSkeletalMeshComponent() const
 void ASkeletalMeshActor::SetSkeletalMesh(const FWString& SkelName)
 {
     SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(SkelName));
+}
+
+void ASkeletalMeshActor::SetAnimationAsset()
+{
+    UAnimSingleNodeInstance* AnimInstance = SkeletalMeshComponent->GetSingleNodeInstance();
+    if (AnimInstance == nullptr)
+    {
+        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
+        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        SkeletalMeshComponent->SetAnimInstance(AnimInstance);
+    }
+
+    TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
+    for (auto& Anim : AnimationAssets)
+    {
+        if (Anim.Key == "Contents/Idle.fbx")
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Walking.fbx")
+        {
+            AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Running.fbx")
+        {
+            AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Jumping.fbx")
+        {
+            AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+
+    }
+    AnimInstance->NativeInitializeAnimation();
 }

@@ -14,9 +14,13 @@ public:
 
     UObject* Duplicate(UObject* InOuter) override;
 
+    virtual void BeginPlay() override;
+
     USkeletalMeshComponent* GetSkeletalMeshComponent() const;
 
     void SetSkeletalMesh(const FWString& SkelName);
+
+    void SetAnimationAsset();
 
 protected:
     UPROPERTY

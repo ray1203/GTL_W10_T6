@@ -37,8 +37,11 @@
 #include "Engine/CurveManager.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimSequence.h"
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FBXStructs.h"
+#include "Renderer/DepthPrePass.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -1564,25 +1567,20 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             );
         }
 
-        if (ImGui::Button("Generate Test Animation")) 
-        {
-            FLoaderFBX::GenerateTestAnimationAsset();
 
-        }
-
-        TArray<UAnimationAsset*> AnimAssets = FManagerFBX::GetAnimationAssets(FilePath);
+        TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
         static TArray<const char*> ItemPtrs;
         ItemPtrs.Empty(AnimAssets.Num());
         for (const auto& Asset : AnimAssets)
         {
-            ItemPtrs.Add(*Asset->GetAssetPath());
+            ItemPtrs.Add(*Asset.Key);
         }
 
         static int CurrentIndex = 0;
 
         if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num()))
         {
-            Cast<USkeletalMeshComponent>(SkeletalMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[CurrentIndex]), true);
+            Cast<USkeletalMeshComponent>(SkeletalMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[ItemPtrs[CurrentIndex]]), true);
         }
 
         ImGui::Spacing();

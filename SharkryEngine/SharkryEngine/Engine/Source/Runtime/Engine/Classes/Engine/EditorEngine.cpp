@@ -18,11 +18,12 @@
 #include "Engine/Animation/Skeleton.h"
 #include "Classes/Actors/ASkeletalMeshActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "Actors/DirectionalLightActor.h"
 #include "Actors/AmbientLightActor.h"
+#include "AssetImporter/FBX/FBXManager.h"
 extern FWString GViewerFilePath;
 extern FEngineLoop GEngineLoop;
 
