@@ -3,6 +3,7 @@
 
 #include "PropertyEditor/SkeletonDataPanel.h"
 #include "PropertyEditor/ViewerControlEditorPanel.h"
+#include "PropertyEditor/AnimEditorPanel.h"
 
 void ViewerEd::Initialize()
 {
@@ -12,7 +13,8 @@ void ViewerEd::Initialize()
     auto SkeletonPanel = std::make_shared<SkeletonDataPanel>();
     Panels["SkeletonDataPanel"] = SkeletonPanel;
 
-
+    auto AnimPanel = std::make_shared<AnimEditorPanel>();
+    Panels["AnimEditorPanel"] = AnimPanel;
 }
 
 void ViewerEd::Render() const
