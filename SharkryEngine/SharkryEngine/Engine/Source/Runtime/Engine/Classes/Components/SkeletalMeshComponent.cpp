@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Engine/Classes/GameFramework/Character.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
@@ -100,6 +101,7 @@ void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
         AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
         AnimInstance->NativeInitializeAnimation();
         AnimInstance->SetSkeletalMesh(SkeletalMesh);
+        AnimInstance->SetSkeletalMeshComponent(this);
     }
 
     TArray<UAnimationAsset*> AnimationAsset = FManagerFBX::GetAnimationAssets(AnimName);
@@ -153,4 +155,13 @@ void USkeletalMeshComponent::RefreshBoneTransforms()
 
     SkeletalMesh->UpdateWorldTransforms();
     UpdateAndApplySkinning();
+}
+
+void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+    ACharacter* CharacterOwner = Cast<ACharacter>(GetOwner());
+    if (CharacterOwner)
+    {
+        CharacterOwner->HandleAnimNotify(Notify);
+    }
 }

@@ -1,9 +1,11 @@
 #include "AnimSequence.h"
 #include "Engine/Animation/AnimData/AnimDataModel.h"
 #include "Engine/Source/Runtime/Core/Math/JungleMath.h"
+#include "Engine/Source/Runtime/Engine/Animation/AnimNotify.h"
 
 UAnimSequence::UAnimSequence()
 {
+    GenerateTestCode();
 }
 
 float UAnimSequence::GetPlayLength()
@@ -13,6 +15,17 @@ float UAnimSequence::GetPlayLength()
     }
 
     return AnimDataModel->PlayLength;
+}
+
+void UAnimSequence::GenerateTestCode()
+{
+    FName TestAName = "TestA";
+    FAnimNotifyEvent TestA = FAnimNotifyEvent(0.5f, 0.0f, TestAName);
+    Notifies.Add(TestA);
+
+    FName TestBName = "TestB";
+    FAnimNotifyEvent TestB = FAnimNotifyEvent(0.7f, 1.0f, TestBName, ENotifyMode::State, ENotifyState::None);
+    Notifies.Add(TestB);
 }
 
 void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext)
@@ -87,4 +100,61 @@ void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const F
 
     // TODO 4) 커브 데이터 평가
     //AnimDataModel->CurveData.Evaluate(ExtractionContext.CurrentTime, OutAnimationPoseData.Curve);
+}
+
+void UAnimSequence::GetAnimNotifies(const float& StartTime, const float& DeltaTime, const bool bAllowLooping, TArray<FAnimNotifyEvent*>& OutNotifies)
+{
+    if ((Notifies.Num() == 0) || (DeltaTime == 0.f))
+    {
+        return;
+    }
+
+    const bool bPlayingBackward = (DeltaTime < 0.f);
+
+    float CurrentTime = StartTime + DeltaTime;
+
+    for (FAnimNotifyEvent& Notify : Notifies)
+    {
+        // 단일 Notify 인 경우
+        if (Notify.NotifyMode == ENotifyMode::Single)
+        {
+            if (StartTime < Notify.TriggerTime && Notify.TriggerTime <= CurrentTime)
+            {
+                OutNotifies.Add(&Notify);
+            }
+        }
+        else // State Notify 인 경우
+        {
+            // 겹치기만 해도 Add 해버리기
+            if (!((Notify.TriggerTime + Notify.Duration) < StartTime || (CurrentTime < Notify.TriggerTime)))
+            {
+                OutNotifies.Add(&Notify);
+            }
+        }
+    }
+
+    float EndTime = AnimDataModel->PlayLength;
+
+    // 만약 Animation이 끝났는데 Looping이 걸려 있다면
+    if (CurrentTime > EndTime && bAllowLooping)
+    {
+        CurrentTime = CurrentTime - EndTime;
+
+        for (FAnimNotifyEvent& Notify : Notifies)
+        {
+            // 단일 Notify 인 경우
+            if (Notify.NotifyMode == ENotifyMode::Single)
+            {
+                if (0.0f <= Notify.TriggerTime && Notify.TriggerTime <= CurrentTime)
+                {
+                    OutNotifies.Add(&Notify);
+                }
+            }
+            else // State Notify 인 경우
+            {
+                // UX 상 애니메이션이 끝나는데 End가 불릴 것을 기대할 것으로 보이므로
+                // 추가하지 않아서 End가 불리도록 유도
+            }
+        }
+    }
 }

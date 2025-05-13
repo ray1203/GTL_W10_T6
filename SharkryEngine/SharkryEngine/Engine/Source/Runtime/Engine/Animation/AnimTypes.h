@@ -6,12 +6,6 @@
 // 작업 하다보면 아래부분에 재정의 문제 생길 수 있음 유의할것
 #include "Engine/Animation/AnimInstance.h"
 
-struct FAnimNotifyEvent
-{
-    float TriggerTime;
-    float Duration;
-    FName NotifyName;
-};
 
 struct FRawAnimSequenceTrack
 {

@@ -806,6 +806,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimData\IAnimationDataModel.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstance.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstances\AnimSingleNodeInstance.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimNotify.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequence.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimSequenceBase.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimTypes.h" />

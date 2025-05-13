@@ -4,6 +4,8 @@
 #include "Engine/Source/Runtime/Engine/Classes/Components/Mesh/SkeletalMesh.h"
 
 class UAnimSequence;
+class USkeletalMeshComponent;
+
 class UAnimInstance : public UObject
 {
     DECLARE_CLASS(UAnimInstance, UObject)
@@ -22,6 +24,7 @@ public:
     TArray<FMatrix> GetRequiredBoneLocalTransforms();
 
     void UpdateAnimation(float DeltaSeconds);
+    virtual void UpdateNotify(float DeltaSeconds);
 
     void SetSkeletalMesh(USkeletalMesh* InSkeletalMesh);
 
@@ -31,7 +34,13 @@ public:
     UAnimSequence* WalkAnimSequence = nullptr;
     UAnimSequence* RunAnimSequence = nullptr;
     UAnimSequence* JumpAnimSequence = nullptr;
-private:
+protected:
     USkeletalMesh* SkeletalMesh = nullptr;
+    USkeletalMeshComponent* SkeletalMeshComp = nullptr;
+
+private:
+    void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
+
+
 };
 

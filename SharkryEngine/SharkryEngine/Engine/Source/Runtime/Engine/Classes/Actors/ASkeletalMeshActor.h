@@ -1,12 +1,13 @@
 #pragma once
 #include "GameFramework/Actor.h"
+#include "Engine/Classes/GameFramework/Character.h"
 
 class USkeletalMeshComponent;
 
 
-class ASkeletalMeshActor : public AActor
+class ASkeletalMeshActor : public ACharacter
 {
-    DECLARE_CLASS(ASkeletalMeshActor, AActor)
+    DECLARE_CLASS(ASkeletalMeshActor, ACharacter)
 
 public:
     ASkeletalMeshActor();

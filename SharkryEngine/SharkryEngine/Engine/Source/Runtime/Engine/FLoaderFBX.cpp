@@ -1739,6 +1739,8 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
 
         for (FbxNode* BoneNode : NewBoneNodes)
         {
+            // FBoneAnimationTrack 추출
+
             FBoneAnimationTrack AnimationTrack;
             AnimationTrack.Name = BoneNode->GetName();
 
@@ -1779,6 +1781,23 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
 
             // 마지막에 트랙 추가
             AnimDataModel->BoneAnimationTracks.Add(AnimationTrack);
+
+            // CurveKey 구하기
+            // Translation
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, TranslationChannels[0], ETransformChannel::Translation, FBXSDK_CURVENODE_COMPONENT_X);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, TranslationChannels[1], ETransformChannel::Translation, FBXSDK_CURVENODE_COMPONENT_Y);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, TranslationChannels[2], ETransformChannel::Translation, FBXSDK_CURVENODE_COMPONENT_Z);
+            
+            // Rotation
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, RotationChannels[0], ETransformChannel::Rotation, FBXSDK_CURVENODE_COMPONENT_X);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, RotationChannels[1], ETransformChannel::Rotation, FBXSDK_CURVENODE_COMPONENT_Y);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, RotationChannels[2], ETransformChannel::Rotation, FBXSDK_CURVENODE_COMPONENT_Z);
+
+            // Scale
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, ScalingChannels[0], ETransformChannel::Scaling, FBXSDK_CURVENODE_COMPONENT_X);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, ScalingChannels[1], ETransformChannel::Scaling, FBXSDK_CURVENODE_COMPONENT_Y);
+            ParseFBXCurveKey(BoneNode, Layer, AnimDataModel, ScalingChannels[2], ETransformChannel::Scaling, FBXSDK_CURVENODE_COMPONENT_Z);
+
         }
         
         // 4) UAnimSequence 생성 및 DataModel 연결
@@ -1788,7 +1807,91 @@ void FLoaderFBX::ParseFBXAnim(const FString& FBXFilePath, const FString& AnimPar
         // 5) 매니저에 등록
         Sequence->SetAssetPath(FBXFilePath);
         FManagerFBX::AddAnimationAssets(TakeName, Sequence);
+        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *TakeName);
     }
+}
+
+const FString FLoaderFBX::TranslationChannels[3] = {
+    TEXT("Translation.X"),
+    TEXT("Translation.Y"),
+    TEXT("Translation.Z")
+};
+
+const FString FLoaderFBX::RotationChannels[3] = {
+    TEXT("Rotation.X"),
+    TEXT("Rotation.Y"),
+    TEXT("Rotation.Z")
+};
+
+const FString FLoaderFBX::ScalingChannels[3] = {
+    TEXT("Scaling.X"),
+    TEXT("Scaling.Y"),
+    TEXT("Scaling.Z")
+};
+
+
+void FLoaderFBX::ParseFBXCurveKey(FbxNode* BoneNode, FbxAnimLayer* Layer, UAnimDataModel* AnimDataModel, const FString& PropertyName, ETransformChannel TransformChannel, const char* pChannel)
+{
+    FString BoneNameStr = BoneNode->GetName();
+    // FAnimationCurveChannel 추가
+    FAnimationCurveChannel AnimationCurveChannel;
+    FString PropNameStr = BoneNameStr + PropertyName;
+    AnimationCurveChannel.PropertyName = PropNameStr;
+    FbxAnimCurve* AnimCurve = nullptr;
+
+    switch (TransformChannel) 
+    {
+    case ETransformChannel::Translation:
+        AnimCurve = BoneNode->LclTranslation.GetCurve(Layer, pChannel, false);
+        break;
+    case ETransformChannel::Rotation:
+        AnimCurve = BoneNode->LclRotation.GetCurve(Layer, pChannel, false);
+        break;
+    case ETransformChannel::Scaling:
+        AnimCurve = BoneNode->LclScaling.GetCurve(Layer, pChannel, false);
+        break;
+    default:
+        break;
+    }
+
+    if (AnimCurve == nullptr) 
+    {
+        // Scaling이나 Translation은 생략하여 데이터 절약을 하는 FBX도 있으므로
+        return;
+    }
+        
+    for (int j = 0; j < AnimCurve->KeyGetCount(); j++)
+    {
+        FbxAnimCurveKey Key = AnimCurve->KeyGet(j);
+
+        FAnimationCurveKey CurveKey;
+        CurveKey.Time = Key.GetTime().GetSecondDouble();
+        CurveKey.Value = Key.GetValue();
+
+        switch (Key.GetInterpolation())
+        {
+        case FbxAnimCurveDef::eInterpolationConstant:
+            CurveKey.InterpMode = EInterpMode::RCIM_Constant;
+            break;
+        case FbxAnimCurveDef::eInterpolationLinear:
+            CurveKey.InterpMode = EInterpMode::RCIM_Linear;
+            break;
+        case FbxAnimCurveDef::eInterpolationCubic:
+            CurveKey.InterpMode = EInterpMode::RCIM_Cubic;
+            break;
+        default:
+            CurveKey.InterpMode = EInterpMode::RCIM_Linear;
+            break;
+        }
+
+        CurveKey.ArriveTangent = AnimCurve->KeyGetLeftDerivative(j);
+        CurveKey.LeaveTangent = AnimCurve->KeyGetRightDerivative(j);
+
+        AnimationCurveChannel.Keys.Add(CurveKey);
+    }
+
+    AnimDataModel->CurveData.Channels.Add(AnimationCurveChannel);
+
 }
 
 void FLoaderFBX::GenerateTestAnimationAsset()

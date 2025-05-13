@@ -11,6 +11,13 @@ enum EInterpMode : uint8
     RCIM_Constant
 };
 
+enum class ETransformChannel
+{
+    Translation,
+    Rotation,
+    Scaling
+};
+
 struct FAnimationCurveKey
 {
     double Time;                       // 샘플링 시간(초 또는 프레임)

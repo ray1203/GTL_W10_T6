@@ -20,6 +20,9 @@ public:
     // 가상함수는 Instance가 될 수 없기에
     virtual void GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext);    
 
+    virtual void GetAnimNotifies(const float& StartTime, const float& DeltaTime,
+        const bool bAllowLooping, TArray<FAnimNotifyEvent*>& OutNotifies);
+
     /** Animation notifies, sorted by time (earliest notification first). */
     UPROPERTY(TArray<struct FAnimNotifyEvent>, Notifies);
 

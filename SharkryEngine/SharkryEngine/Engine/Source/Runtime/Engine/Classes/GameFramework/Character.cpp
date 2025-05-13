@@ -6,6 +6,7 @@
 #include "Engine/Lua/LuaUtils/LuaTypeMacros.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/Animation/AnimNotify.h"
 
 ACharacter::ACharacter()  
 {  
@@ -66,4 +67,33 @@ bool ACharacter::BindSelfLuaProperties()
     LuaTable["this"] = this;
        
     return true;
+}
+
+void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify)
+{
+    FString State = "n";
+
+    switch (Notify.NotifyState) 
+    {
+    case ENotifyState::None:
+        State = "None";
+        break;
+    case ENotifyState::Begin:
+        State = "Begin";
+        break;
+    case ENotifyState::Tick:
+        State = "Tick";
+        break;
+    case ENotifyState::End:
+        State = "End";
+        break;
+    }
+
+    UE_LOG(LogLevel::Display,
+        TEXT("FAnimNotifyEvent: Time=%.3f, Duration=%.3f, Name=%s, State=%s"),
+        Notify.TriggerTime,
+        Notify.Duration,
+        *Notify.NotifyName.ToString(),
+        *State
+    );
 }
