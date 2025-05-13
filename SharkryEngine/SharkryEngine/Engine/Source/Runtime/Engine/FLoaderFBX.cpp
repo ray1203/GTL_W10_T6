@@ -2182,7 +2182,3 @@ void FManagerFBX::CreateAnimationAsset(const FWString& name, const FWString& Ani
 {
     FLoaderFBX::ParseFBXAnim(FString(name.c_str()), FString(AnimParentFBXFilePath.c_str()));
 }
-
-void FManagerFBX::SetAnimationAsset(const FString& name)
-{
-}

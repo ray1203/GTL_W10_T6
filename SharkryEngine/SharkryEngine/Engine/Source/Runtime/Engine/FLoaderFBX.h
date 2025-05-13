@@ -303,10 +303,9 @@ public:
     static TArray<FString> GetFBXBoneNames(const FString& name);
 
     static void CreateAnimationAsset(const FWString& name, const FWString& AnimParentFBXFilePath);
-    static void SetAnimationAsset(const FString& name);
 
 private:
-    inline static TMap<FString, TArray<FString>> FBXBoneNameMap; // FBX 노드 맵
+    inline static TMap<FString, TArray<FString>> FBXBoneNameMap; // FBX BoneNode를 들고오기 위한 NameMap
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> materialMap;
