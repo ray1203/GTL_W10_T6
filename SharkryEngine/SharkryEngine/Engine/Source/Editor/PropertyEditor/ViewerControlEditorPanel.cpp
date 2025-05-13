@@ -26,6 +26,7 @@
 #include "Actors/SpotLightActor.h"
 #include "Actors/AmbientLightActor.h"
 #include "Actors/ASkeletalMeshActor.h"
+#include "AssetImporter/FBX/FBXManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Games/LastWar/Core/Spawner.h"
 #include "ImGUI/imgui.h"

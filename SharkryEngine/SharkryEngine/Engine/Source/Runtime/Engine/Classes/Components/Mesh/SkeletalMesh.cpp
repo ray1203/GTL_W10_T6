@@ -1,4 +1,7 @@
 #include "SkeletalMesh.h"
+
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FBXStructs.h"
 #include "Engine/FLoaderOBJ.h"
 #include "UObject/Casts.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"

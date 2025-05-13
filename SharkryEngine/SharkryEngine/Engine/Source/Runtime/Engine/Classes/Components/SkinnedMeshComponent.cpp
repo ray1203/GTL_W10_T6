@@ -1,11 +1,13 @@
 #include "Components/SkinnedMeshComponent.h"
 
+#include "AssetImporter/FBX/FBXStructs.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 
 #include "GameFramework/Actor.h"
+#include "Mesh/SkeletalMesh.h"
 
 USkinnedMeshComponent::~USkinnedMeshComponent()
 {

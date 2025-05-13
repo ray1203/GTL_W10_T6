@@ -8,6 +8,7 @@
 #include "Engine/Classes/GameFramework/Character.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimNotify.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {

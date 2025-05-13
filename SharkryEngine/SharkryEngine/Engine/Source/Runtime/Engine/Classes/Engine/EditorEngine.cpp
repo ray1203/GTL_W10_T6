@@ -23,6 +23,7 @@
 #include "LevelEditor/SLevelEditor.h"
 #include "Actors/DirectionalLightActor.h"
 #include "Actors/AmbientLightActor.h"
+#include "AssetImporter/FBX/FBXManager.h"
 extern FWString GViewerFilePath;
 extern FEngineLoop GEngineLoop;
 
