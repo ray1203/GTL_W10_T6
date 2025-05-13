@@ -12,6 +12,7 @@ public:
     ~UAnimSingleNodeInstance() = default;
 
     void SetAnimSequence(UAnimSequence* InAnimSequence) { AnimSequence = InAnimSequence; }
+    UAnimSequence* GetAnimSequence() { return AnimSequence; }
 
     FPoseContext GetOutput() { return Output; }
 

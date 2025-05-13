@@ -1,6 +1,14 @@
 #include "AnimEditorPanel.h"
 #include "Engine/Animation/AnimSequence.h"
+#include "Engine/Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Engine/Animation/AnimNotify.h"
+#include "Engine/Animation/AnimData/AnimDataModel.h"
 #include "include/ImNeoSequencer/imgui_neo_sequencer.h"
+#include "World/World.h"
+#include "Classes/Actors/ASkeletalMeshActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/Mesh/SkeletalMesh.h"
+#include "Engine/EditorEngine.h"
 
 
 void AnimEditorPanel::Render()
@@ -50,43 +58,97 @@ void AnimEditorPanel::OnResize(HWND hWnd)
 
 void AnimEditorPanel::CreateAnimNotifyControl()
 {
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+
+    // 선택된 스켈레탈 애니메이션 Instance 가져오기
+    /* 선택된 스켈레탈 메시 컴포넌트 가져오기 */
+    AActor* SelectedActor = nullptr;
+
+    for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors) 
+    {
+        if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
+        {
+            SelectedActor = SkeletalActor;
+        }
+    }
+
+    if (!Engine || !SelectedActor) 
+    {
+        ImGui::Text("No Skeletal Mesh Selected");
+        ImGui::End();
+        return;
+    }
+
+    // 선택된 스켈레탈 애니메이션 Instance와 Sequence 가져오기
+    USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
+    UAnimSingleNodeInstance* AnimInstance = SkeletalComp->GetAnimInstance();
+    UAnimSequence* AnimSequence = AnimInstance->GetAnimSequence();
+    UAnimDataModel* AnimDataModel = AnimSequence->GetDataModel();
+    
+    // Sequence와 AnimInstance에서 정보 가져다가 사용
+    TArray<FAnimNotifyEvent>& NotifyEvents = AnimSequence->Notifies;
+
     int32_t currentFrame = 0;
-    int32_t startFrame = -10;
-    int32_t endFrame = 64;
+    int32_t startFrame = 0;
+    int32_t endFrame = AnimDataModel->NumberOfFrames;
+    float playLength = AnimDataModel->PlayLength;
     static bool transformOpen = false;
-    std::vector<ImGui::FrameIndexType> keys = { 0, 10, 24 };
+
     bool doDelete = false;
+    TArray<FAnimNotifyEvent*> NotifiesToRemove;
 
     if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, { 0, 0 },
         ImGuiNeoSequencerFlags_EnableSelection |
         ImGuiNeoSequencerFlags_Selection_EnableDragging |
         ImGuiNeoSequencerFlags_Selection_EnableDeletion))
     {
-        if (ImGui::BeginNeoGroup("Transform", &transformOpen))
+
+        if (ImGui::BeginNeoGroup("Notifies", &transformOpen))
         {
-
-            if (ImGui::BeginNeoTimelineEx("Position"))
+            for (int i = 1; i <= AnimSequence->GetNotifyTrackCount(); i++)
             {
-                for (auto&& v : keys)
+                char timelineLabel[64];
+                snprintf(
+                    timelineLabel,
+                    sizeof(timelineLabel),
+                    "%d##Position%d",   // 화면엔 %d, ID엔 Position%d
+                    i,               // 보여줄 숫자 (1,2,3…)
+                    i                    // 내부 ID uniqueness
+                );
+
+                if (ImGui::BeginNeoTimelineEx(timelineLabel))
                 {
-                    ImGui::NeoKeyframe(&v);
-                    // Per keyframe code here
+                    for (FAnimNotifyEvent& Notify : AnimSequence->Notifies)
+                    {
+                        if (Notify.TrackNum == i)
+                        {
+                            if (Notify.NotifyMode == ENotifyMode::Single)
+                            {
+                                // Notify의 TriggerTime을 frame으로 변환
+                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
+                                ImGui::NeoKeyframe(&Notify.TriggerFrame);
+                                if (doDelete && ImGui::IsNeoKeyframeSelected()) 
+                                {
+                                    NotifiesToRemove.Add(&Notify);
+                                }
+                                Notify.UpdateTriggerTime(AnimDataModel->NumberOfFrames);
+                            }
+                            else // NotifyState인 경우
+                            {
+
+                            }
+                        }
+                    }
+                    ImGui::EndNeoTimeLine();
                 }
-
-
-                if (doDelete)
-                {
-                    uint32_t count = ImGui::GetNeoKeyframeSelectionSize();
-
-                    ImGui::FrameIndexType* toRemove = new ImGui::FrameIndexType[count];
-
-                    ImGui::GetNeoKeyframeSelection(toRemove);
-
-                    //Delete keyframes from your structure
-                }
-                ImGui::EndNeoTimeLine();
             }
+            
             ImGui::EndNeoGroup();
+        }
+
+        for (FAnimNotifyEvent* NotifyToRemove : NotifiesToRemove) 
+        {
+            AnimSequence->Notifies.Remove(*NotifyToRemove);
         }
 
         ImGui::EndNeoSequencer();

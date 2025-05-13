@@ -37,6 +37,8 @@ public:
 
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
+    UAnimSingleNodeInstance* GetAnimInstance() { return AnimInstance; }
+
 private:
     UAnimSingleNodeInstance* AnimInstance= nullptr;
 };
