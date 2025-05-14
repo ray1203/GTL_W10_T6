@@ -86,6 +86,48 @@ void AnimEditorPanel::CreateAnimNotifyControl()
     const float playLength = AnimDataModel->PlayLength;
     const int   frameCount = AnimDataModel->NumberOfFrames;
 
+    // --- Track Add/Delete Controls ---
+    static int trackToEdit = 1;
+    ImGui::SameLine();
+    if (ImGui::Button("Add Track")) {
+        AnimSequence->SetNotifyTrackCount(AnimSequence->GetNotifyTrackCount() + 1);
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(150.0f);
+    ImGui::InputInt("Delete Track#", &trackToEdit);
+    ImGui::SameLine();
+
+    TArray<int> RemoveTrackNotifiesIndex;
+
+    if (ImGui::Button("Delete Track")) {
+        if (AnimSequence->GetNotifyTrackCount() > 1)
+        {
+            if (trackToEdit >= 1 && trackToEdit <= AnimSequence->GetNotifyTrackCount())
+            {
+
+                for (int k = 0; k < AnimSequence->Notifies.Num(); k++)
+                {
+                    if (AnimSequence->Notifies[k].TrackNum == trackToEdit)
+                    {
+                        RemoveTrackNotifiesIndex.Add(k);
+                    }
+                    else if (AnimSequence->Notifies[k].TrackNum > trackToEdit) 
+                    {
+                        AnimSequence->Notifies[k].TrackNum += -1;
+                    }
+                }
+
+                AnimSequence->SetNotifyTrackCount(AnimSequence->GetNotifyTrackCount() - 1);
+            }
+        }
+    }
+
+    RemoveTrackNotifiesIndex.Sort();
+    for (int idx = RemoveTrackNotifiesIndex.Num() - 1; idx >= 0; --idx)
+    {
+        AnimSequence->Notifies.RemoveAt(RemoveTrackNotifiesIndex[idx]);
+    }
+
     // --- Animation Selection Combo ---
     TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
     static TArray<const char*> ItemPtrs;
