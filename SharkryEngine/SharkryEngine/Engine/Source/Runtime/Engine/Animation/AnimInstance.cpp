@@ -45,7 +45,6 @@ void UAnimInstance::UpdateAnimation(float DeltaSeconds)
 
 void UAnimInstance::UpdateNotify(float DeltaSeconds)
 {
-    // 구현은 UAnimSingleNodeInstance에서 처리
 }
 
 void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
@@ -75,3 +74,7 @@ void UAnimInstance::StartCrossfade(UAnimSequence* NewTargetSequence, bool bTarge
 {
 }
 
+
+void UAnimInstance::SetLooping(bool bInLooping)
+{
+}

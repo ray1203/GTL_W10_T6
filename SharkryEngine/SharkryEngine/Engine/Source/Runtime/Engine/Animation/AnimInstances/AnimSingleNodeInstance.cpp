@@ -134,7 +134,6 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
 
 
     AnimSequence = NewSequence;
-    bLooping = bIsLooping;
     PlayRate = InPlayRate;
 }
 
@@ -148,3 +147,7 @@ void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
     bIsPlaying = bInPlaying;
 }
 
+void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
+{
+    bIsLooping = bInLooping;
+}

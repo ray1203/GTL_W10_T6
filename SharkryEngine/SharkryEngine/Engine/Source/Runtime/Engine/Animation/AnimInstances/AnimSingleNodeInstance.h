@@ -16,18 +16,17 @@ public:
     virtual void UpdateNotify(float DeltaSeconds) override;
     virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration = 1.f, float InPlayRate = 1.f) override;
     UAnimSequence* GetAnimationSequence() { return AnimSequence; }
-    void SetPlaying(bool bInPlaying);
-
-    FPoseContext& GetOutput();
+    virtual FPoseContext& GetOutput() override;
+    virtual void SetPlaying(bool bInPlaying) override;
+    void SetLooping(bool bInLooping) override;
 
 protected:
     UAnimSequence* AnimSequence = nullptr;
-    UAnimSequence* TargetSequence = nullptr; // 
     FPoseContext Output;
     float CurrentTime = 0.0f;
-    bool bIsPlaying = true;
+    bool bIsPlaying = false;
     float PlayRate = 1.0f;
-    bool bIsLooping = true;
+    bool bIsLooping = false;
 
     TArray<FAnimNotifyEvent*> PrevFrameNotifies;
 

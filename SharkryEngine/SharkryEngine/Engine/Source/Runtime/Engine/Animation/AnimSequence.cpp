@@ -21,11 +21,11 @@ float UAnimSequence::GetPlayLength()
 void UAnimSequence::GenerateTestCode()
 {
     FName TestAName = "TestA";
-    FAnimNotifyEvent TestA = FAnimNotifyEvent(0.5f, 0.0f, TestAName);
+    FAnimNotifyEvent TestA = FAnimNotifyEvent(0.1f, 0.0f, TestAName);
     Notifies.Add(TestA);
 
     FName TestBName = "TestB";
-    FAnimNotifyEvent TestB = FAnimNotifyEvent(0.7f, 1.0f, TestBName, ENotifyMode::State, ENotifyState::None);
+    FAnimNotifyEvent TestB = FAnimNotifyEvent(0.2f, 1.0f, TestBName, ENotifyMode::State, ENotifyState::None);
     Notifies.Add(TestB);
 }
 

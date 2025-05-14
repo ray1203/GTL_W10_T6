@@ -8,7 +8,7 @@
 
 ASkeletalMeshActor::ASkeletalMeshActor()
 {
-    SkeletalMeshComponent = AddComponent<USkeletalMeshComponent>("SkeletalMeshComponent_0");
+    SkeletalMeshComponent = Cast<USkeletalMeshComponent>(BodyMesh);
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Capoeira.fbx"));
     //SkeletalMeshComponent->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/RidenEi-V1.fbx"));
@@ -21,6 +21,8 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Idle.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Walking.fbx");
     SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
 
@@ -64,27 +66,22 @@ void ASkeletalMeshActor::SetAnimationAsset()
     TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
     for (auto& Anim : AnimationAssets)
     {
-        if (Anim.Key == "Contents/Idle.fbx")
+        if (Anim.Key == "Idle_mixamo.com")
         {
             AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Walking.fbx")
+        else if (Anim.Key == "Walking_mixamo.com")
         {
             AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Running.fbx")
+        else if (Anim.Key == "Running_mixamo.com")
         {
             AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Jumping.fbx")
+        else if (Anim.Key == "Jumping_mixamo.com")
         {
             AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
-        }
-
     }
     AnimInstance->NativeInitializeAnimation();
 }

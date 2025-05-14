@@ -89,11 +89,11 @@ void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify)
         break;
     }
 
-    UE_LOG(LogLevel::Display,
+    /*UE_LOG(LogLevel::Display,
         TEXT("FAnimNotifyEvent: Time=%.3f, Duration=%.3f, Name=%s, State=%s"),
         Notify.TriggerTime,
         Notify.Duration,
         *Notify.NotifyName.ToString(),
         *State
-    );
+    );*/
 }

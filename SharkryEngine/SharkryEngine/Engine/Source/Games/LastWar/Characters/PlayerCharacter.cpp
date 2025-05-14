@@ -65,27 +65,22 @@ void APlayerCharacter::BeginPlay()
     TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
     for (auto& Anim : AnimationAssets)
     {
-        if (Anim.Key == "Contents/Idle.fbx")
+        if (Anim.Key == "Idle_mixamo.com")
         {
             AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Walking.fbx")
+        else if (Anim.Key == "Walking_mixamo.com")
         {
             AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Running.fbx")
+        else if (Anim.Key == "Running_mixamo.com")
         {
             AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Jumping.fbx")
+        else if (Anim.Key == "Jumping_mixamo.com")
         {
             AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
-        }
-
     }
     AnimInstance->NativeInitializeAnimation();
 }
@@ -150,8 +145,15 @@ void APlayerCharacter::MoveForward(float Value)
 {
     if (Value != 0.0f)
     {
-        Velocity += 0.1f;
+        if (Velocity <= MaxSpeed)
+        {
+            Velocity += 0.1f;
+        }
+
         AddMovementInput(GetActorForwardVector(), Value);
+
+        FVector Location = GetActorLocation();
+        SetActorLocation(Location);
 
         if (Value >= 0.0f)
         {
@@ -168,11 +170,16 @@ void APlayerCharacter::MoveRight(float Value)
 {
     if (Controller && Value != 0.0f)
     {
-        Velocity += 0.1f;
+        if (Velocity <= MaxSpeed)
+        {
+            Velocity += 0.1f;
+        }
+
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
         SetActorLocation(Location);
+
         if (Value >= 0.0f)
         {
             BodyMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));

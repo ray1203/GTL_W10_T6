@@ -36,15 +36,20 @@ void SkeletonDataPanel::Render()
 
     /* 선택된 스켈레탈 메시 컴포넌트 가져오기 */
     AActor* SelectedActor = nullptr;
-
+    //FString str = "";
     for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
     {
         if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
         {
             SelectedActor = SkeletalActor;
+            /*for (auto i:SkeletalActor->GetComponents())
+            {
+                str += i->GetName();
+                str += " ";
+            }*/
         }
     }
-
+    //UE_LOG(LogLevel::Display, *str);
     if (!Engine || !SelectedActor)
     {
         ImGui::Text("No Skeletal Mesh Selected");
@@ -52,7 +57,7 @@ void SkeletonDataPanel::Render()
         return;
     }
 
-    USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
+    USkeletalMeshComponent* SkeletalComp = Cast<ASkeletalMeshActor>(SelectedActor)->GetSkeletalMeshComponent();
 
     USkeletalMesh* SkeletalMesh = SkeletalComp->GetSkeletalMesh();
 

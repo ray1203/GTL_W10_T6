@@ -12,6 +12,8 @@ public:
 private:
     void CreateAnimNotifyControl();
 
+    bool CheckAnimationSelected();
+
 public:
     void SetAnimSequence(UAnimSequence* InAnimSequence);
 

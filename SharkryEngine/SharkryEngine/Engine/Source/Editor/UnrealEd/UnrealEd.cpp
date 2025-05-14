@@ -17,6 +17,9 @@ void UnrealEd::Initialize()
     
     auto PropertyPanel = std::make_shared<PropertyEditorPanel>();
     Panels["PropertyPanel"] = PropertyPanel;
+
+    /*auto AnimPanel = std::make_shared<AnimEditorPanel>();
+    Panels["AnimEditorPanel"] = AnimPanel;*/
 }
 
 void UnrealEd::Render() const

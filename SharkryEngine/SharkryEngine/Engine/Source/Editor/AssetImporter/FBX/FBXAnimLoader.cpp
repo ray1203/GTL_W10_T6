@@ -5,11 +5,15 @@
 #include "UObject/ObjectFactory.h"
 #include "FBXAnimLoader.h"
 
+#include <filesystem>
+#include <fstream>
+
 #include "FBXManager.h"
 #include "FBXSceneLoader.h"
 #include "FLoaderFBX.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimData/AnimDataModel.h"
+#include "AssetImporter/FPaths.h"
 #include "UObject/NameTypes.h"
 
 void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
@@ -36,13 +40,32 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
     FbxNode* Root = Scene->GetRootNode();
     CollectSkeletonNodes(Root, BoneNodes);
 
+    const FString BaseName = FPaths::GetBaseFilename(FBXFilePath);
+    FString OutputDir = TEXT("Contents/Binary/Animation");
+    std::filesystem::create_directories(std::string(OutputDir)); // 디렉터리 생성
+
     int NumStacks = Scene->GetSrcObjectCount<FbxAnimStack>();
     for (int i = 0; i < NumStacks; i++)
     {
         // Stack의 개수만큼 애니메이션의 클립이 있는 것임
         FbxAnimStack* Stack = Scene->GetSrcObject<FbxAnimStack>(i);
         Scene->SetCurrentAnimationStack(Stack);
-        FString TakeName = FBXFilePath;
+
+        FString TakeName = (Stack->GetName());
+        FString CleanedTakeName = TakeName.Replace(TEXT("|"), TEXT("_")); // 파일 시스템 안전 이름
+
+        FString FullName = BaseName + TEXT("_") + CleanedTakeName;
+        FWString BinPath = FWString((OutputDir + "/" + (FullName + TEXT(".anim.bin"))).ToWideString().c_str());
+
+        if (UAnimSequence* Cached = FBX::FBXAnimLoader::LoadAnimFromBinary(BinPath))
+        {
+            Cached->SetAssetPath(FBXFilePath);
+            FManagerFBX::AddAnimationAsset(FullName, Cached);
+            UE_LOG(LogLevel::Display, TEXT("Animation loaded from binary: %s"), *FullName);
+            continue;
+        }
+
+        //FString TakeName = FBXFilePath;
 
         // 엔진 내부 구조도 준비
         UAnimDataModel* AnimDataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
@@ -137,8 +160,17 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
 
         // 5) 매니저에 등록
         Sequence->SetAssetPath(FBXFilePath);
-        FManagerFBX::AddAnimationAsset(TakeName, Sequence);
-        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *TakeName);
+        FManagerFBX::AddAnimationAsset(FullName, Sequence);
+        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *FullName);
+
+        /*FString FileName = FPaths::GetFileNameWithoutExtension(FBXFilePath);
+        FString OutputDir = TEXT("Contents/Binary/Animation");
+        std::filesystem::create_directories(std::string(OutputDir)); // 디렉터리 생성
+        FString OutputPath = OutputDir + TEXT("/") + FileName + TEXT(".anim.bin");*/
+
+        FBX::FBXAnimLoader::SaveAnimToBinary(BinPath, Sequence);
+
+        //FBX::FBXAnimLoader::SaveAnimToBinary(BinPath, Sequence);
     }
 }
 const FString FBX::FBXAnimLoader::TranslationChannels[3] = {
@@ -247,4 +279,84 @@ void FBX::FBXAnimLoader::CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& O
     {
         CollectSkeletonNodes(Node->GetChild(i), OutBones);
     }
+}
+bool FBX::FBXAnimLoader::SaveAnimToBinary(const FWString& FilePath, const UAnimSequence* Sequence)
+{
+    if (!Sequence || !Sequence->GetDataModel()) return false;
+    const UAnimDataModel* DataModel = Sequence->GetDataModel();
+
+    std::ofstream OutFile(FilePath.c_str(), std::ios::binary);
+    if (!OutFile.is_open()) return false;
+
+    int32 FrameCount = DataModel->NumberOfFrames;
+    OutFile.write(reinterpret_cast<const char*>(&FrameCount), sizeof(int32));
+    OutFile.write(reinterpret_cast<const char*>(&DataModel->PlayLength), sizeof(float));
+    OutFile.write(reinterpret_cast<const char*>(&DataModel->FrameRate.Numerator), sizeof(int32));
+    OutFile.write(reinterpret_cast<const char*>(&DataModel->FrameRate.Denominator), sizeof(int32));
+
+    int32 BoneTrackCount = DataModel->BoneAnimationTracks.Num();
+    OutFile.write(reinterpret_cast<const char*>(&BoneTrackCount), sizeof(int32));
+    for (const FBoneAnimationTrack& Track : DataModel->BoneAnimationTracks)
+    {
+        FString Name = Track.Name.ToString();
+        int32 NameLen = Name.Len();
+        OutFile.write(reinterpret_cast<const char*>(&NameLen), sizeof(int32));
+        OutFile.write((*Name), NameLen);
+
+        OutFile.write(reinterpret_cast<const char*>(Track.InternalTrack.PosKeys.GetData()), sizeof(FVector) * Track.InternalTrack.PosKeys.Num());
+        OutFile.write(reinterpret_cast<const char*>(Track.InternalTrack.RotKeys.GetData()), sizeof(FQuat) * Track.InternalTrack.RotKeys.Num());
+        OutFile.write(reinterpret_cast<const char*>(Track.InternalTrack.ScaleKeys.GetData()), sizeof(FVector) * Track.InternalTrack.ScaleKeys.Num());
+    }
+
+    OutFile.close();
+    return true;
+}
+
+UAnimSequence* FBX::FBXAnimLoader::LoadAnimFromBinary(const FWString& FilePath)
+{
+    std::ifstream InFile(FilePath.c_str(), std::ios::binary);
+    if (!InFile.is_open()) return nullptr;
+
+    int32 FrameCount = 0;
+    float PlayLength = 0.0f;
+    int32 RateNum = 30, RateDen = 1;
+    InFile.read(reinterpret_cast<char*>(&FrameCount), sizeof(int32));
+    InFile.read(reinterpret_cast<char*>(&PlayLength), sizeof(float));
+    InFile.read(reinterpret_cast<char*>(&RateNum), sizeof(int32));
+    InFile.read(reinterpret_cast<char*>(&RateDen), sizeof(int32));
+
+    int32 BoneTrackCount = 0;
+    InFile.read(reinterpret_cast<char*>(&BoneTrackCount), sizeof(int32));
+
+    UAnimDataModel* DataModel = FObjectFactory::ConstructObject<UAnimDataModel>(nullptr);
+    DataModel->NumberOfFrames = FrameCount;
+    DataModel->NumberOfKeys = FrameCount;
+    DataModel->PlayLength = PlayLength;
+    DataModel->FrameRate = FFrameRate(RateNum, RateDen);
+
+    for (int32 i = 0; i < BoneTrackCount; ++i)
+    {
+        int32 NameLen = 0;
+        InFile.read(reinterpret_cast<char*>(&NameLen), sizeof(int32));
+        std::string NameBuf(NameLen, '\0');
+        InFile.read(NameBuf.data(), NameLen);
+        FString BoneName((NameBuf.c_str()));
+
+        FBoneAnimationTrack Track;
+        Track.Name = FName(BoneName);
+        Track.InternalTrack.PosKeys.SetNum(FrameCount);
+        Track.InternalTrack.RotKeys.SetNum(FrameCount);
+        Track.InternalTrack.ScaleKeys.SetNum(FrameCount);
+
+        InFile.read(reinterpret_cast<char*>(Track.InternalTrack.PosKeys.GetData()), sizeof(FVector) * FrameCount);
+        InFile.read(reinterpret_cast<char*>(Track.InternalTrack.RotKeys.GetData()), sizeof(FQuat) * FrameCount);
+        InFile.read(reinterpret_cast<char*>(Track.InternalTrack.ScaleKeys.GetData()), sizeof(FVector) * FrameCount);
+
+        DataModel->BoneAnimationTracks.Add(Track);
+    }
+
+    InFile.close();
+    UAnimSequence* Sequence = FObjectFactory::ConstructObject<UAnimSequence>(nullptr);
+    Sequence->SetDataModel(DataModel);
+    return Sequence;
 }

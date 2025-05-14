@@ -121,7 +121,7 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    if (!bIsPlaying || !AnimSequence || !StateMachine) return;
+    if (!StateMachine) return;
 
     StateMachine->Update(DeltaSeconds);
 
@@ -315,6 +315,11 @@ void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLoo
 void UMyAnimInstance::SetPlaying(bool bInPlaying)
 {
     bIsPlaying = bInPlaying;
+}
+
+void UMyAnimInstance::SetLooping(bool bInLooping)
+{
+    bIsLooping = bInLooping;
 }
 
 FPoseContext& UMyAnimInstance::GetOutput()

@@ -29,6 +29,7 @@ public:
     virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration = 1.f, float InPlayRate = 1.f) override;
     UAnimSequence* GetAnimationSequence() { return AnimSequence; }
     virtual void SetPlaying(bool bInPlaying) override;
+    void SetLooping(bool bInLooping) override;
 
     virtual FPoseContext& GetOutput() override;
 
@@ -42,9 +43,9 @@ private:
     UAnimSequence* AnimSequence = nullptr;
     FPoseContext Output;
     float CurrentTime = 0.0f;
-    bool bIsPlaying = true;
+    bool bIsPlaying = false;
     float PlayRate = 1.0f;
-    bool bIsLooping = true;
+    bool bIsLooping = false;
 
     // 애니매이션 노티파이
     TArray<FAnimNotifyEvent*> PrevFrameNotifies;
