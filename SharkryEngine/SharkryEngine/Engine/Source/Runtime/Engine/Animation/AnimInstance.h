@@ -33,8 +33,9 @@ public:
 
     virtual FPoseContext& GetOutput();
 
-    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    virtual void SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate = 1.f);
     virtual void SetPlaying(bool bInPlaying);
+    virtual void SetLooping(bool bInLooping);
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;

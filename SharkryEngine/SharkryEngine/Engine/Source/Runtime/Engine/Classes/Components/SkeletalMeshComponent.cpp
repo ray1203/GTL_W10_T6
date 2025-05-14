@@ -114,9 +114,9 @@ void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRoot
 
 void USkeletalMeshComponent::RefreshBoneTransforms()
 {
-    if (!SkeletalMesh || !SkeletalMesh->Skeleton)return;
+    if (!SkeletalMesh || !SkeletalMesh->Skeleton) return;
     FPoseContext AnimPose = AnimInstance->GetOutput();
-    if (AnimationMode == EAnimationMode::AnimationSingleNode)
+    if (AnimationMode == EAnimationMode::AnimationSingleNode && SingleNodeInstance)
     {
         AnimPose = SingleNodeInstance->GetOutput();
     }
@@ -171,13 +171,11 @@ void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay)
 {
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
-        SingleNodeInstance->SetPlaying(false);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay);
     }
     else
     {
-        AnimInstance->SetAnimationSequence(NewAnimToPlay, true);
-        AnimInstance->SetPlaying(false);
+        AnimInstance->SetAnimationSequence(NewAnimToPlay);
     }
 }
 
@@ -186,10 +184,12 @@ void USkeletalMeshComponent::Play(bool bLooping)
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
         SingleNodeInstance->SetPlaying(true);
+        SingleNodeInstance->SetLooping(bLooping);
     }
     else
     {
         AnimInstance->SetPlaying(true);
+        AnimInstance->SetLooping(bLooping);
     }
 }
 

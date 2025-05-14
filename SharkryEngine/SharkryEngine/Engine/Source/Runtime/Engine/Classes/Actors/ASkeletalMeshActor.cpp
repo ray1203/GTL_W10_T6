@@ -66,27 +66,22 @@ void ASkeletalMeshActor::SetAnimationAsset()
     TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
     for (auto& Anim : AnimationAssets)
     {
-        if (Anim.Key == "Contents/Idle.fbx")
+        if (Anim.Key == "Idle_mixamo.com")
         {
             AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Walking.fbx")
+        else if (Anim.Key == "Walking_mixamo.com")
         {
             AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Running.fbx")
+        else if (Anim.Key == "Running_mixamo.com")
         {
             AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else if (Anim.Key == "Contents/Jumping.fbx")
+        else if (Anim.Key == "Jumping_mixamo.com")
         {
             AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
         }
-        else
-        {
-            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
-        }
-
     }
     AnimInstance->NativeInitializeAnimation();
 }

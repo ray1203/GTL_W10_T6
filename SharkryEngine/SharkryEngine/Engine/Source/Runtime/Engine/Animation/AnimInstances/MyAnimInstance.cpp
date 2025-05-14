@@ -120,9 +120,11 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    if (!bIsPlaying || !AnimSequence || !StateMachine) return;
+    if (!StateMachine) return;
 
     StateMachine->Update(DeltaSeconds);
+
+    if (!bIsPlaying || !AnimSequence) return;
 
     // 재생 속도(PlayRate)를 곱해서야 제대로 속도 조절이 됩니다.
     CurrentTime += DeltaSeconds * PlayRate;
@@ -148,7 +150,7 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     // Output.Curve = Pose.Curve;
 }
 
-void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate)
 {
     if (NewSequence == nullptr || NewSequence == AnimSequence)
     {
@@ -156,13 +158,17 @@ void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLoo
     }
 
     AnimSequence = NewSequence;
-    bLooping = bIsLooping;
     PlayRate = InPlayRate;
 }
 
 void UMyAnimInstance::SetPlaying(bool bInPlaying)
 {
     bIsPlaying = bInPlaying;
+}
+
+void UMyAnimInstance::SetLooping(bool bInLooping)
+{
+    bIsLooping = bInLooping;
 }
 
 FPoseContext& UMyAnimInstance::GetOutput()

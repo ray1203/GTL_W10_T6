@@ -124,7 +124,7 @@ void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
     }
 }
 
-void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate)
 {
     if (NewSequence == nullptr || NewSequence == AnimSequence)
     {
@@ -132,7 +132,6 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
     }
 
     AnimSequence = NewSequence;
-    bLooping = bIsLooping;
     PlayRate = InPlayRate;
 }
 
@@ -144,4 +143,9 @@ FPoseContext& UAnimSingleNodeInstance::GetOutput()
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
 {
     bIsPlaying = bInPlaying;
+}
+
+void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
+{
+    bIsLooping = bInLooping;
 }

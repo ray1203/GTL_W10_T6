@@ -45,7 +45,6 @@ void UAnimInstance::UpdateAnimation(float DeltaSeconds)
 
 void UAnimInstance::UpdateNotify(float DeltaSeconds)
 {
-    // 구현은 UAnimSingleNodeInstance에서 처리
 }
 
 void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
@@ -63,10 +62,14 @@ FPoseContext& UAnimInstance::GetOutput()
     return Output;
 }
 
-void UAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+void UAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate)
 {
 }
 
 void UAnimInstance::SetPlaying(bool bInPlaying)
+{
+}
+
+void UAnimInstance::SetLooping(bool bInLooping)
 {
 }
