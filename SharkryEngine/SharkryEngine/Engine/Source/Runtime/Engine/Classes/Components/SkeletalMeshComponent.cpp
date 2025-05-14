@@ -175,7 +175,7 @@ void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float Bl
     }
     else
     {
-        AnimInstance->SetAnimationSequence(NewAnimToPlay, true);
+        AnimInstance->SetAnimationSequence(NewAnimToPlay, true, 0.3f);
         AnimInstance->SetPlaying(false);
     }
 }

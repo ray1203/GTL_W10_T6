@@ -63,10 +63,15 @@ FPoseContext& UAnimInstance::GetOutput()
     return Output;
 }
 
-void UAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+void UAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration, float InPlayRate)
 {
 }
 
 void UAnimInstance::SetPlaying(bool bInPlaying)
 {
 }
+
+void UAnimInstance::StartCrossfade(UAnimSequence* NewTargetSequence, bool bTargetLooping, float InBlendDuration, float InTargetPlayRate)
+{
+}
+
