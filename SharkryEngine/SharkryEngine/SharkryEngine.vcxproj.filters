@@ -175,6 +175,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{A9773D1D-2B7E-4A45-9967-3C8F6D68F622}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Source\ThirdParty\include\ImNeoSequencer">
+      <UniqueIdentifier>{600e6f09-ba23-491c-89d0-86702573aba5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SLevelEditor.cpp">
@@ -844,6 +847,15 @@
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.cpp" />
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.cpp" />
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FPaths.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_sequencer.cpp">
+      <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimEditorPanel.cpp">
+      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="SharkryEngine.natvis" />
@@ -1129,6 +1141,16 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimNotify.h" />
     <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.h" />
     <ClInclude Include="Engine\Source\Editor\AssetImporter\FPaths.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimNotify.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.h">
+      <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_sequencer.h">
+      <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimEditorPanel.h">
+      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />

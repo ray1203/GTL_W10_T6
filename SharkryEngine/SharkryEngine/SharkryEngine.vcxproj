@@ -482,6 +482,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.cpp" />
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.cpp" />
     <ClCompile Include="Engine\Source\Editor\AssetImporter\FPaths.cpp" />
+    <ClCompile Include="Engine\Source\Editor\PropertyEditor\AnimEditorPanel.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimData\AnimDataModel.cpp" />
@@ -644,6 +645,8 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_impl_win32.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.cpp" />
+    <ClCompile Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_sequencer.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\ShadowRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Shapes\ShapeComponent.cpp" />
@@ -816,6 +819,7 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.h" />
     <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.h" />
     <ClInclude Include="Engine\Source\Editor\AssetImporter\FPaths.h" />
+    <ClInclude Include="Engine\Source\Editor\PropertyEditor\AnimEditorPanel.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameNumber.h" />
     <ClInclude Include="Engine\Source\Runtime\Core\Misc\FrameRate.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.h" />
@@ -1056,6 +1060,8 @@ for %%F in ("$(ProjectDir)Assets\*.*") do (
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imstb_rectpack.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imstb_textedit.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImGUI\imstb_truetype.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_sequencer.h" />
     <ClInclude Include="Engine\Source\ThirdParty\JSON\json.hpp" />
     <ClInclude Include="Engine\Source\ThirdParty\Lua\include\lauxlib.h" />
     <ClInclude Include="Engine\Source\ThirdParty\Lua\include\lua.h" />

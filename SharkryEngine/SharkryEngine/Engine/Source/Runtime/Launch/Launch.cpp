@@ -1,4 +1,5 @@
 #include "Core/HAL/PlatformType.h"
+#include "Core/Container/String.h"
 #include "EngineLoop.h"
 #include <windows.h>
 #include <shellapi.h>
@@ -9,6 +10,7 @@
 FEngineLoop GEngineLoop;
 #ifdef _DEBUG_VIEWER
 FWString GViewerFilePath;
+std::vector<std::wstring> AnimAssetList;
 #endif
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
@@ -29,6 +31,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (argv && argc >= 2)
     {
         GViewerFilePath = FWString(argv[1]);
+    }
+    if (argc >= 3) 
+    {
+        FWString AnimListArg = FWString(argv[2]);
+        AnimAssetList = SplitWString(AnimListArg, L';');
     }
     LocalFree(argv);
 #endif

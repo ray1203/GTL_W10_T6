@@ -17,6 +17,6 @@ public:
     virtual void GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext) override;
 
     virtual void GetAnimNotifies(const float& StartTime, const float& DeltaTime,
-        const bool bAllowLooping, TArray<FAnimNotifyEvent*>& OutNotifies) override;
+        const bool bAllowLooping, TArray<FAnimNotifyEvent*>& OutNotifies) override;   
 };
 

@@ -1,9 +1,11 @@
-﻿#include "UnrealEd.h"
+#include "UnrealEd.h"
 #include "EditorPanel.h"
 
 #include "PropertyEditor/ControlEditorPanel.h"
 #include "PropertyEditor/OutlinerEditorPanel.h"
 #include "PropertyEditor/PropertyEditorPanel.h"
+
+#include "PropertyEditor/AnimEditorPanel.h"
 
 void UnrealEd::Initialize()
 {
