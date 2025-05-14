@@ -39,7 +39,7 @@ public:
     void PlayAnimation(EAnimationMode NewAnimMode, UAnimSequence* NewAnimToPlay, bool bLooping = false);
     void SetAnimationMode(EAnimationMode NewMode);
     EAnimationMode GetAnimationMode() const;
-    void SetAnimation(UAnimSequence* NewAnimToPlay);
+    void SetAnimation(UAnimSequence* NewAnimToPlay, float BlendDuration = 0.7f, float InPlayRate = 1.f);
     void Play(bool bLooping = false);
     void Stop();
     UAnimSingleNodeInstance* GetSingleNodeInstance();

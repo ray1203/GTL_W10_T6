@@ -233,6 +233,7 @@ void USkinnedMeshComponent::SetUseGpuSkinning(bool bEnable)
 
 bool USkinnedMeshComponent::IsUsingGpuSkinning() const
 {
+    if (InstanceRenderData == nullptr) return false;
     return InstanceRenderData->bUseGpuSkinning;
 }
 

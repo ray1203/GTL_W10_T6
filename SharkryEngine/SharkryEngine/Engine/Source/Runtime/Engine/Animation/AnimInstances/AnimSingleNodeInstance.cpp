@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
+#include "Math/JungleMath.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -124,12 +125,13 @@ void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
     }
 }
 
-void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate)
+void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration, float InPlayRate)
 {
     if (NewSequence == nullptr || NewSequence == AnimSequence)
     {
         return;
     }
+
 
     AnimSequence = NewSequence;
     PlayRate = InPlayRate;

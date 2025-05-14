@@ -14,7 +14,7 @@ public:
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
     virtual void UpdateNotify(float DeltaSeconds) override;
-    virtual void SetAnimationSequence(UAnimSequence* NewSequence, float InPlayRate = 1.f) override;
+    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration = 1.f, float InPlayRate = 1.f) override;
     UAnimSequence* GetAnimationSequence() { return AnimSequence; }
     virtual FPoseContext& GetOutput() override;
     virtual void SetPlaying(bool bInPlaying) override;
@@ -29,4 +29,6 @@ protected:
     bool bIsLooping = false;
 
     TArray<FAnimNotifyEvent*> PrevFrameNotifies;
+
+
 };
