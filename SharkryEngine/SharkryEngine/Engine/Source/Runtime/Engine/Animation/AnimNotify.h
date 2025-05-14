@@ -42,9 +42,9 @@ struct FAnimNotifyEvent
         TrackNum = InTrackNum;
     }
 
-    void UpdateTriggerTime(int FrameNum) 
+    void UpdateTriggerTime(float PlayLength, int FrameNum)
     {
-        TriggerTime = (float)(TriggerFrame / FrameNum);
+        TriggerTime = ((float)TriggerFrame / FrameNum) * PlayLength;
     }
 
     void UpdateTriggerFrame(float PlayLength, int FrameNum) 

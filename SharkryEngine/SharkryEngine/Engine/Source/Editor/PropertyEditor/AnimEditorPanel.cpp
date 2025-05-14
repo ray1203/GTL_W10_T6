@@ -112,7 +112,7 @@ void AnimEditorPanel::CreateAnimNotifyControl()
                                 {
                                     RemoveNotifiesIndex.Add(j);
                                 }
-                                Notify.UpdateTriggerTime(AnimDataModel->NumberOfFrames);
+                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
                             }
                             else // NotifyState인 경우
                             {
