@@ -6,7 +6,7 @@
 
 UAnimSequence::UAnimSequence()
 {
-    GenerateTestCode();
+
 }
 
 float UAnimSequence::GetPlayLength()
