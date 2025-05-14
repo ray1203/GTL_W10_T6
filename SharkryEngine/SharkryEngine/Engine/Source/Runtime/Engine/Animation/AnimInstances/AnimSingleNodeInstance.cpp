@@ -8,6 +8,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
+#include "Math/JungleMath.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {

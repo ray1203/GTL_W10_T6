@@ -147,7 +147,7 @@ void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float Bl
     UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
     if (SingleNodeInstance)
     {
-        /*if (BlendDuration > 0.f && NewAnimToPlay != SingleNodeInstance->GetCurrentAnimSequnece())
+        if (BlendDuration > 0.f && NewAnimToPlay != SingleNodeInstance->GetCurrentAnimSequnece())
         {
             SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
             SingleNodeInstance->StartCrossfade(NewAnimToPlay, BlendDuration, false, InPlayRate);
@@ -156,9 +156,9 @@ void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float Bl
         {
             SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
             SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true, InPlayRate);
-        }*/
-        SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true, InPlayRate);
+        }
+        //SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
+        //SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true, InPlayRate);
         SingleNodeInstance->SetPlaying(false);
     }
 }

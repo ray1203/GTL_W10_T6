@@ -33,10 +33,10 @@ public:
     void RefreshBoneTransforms();
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
-    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = false, float BlendDuration = 0.5f, float InPlayRate = 1.f);
+    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = false, float BlendDuration = 0.7f, float InPlayRate = 1.f);
     void SetAnimationMode(EAnimationMode NewMode);
     EAnimationMode GetAnimationMode() const;
-    void SetAnimation(UAnimSequence* NewAnimToPlay, float BlendDuration = 0.5f, float InPlayRate = 1.f);
+    void SetAnimation(UAnimSequence* NewAnimToPlay, float BlendDuration = 0.7f, float InPlayRate = 1.f);
     void Play(bool bLooping = false);
     void Stop();
     UAnimSingleNodeInstance* GetSingleNodeInstance();
