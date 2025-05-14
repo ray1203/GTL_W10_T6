@@ -6,11 +6,13 @@
 #include "UObject/NameTypes.h"
 #include "Container/Array.h"
 #include "Container/Map.h"
+#include <filesystem>
 
 class USkeletalMesh;
 class UMaterial;
 class USkeleton;
 class UAnimationAsset;
+struct FAnimNotifyEvent;
 
 class FManagerFBX
 {
@@ -35,9 +37,14 @@ public:
     static UMaterial* GetMaterial(const FString& Name);
     static int GetMaterialNum();
 
+    static void AddNotifySequence(const FString& SequenceName, const TArray<FAnimNotifyEvent>& Events);
+    static bool SaveNotifySequencesJson(const std::filesystem::path& FilePath);
+    static bool LoadNotifySequencesJson(const FString& FilePath);
+
 private:
     inline static TMap<FString, FBX::FSkeletalMeshRenderData*> FBXSkeletalMeshMap;
     inline static TMap<FWString, USkeletalMesh*> SkeletalMeshMap;
     inline static TMap<FString, UMaterial*> MaterialMap;
     inline static TMap<FString, UAnimationAsset*> AnimationAssetMap;
+    static TMap<FString, TArray<FAnimNotifyEvent>> SequenceMap;
 };

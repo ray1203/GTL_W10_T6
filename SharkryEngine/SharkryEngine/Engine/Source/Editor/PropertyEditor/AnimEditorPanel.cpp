@@ -179,6 +179,13 @@ void AnimEditorPanel::CreateAnimNotifyControl()
         ImGui::EndPopup();
     }
 
+    ImGui::SameLine();
+    if (ImGui::Button("Save Notifies To Sequence")) 
+    {
+        FManagerFBX::AddNotifySequence(AnimSequence->GetAssetPath(), AnimSequence->Notifies);
+        FManagerFBX::SaveNotifySequencesJson("Contents/NotifySequences.json");
+    }
+
     // --- Sequencer UI ---
     if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, ImVec2(0, 0),
         ImGuiNeoSequencerFlags_EnableSelection |

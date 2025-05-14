@@ -27,6 +27,13 @@ struct FAnimNotifyEvent
     ENotifyState NotifyState;
     int TrackNum = 1;   // AnimNotify UI 쪽에서 변경할 때 몇 번째 트랙인지 판별, 1부터 유효
 
+    FAnimNotifyEvent()
+        :TriggerTime(0.0f), TriggerFrame(0), Duration(0.0f),
+        TriggerEndFrame(0), isTriggerEndClicked(false),
+        NotifyName(""), NotifyMode(ENotifyMode::Single), NotifyState(ENotifyState::None),
+        TrackNum(1)
+    { }
+
     // Single Notify Event에 대한 생성자
     FAnimNotifyEvent(float InTriggerTime, float InDuration, FName InNotifyName) 
         : TriggerTime(InTriggerTime), Duration(InDuration), NotifyName(InNotifyName), 
