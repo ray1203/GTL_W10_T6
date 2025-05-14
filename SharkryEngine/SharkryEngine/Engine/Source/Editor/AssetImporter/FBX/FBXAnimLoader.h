@@ -3,6 +3,7 @@
 #include "Define.h"
 #include <fbxsdk.h>
 
+class UAnimSequence;
 class UAnimDataModel;
 enum class ETransformChannel;
 
@@ -26,6 +27,9 @@ namespace FBX
         );
 
         static void CollectSkeletonNodes(FbxNode* Node, TArray<FbxNode*>& OutBones);
+
+        static bool SaveAnimToBinary(const FWString& FilePath, const UAnimSequence* Sequence);
+        static UAnimSequence* LoadAnimFromBinary(const FWString& FilePath);
 
 
     private:

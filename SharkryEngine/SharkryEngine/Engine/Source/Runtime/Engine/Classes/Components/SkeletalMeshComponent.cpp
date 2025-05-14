@@ -108,6 +108,7 @@ void USkeletalMeshComponent::RefreshBoneTransforms()
     
     for (int i = 0; i < AnimPose.Pose.BoneTransforms.Num(); i++) 
     {
+        if (SkeletalMesh)
         SkeletalMesh->SetBoneLocalMatrix(i, AnimPose.Pose.BoneTransforms[i]);
     }
 

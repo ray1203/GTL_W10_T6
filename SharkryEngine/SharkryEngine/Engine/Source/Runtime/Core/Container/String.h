@@ -211,6 +211,7 @@ public:
      *         Count가 문자열 길이보다 크거나 같으면 빈 문자열을 반환합니다.
      */
     FString RightChop(int32 Count) const;
+    FString TrimStart(const FString& CharsToTrim) const;
 
 public:
     FORCEINLINE int32 Len() const;
@@ -251,7 +252,9 @@ public:
         const FString& SubStr, ESearchCase::Type SearchCase = ESearchCase::IgnoreCase,
         ESearchDir::Type SearchDir = ESearchDir::FromStart, int32 StartPosition = -1
     ) const;
+    FString Replace(const FString& From, const FString& To) const;
 
+    FString Mid(int32 Start, int32 Count) const;
     void Reserve(int32 CharacterCount);
     void Resize(int32 CharacterCount);
 
