@@ -196,13 +196,13 @@ void APlayerCharacter::Jump()
     if (Controller && !bIsJumping)
     {
         bIsJumping = true;
-        VerticalVelocity = 8.0f;
+        VerticalVelocity = 6.0f;
     }
 }
 
 void APlayerCharacter::UpdateVerticalMovement(float DeltaTime)
 {
-    if (!bIsJumping)
+    if (!bCharacterVerticalPositionChange)
         return;
 
     // 중력 적용
@@ -216,8 +216,9 @@ void APlayerCharacter::UpdateVerticalMovement(float DeltaTime)
     if (Loc.Z <= 0.0f)
     {
         Loc.Z = 0.0f;
-        VerticalVelocity = 0.f;
+        VerticalVelocity = 0.0f;
         bIsJumping = false;
+        bCharacterVerticalPositionChange = false;
     }
     SetActorLocation(Loc);
 }

@@ -37,6 +37,10 @@ void UMyAnimInstance::NativeInitializeAnimation()
         AnimSequence = IdleAnimSequence;
     }
     CurrentTime = 0.0f;
+
+    FName JumpStart = "JumpStart";
+    FAnimNotifyEvent JumpStartEvent = FAnimNotifyEvent(0.1f, 0.0f, JumpStart);
+    JumpAnimSequence->Notifies.Add(JumpStartEvent);
 }
 
 void UMyAnimInstance::UpdateNotify(float DeltaSeconds)
@@ -284,14 +288,6 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
             FAnimExtractContext Extract(CurrentTime, false);
 
             AnimSequence->GetAnimationPose(Pose, Extract);
-
-            if (Pose.Pose.BoneTransforms.Num() > 0)
-            {
-                FMatrix& RootLocal = Pose.Pose.BoneTransforms[0];
-                RootLocal.M[3][0] = 0.f;
-                RootLocal.M[3][1] = 0.f;
-                RootLocal.M[3][2] = 0.f;
-            }
 
             Output.Pose = Pose.Pose;
             // Output.Curve = Pose.Curve;
