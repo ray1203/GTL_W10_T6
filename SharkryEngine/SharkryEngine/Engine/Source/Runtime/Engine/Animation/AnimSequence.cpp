@@ -18,16 +18,6 @@ float UAnimSequence::GetPlayLength()
     return AnimDataModel->PlayLength;
 }
 
-void UAnimSequence::GenerateTestCode()
-{
-    FName TestAName = "TestA";
-    FAnimNotifyEvent TestA = FAnimNotifyEvent(0.1f, 0.0f, TestAName);
-    Notifies.Add(TestA);
-
-    FName TestBName = "TestB";
-    FAnimNotifyEvent TestB = FAnimNotifyEvent(0.2f, 1.0f, TestBName, ENotifyMode::State, ENotifyState::None);
-    Notifies.Add(TestB);
-}
 
 void UAnimSequence::GetAnimationPose(FPoseContext& OutAnimationPoseData, const FAnimExtractContext& ExtractionContext)
 {

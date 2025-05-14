@@ -131,6 +131,10 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     {
         // 시퀀스 길이를 넘어가면 맨 앞으로 되돌리기
         CurrentTime = FMath::Fmod(CurrentTime, AnimSequence->GetPlayLength());
+        if (CurrentTime < 0.f) 
+        {
+            CurrentTime = AnimSequence->GetPlayLength() + CurrentTime;  // 음수로 나온 값 반영해주기
+        }
     }
     else
     {
