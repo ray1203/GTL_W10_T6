@@ -98,6 +98,34 @@ void AnimEditorPanel::CreateAnimNotifyControl()
 
                 if (ImGui::BeginNeoTimelineEx(timelineLabel))
                 {
+                    // State의 범위가 먼저 그려져야 다이아몬드를 가리지 않으므로
+                    for (int j = 0; j < AnimSequence->Notifies.Num(); j++)
+                    {
+                        FAnimNotifyEvent& Notify = AnimSequence->Notifies[j];
+                        if (Notify.TrackNum == i)
+                        {
+                            if (Notify.NotifyMode == ENotifyMode::State)
+                            {
+                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
+                                Notify.UpdateTriggerEndFrame(playLength, AnimDataModel->NumberOfFrames);
+
+                                ImGui::ShowNotifyState(*Notify.NotifyName.ToString(), Notify.TriggerFrame, Notify.TriggerEndFrame);
+                                ImGui::NeoKeyframe(&Notify.TriggerFrame);
+                                ImGui::NeoKeyframe(&Notify.TriggerEndFrame);
+
+                                Notify.isTriggerEndClicked = ImGui::IsNeoKeyframeSelected();
+
+                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
+                                Notify.UpdateTriggerEndTime(playLength, AnimDataModel->NumberOfFrames);
+
+                                if (doDelete && ImGui::IsNeoKeyframeSelected())
+                                {
+                                    RemoveNotifiesIndex.Add(j);
+                                }
+                            }
+                        }
+                    }
+
                     for (int j = 0; j < AnimSequence->Notifies.Num(); j++)
                     {
                         FAnimNotifyEvent& Notify = AnimSequence->Notifies[j];
@@ -108,22 +136,17 @@ void AnimEditorPanel::CreateAnimNotifyControl()
                                 // Notify의 TriggerTime을 frame으로 변환
                                 Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
                                 ImGui::NeoKeyframe(&Notify.TriggerFrame);
-                                if (doDelete && ImGui::IsNeoKeyframeSelected()) 
+                                
+                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
+                                
+                                if (doDelete && ImGui::IsNeoKeyframeSelected())
                                 {
                                     RemoveNotifiesIndex.Add(j);
                                 }
-                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
-                            }
-                            else // NotifyState인 경우
-                            {
-                                bool open = true;
-                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
-                                ImGui::BeginNeoNotifyState(*Notify.NotifyName.ToString(),
-                                    &Notify.TriggerFrame, &Notify.Duration, &open);
-                                ImGui::EndNeoNotifyState();
                             }
                         }
                     }
+                    
                     ImGui::EndNeoTimeLine();
                 }
             }

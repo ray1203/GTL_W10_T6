@@ -18,8 +18,10 @@ enum class ENotifyState
 struct FAnimNotifyEvent 
 {
     float TriggerTime;
-    int TriggerFrame;       // AniEditorPanel UI에서 변경해주는 용도의 Frame
+    int TriggerFrame;       // AnimEditorPanel UI에서 변경해주는 용도의 Frame
     float Duration;
+    int TriggerEndFrame;    // AnimEditorPanel UI에서 변경해주는 용도의 Frame
+    bool isTriggerEndClicked;
     FName NotifyName;
     ENotifyMode NotifyMode;
     ENotifyState NotifyState;
@@ -44,11 +46,33 @@ struct FAnimNotifyEvent
 
     void UpdateTriggerTime(float PlayLength, int FrameNum)
     {
+        if (!isTriggerEndClicked && TriggerFrame > TriggerEndFrame) 
+        {
+            TriggerEndFrame = TriggerFrame;
+        }
+
         TriggerTime = ((float)TriggerFrame / FrameNum) * PlayLength;
     }
 
     void UpdateTriggerFrame(float PlayLength, int FrameNum) 
     {
         TriggerFrame = FMath::FloorToInt32((TriggerTime / PlayLength) * FrameNum);
+    }
+
+    void UpdateTriggerEndTime(float PlayLength, int FrameNum) 
+    {
+        float TriggerEndTime = ((float)TriggerEndFrame / FrameNum) * PlayLength;
+        if (isTriggerEndClicked && TriggerTime > TriggerEndTime)
+        {
+            TriggerTime = TriggerEndTime;
+            Duration = 0.0f;
+            return;
+        } 
+        Duration = TriggerEndTime - TriggerTime;
+    }
+
+    void UpdateTriggerEndFrame(float PlayLength, int FrameNum) 
+    {
+        TriggerEndFrame = FMath::FloorToInt32(((TriggerTime + Duration) / PlayLength) * FrameNum);
     }
 };
