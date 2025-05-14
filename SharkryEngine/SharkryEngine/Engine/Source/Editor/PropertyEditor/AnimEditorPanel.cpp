@@ -27,7 +27,7 @@ void AnimEditorPanel::Render()
 
     // --- 2) 패널 크기 계산
     const float PanelWidth = Width * 4.0f;
-    const float PanelHeight = Height * 3.0f;
+    const float PanelHeight = Height * 5.0f;
 
     // --- 3) 왼쪽 하단 위치 계산
     const ImVec2 PanelPos(0.0f, DisplaySize.y - PanelHeight);
@@ -208,7 +208,15 @@ void AnimEditorPanel::CreateAnimNotifyControl()
                         Notify.UpdateTriggerTime(playLength, frameCount);
                         Notify.UpdateTriggerEndTime(playLength, frameCount);
 
-                        if (ImGui::IsNeoKeyframeSelected()) RemoveNotifiesIndex.Add(j);
+                        if (ImGui::IsNeoKeyframeRightClicked()) ImGui::OpenPopup("NotifyContextMenu");
+                        if (ImGui::BeginPopup("NotifyContextMenu")) {
+                            ImGui::Text("Notify: %s", *Notify.NotifyName.ToString());
+                            if (ImGui::Button("Remove")) {
+                                RemoveNotifiesIndex.Add(j);
+                                ImGui::CloseCurrentPopup();
+                            }
+                            ImGui::EndPopup();
+                        }
                     }
                     // Single keyframe notifies
                     for (int j = 0; j < AnimSequence->Notifies.Num(); ++j)
@@ -218,7 +226,16 @@ void AnimEditorPanel::CreateAnimNotifyControl()
                         Notify.UpdateTriggerFrame(playLength, frameCount);
                         ImGui::NeoKeyframe(&Notify.TriggerFrame);
                         Notify.UpdateTriggerTime(playLength, frameCount);
-                        if (ImGui::IsNeoKeyframeSelected()) RemoveNotifiesIndex.Add(j);
+
+                        if (ImGui::IsNeoKeyframeRightClicked()) ImGui::OpenPopup("NotifyContextMenu");
+                        if (ImGui::BeginPopup("NotifyContextMenu")) {
+                            ImGui::Text("Notify: %s", *Notify.NotifyName.ToString());
+                            if (ImGui::Button("Remove")) {
+                                RemoveNotifiesIndex.Add(j);
+                                ImGui::CloseCurrentPopup();
+                            }
+                            ImGui::EndPopup();
+                        }
                     }
                     ImGui::EndNeoTimeLine();
                 }
