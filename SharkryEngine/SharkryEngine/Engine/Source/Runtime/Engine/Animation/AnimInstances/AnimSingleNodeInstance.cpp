@@ -132,7 +132,6 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
         return;
     }
 
-
     AnimSequence = NewSequence;
     PlayRate = InPlayRate;
     CurrentTime = 0.0f;

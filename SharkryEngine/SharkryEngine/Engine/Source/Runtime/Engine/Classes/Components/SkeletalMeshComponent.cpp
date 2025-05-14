@@ -153,7 +153,7 @@ void USkeletalMeshComponent::InitAnimation()
 void USkeletalMeshComponent::PlayAnimation(EAnimationMode NewAnimMode, UAnimSequence* NewAnimToPlay, bool bLooping)
 {
     SetAnimationMode(NewAnimMode);
-    SetAnimation(NewAnimToPlay);
+    SetAnimation(NewAnimToPlay, bLooping);
     Play(bLooping);
 }
 
@@ -168,16 +168,15 @@ EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
     return AnimationMode;
 }
 
-void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float BlendDuration, float InPlayRate)
+void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, bool bLooping, float BlendDuration, float InPlayRate)
 {
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, bLooping);
     }
     else
     {
-        AnimInstance->SetAnimationSequence(NewAnimToPlay, true, 0.3f);
-        AnimInstance->SetPlaying(false);
+        AnimInstance->SetAnimationSequence(NewAnimToPlay, bLooping, 0.3f);
     }
 }
 

@@ -39,7 +39,7 @@ void UMyAnimInstance::NativeInitializeAnimation()
     CurrentTime = 0.0f;
 
     FName JumpStart = "JumpStart";
-    FAnimNotifyEvent JumpStartEvent = FAnimNotifyEvent(0.1f, 0.0f, JumpStart);
+    FAnimNotifyEvent JumpStartEvent = FAnimNotifyEvent(0.5f, 0.0f, JumpStart);
     JumpAnimSequence->Notifies.Add(JumpStartEvent);
 }
 
@@ -240,15 +240,6 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
             Output = SourcePose;
         }
 
-        // 루트 본 위치 강제 0
-        if (Output.Pose.BoneTransforms.Num() > 0)
-        {
-            FMatrix& RootLocal = Output.Pose.BoneTransforms[0];
-            RootLocal.M[3][0] = 0.f;
-            RootLocal.M[3][1] = 0.f;
-            RootLocal.M[3][2] = 0.f;
-        }
-
         // 블렌딩 완료 처리
         if (BlendAlpha >= 1.f)
         {
@@ -297,7 +288,7 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration, float InPlayRate)
 {
-    if (NewSequence == nullptr || NewSequence == AnimSequence)
+    if (NewSequence == nullptr)
     {
         return;
     }
@@ -321,16 +312,17 @@ FPoseContext& UMyAnimInstance::GetOutput()
     return Output;
 }
 
-void UMyAnimInstance::StartCrossfade(UAnimSequence* NewTargetSequence, bool bTargetLooping, float InBlendDuration, float InTargetPlayRate)
+void UMyAnimInstance::StartCrossfade(UAnimSequence* NewTargetSequence, bool InbTargetLooping, float InBlendDuration, float InTargetPlayRate)
 {
-    if (!AnimSequence || !NewTargetSequence || InBlendDuration <= 0.f || AnimSequence == NewTargetSequence)
+    if (!AnimSequence || !NewTargetSequence || InBlendDuration <= 0.f)
     {
         return;
     }
 
-    // 이미 NewTargetSequence로 블렌딩 중이라면 무시
-    if (bIsBlending && TargetAnimSequence == NewTargetSequence)
+    // 이미 NewTargetSequence로 블렌딩 중이라면 바로 변경
+    if (bIsBlending && TargetAnimSequence != NewTargetSequence)
     {
+        bIsBlending = false;
         return;
     }
 
@@ -338,7 +330,7 @@ void UMyAnimInstance::StartCrossfade(UAnimSequence* NewTargetSequence, bool bTar
     TargetAnimSequence = NewTargetSequence;
     TargetCurrentTime = 0.f;
     TargetPlayRate = InTargetPlayRate;
-    bTargetLooping = bTargetLooping;
+    bTargetLooping = InbTargetLooping;
 
     // 블렌딩 시작
     bIsBlending = true;

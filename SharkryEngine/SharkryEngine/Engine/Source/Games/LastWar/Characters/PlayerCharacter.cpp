@@ -193,7 +193,7 @@ void APlayerCharacter::MoveRight(float Value)
 
 void APlayerCharacter::Jump()
 {
-    if (Controller && !bIsJumping)
+    if (Controller && !bIsJumping && Velocity == InitVelocity)
     {
         bIsJumping = true;
         VerticalVelocity = 6.0f;
