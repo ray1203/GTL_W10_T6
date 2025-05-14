@@ -23,6 +23,7 @@
 #include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
 #include "AssetImporter/FBX/FBXManager.h"
+#include "Animation/AnimSequence.h"
 
 APlayerCharacter::APlayerCharacter()
 {
@@ -52,6 +53,40 @@ void APlayerCharacter::BeginPlay()
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
     //SetCharacterMeshCount(1);
+    UAnimSingleNodeInstance* AnimInstance = Cast<USkeletalMeshComponent>(BodyMesh)->GetSingleNodeInstance();
+    if (AnimInstance == nullptr)
+    {
+        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
+        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimInstance(AnimInstance);
+    }
+
+    TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
+    for (auto& Anim : AnimationAssets)
+    {
+        if (Anim.Key == "Contents/Idle.fbx")
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Walking.fbx")
+        {
+            AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Running.fbx")
+        {
+            AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Jumping.fbx")
+        {
+            AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+
+    }
+    AnimInstance->NativeInitializeAnimation();
 }
   
 void APlayerCharacter::Tick(float DeltaTime)
@@ -76,6 +111,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     // Bind input actions and axes here  
     PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
+    PlayerInputComponent->BindAction("MoveForwardRelease", [this]() { MoveForwardRelease(); });
+    PlayerInputComponent->BindAction("MoveRightRelease", [this]() { MoveRightRelease(); });
     PlayerInputComponent->BindAction("Jump", [this]() { Jump(); });
 }
 
@@ -112,6 +149,7 @@ void APlayerCharacter::MoveForward(float Value)
 {
     if (Value != 0.0f)
     {
+        Velocity += 0.1f;
         AddMovementInput(GetActorForwardVector(), Value);
 
         if (Value >= 0.0f)
@@ -129,6 +167,7 @@ void APlayerCharacter::MoveRight(float Value)
 {
     if (Controller && Value != 0.0f)
     {
+        Velocity += 0.1f;
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
@@ -173,6 +212,24 @@ void APlayerCharacter::UpdateVerticalMovement(float DeltaTime)
         bIsJumping = false;
     }
     SetActorLocation(Loc);
+}
+
+void APlayerCharacter::MoveForwardPress()
+{
+}
+
+void APlayerCharacter::MoveForwardRelease()
+{
+    Velocity = InitVelocity;
+}
+
+void APlayerCharacter::MoveRightPress()
+{
+}
+
+void APlayerCharacter::MoveRightRelease()
+{
+    Velocity = InitVelocity;
 }
 
 void APlayerCharacter::HandleOverlap(AActor* OtherActor)

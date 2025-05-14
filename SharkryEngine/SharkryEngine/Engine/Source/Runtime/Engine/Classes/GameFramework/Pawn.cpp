@@ -18,7 +18,7 @@ void APawn::Tick(float DeltaTime)
     {
         // 최대 길이를 1로 정규화한 뒤 속도·델타타임 곱해서 이동량 계산
         FVector Dir = PendingMovement.GetClampedToMaxSize(1.0f);
-        FVector Delta = Dir * MoveSpeed * DeltaTime;
+        FVector Delta = Dir * Velocity * DeltaTime;
 
         // sweep=true 로 충돌 처리
         //AddActorWorldOffset(Delta, true);
@@ -44,7 +44,7 @@ void APawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void APawn::GetProperties(TMap<FString, FString>& OutProperties) const
 {
     Super::GetProperties(OutProperties);
-    OutProperties.Add(TEXT("MoveSpeed"), std::to_string(MoveSpeed));
+    OutProperties.Add(TEXT("MoveSpeed"), std::to_string(Velocity));
     OutProperties.Add(TEXT("PendingMovement"), PendingMovement.ToString());
 }
 
@@ -55,7 +55,7 @@ void APawn::SetProperties(const TMap<FString, FString>& InProperties)
     TempStr = InProperties.Find(TEXT("MoveSpeed"));
     if (TempStr)
     {
-        MoveSpeed = std::stof(GetData(*TempStr));
+        Velocity = std::stof(GetData(*TempStr));
     }
     TempStr = InProperties.Find(TEXT("PendingMovement"));
     if (TempStr)

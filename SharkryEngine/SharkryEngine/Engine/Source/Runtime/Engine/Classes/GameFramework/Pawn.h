@@ -56,7 +56,7 @@ public:
 
     AController* GetController() const { return Controller; }
 
-    float GetVelocity() const { return MoveSpeed; }
+    float GetVelocity() const { return Velocity; }
     float GetWalkSpeed() const { return WalkSpeed; }
     float GetRunSpeed() const { return RunSpeed; }
 
@@ -67,13 +67,16 @@ public:
 
     UPROPERTY
     (bool, bIsJumping, = false) // 점프 중인지 여부
+
+    UPROPERTY
+    (float, InitVelocity, = 6.0f) // 초기 이동 속도
 protected:
     UPROPERTY
     (AController*, Controller, = nullptr) // 현재 조종 중인 컨트롤러
 
 protected:
     UPROPERTY
-    (float, MoveSpeed, = 6.0f)
+    (float, Velocity, = 6.0f)
 
     UPROPERTY
     (float, VerticalVelocity, = 0.0f)
