@@ -9,6 +9,7 @@
 #include "Classes/Actors/ASkeletalMeshActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/Mesh/SkeletalMesh.h"
+#include "AssetImporter/FBX/FBXManager.h"
 #include "Engine/EditorEngine.h"
 
 
@@ -63,7 +64,7 @@ void AnimEditorPanel::OnResize(HWND hWnd)
 
 void AnimEditorPanel::CreateAnimNotifyControl()
 {
-    // --- Fetch AnimInstance (custom UMyAnimInstance) ---
+    // --- Retrieve SkeletalMeshComponent and custom AnimInstance ---
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
     USkeletalMeshComponent* SkeletalComp = nullptr;
     for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors) {
@@ -73,24 +74,39 @@ void AnimEditorPanel::CreateAnimNotifyControl()
         }
     }
     if (!SkeletalComp) return;
-
     UMyAnimInstance* MyInst = Cast<UMyAnimInstance>(SkeletalComp->GetAnimInstance());
     if (!MyInst) {
         ImGui::Text("Custom AnimInstance not found");
         return;
     }
 
-    UAnimSequence* AnimSequence = MyInst->GetAnimationSequence();
-    if (!AnimSequence) {
-        ImGui::Text("No AnimSequence set");
-        return;
+    // --- Animation Selection Combo ---
+    TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
+    static TArray<const char*> ItemPtrs;
+    ItemPtrs.Empty(AnimAssets.Num());
+    for (const auto& Asset : AnimAssets) {
+        ItemPtrs.Add(*Asset.Key);
+    }
+    static int CurrentIndex = 0;
+    if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num())) {
+        FString Key = ItemPtrs[CurrentIndex];
+        if (UAnimationAsset* Asset = AnimAssets[Key]) {
+            if (UAnimSequence* Seq = Cast<UAnimSequence>(Asset)) {
+                MyInst->SetAnimationSequence(Seq, true, MyInst->GetPlayRate());
+                MyInst->SetPlayingState(true);
+                // Reset time to start
+                MyInst->SetCurrentTime(0.0f);
+            }
+        }
     }
 
+    UAnimSequence* AnimSequence = MyInst->GetAnimationSequence();
+    if (!AnimSequence) return;
     UAnimDataModel* AnimDataModel = AnimSequence->GetDataModel();
-    const float playLength = AnimDataModel->PlayLength;
-    const int   frameCount = AnimDataModel->NumberOfFrames;
+    int32_t frameCount = AnimDataModel->NumberOfFrames;
+    float playLength = AnimDataModel->PlayLength;
 
-    // --- Playback controls UI ---
+    // --- Playback Controls ---
     ImGui::BeginGroup();
     bool bPlaying = MyInst->IsPlaying();
     if (ImGui::Button(bPlaying ? "Pause" : "Play")) {
@@ -113,15 +129,14 @@ void AnimEditorPanel::CreateAnimNotifyControl()
     }
     ImGui::EndGroup();
 
-    // --- Time slider ---
+    // --- Time Slider ---
     float currentTime = MyInst->GetCurrentTime();
     if (ImGui::SliderFloat("Time", &currentTime, 0.0f, playLength, "%.3f s")) {
         MyInst->SetCurrentTime(currentTime);
     }
-    int32_t currentFrame = (int32_t)FMath::FloorToInt32((currentTime / playLength) * frameCount);
+    int32_t currentFrame = FMath::FloorToInt32((currentTime / playLength) * frameCount);
     int32_t startFrame = 0;
     int32_t endFrame = frameCount;
-
     static bool transformOpen = true;
     bool doDelete = false;
     TArray<int> RemoveNotifiesIndex;
