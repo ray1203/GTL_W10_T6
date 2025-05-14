@@ -120,6 +120,10 @@ void USkeletalMeshComponent::RefreshBoneTransforms()
     {
         AnimPose = SingleNodeInstance->GetOutput();
     }
+    else if (AnimationMode == EAnimationMode::AnimationCustomMode) 
+    {
+        AnimPose = AnimInstance->GetOutput();
+    }
     
     for (int i = 0; i < AnimPose.Pose.BoneTransforms.Num(); i++) 
     {

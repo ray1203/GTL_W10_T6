@@ -847,56 +847,23 @@ namespace ImGui
         return addGroupRes;
     }
 
-    ////////////////////////////////////
-
-    IMGUI_API bool BeginNeoNotifyState(const char* label, FrameIndexType* startFrame, float* duration, bool* open)
-    {
-        // Only valid inside a BeginNeoSequencer() / EndNeoSequencer() block
-        IM_ASSERT(inSequencer && "Must be inside BeginNeoSequencer");
-        const auto& style = GetNeoSequencerStyle();
-        auto& ctx = sequencerData[currentSequencer];
-        ImGuiWindow* window = GetCurrentWindow();
-        ImGuiID id = window->GetID(label);
-        // Calculate pixel positions
-        float perFrame = getPerFrameWidth(ctx);
-        float x0 = ctx.TopBarStartCursor.x + ctx.ValuesWidth + ((*startFrame - ctx.StartFrame - ctx.OffsetFrame) * perFrame);
-        float width = (*duration) * perFrame;
-        ImRect bb(ImVec2(x0, ctx.ValuesCursor.y), ImVec2(x0 + width, ctx.ValuesCursor.y + currentTimelineHeight));
-        // Header clickable to toggle
-        if (open && ImGui::IsItemClicked()) *open = !*open;
-        // Render background
-        window->DrawList->AddRectFilled(bb.Min, bb.Max, ColorConvertFloat4ToU32(style.Colors[ImGuiNeoSequencerCol_SelectedTimeline]));
-        // Handle dragging start
-        bool hovered = ItemHoverable(bb, id, ImGuiItemFlags_None);
-        static bool draggingStart = false;
-        static bool draggingEnd = false;
-        ImVec2 mouse = GetMousePos();
-        // resize handles
-        ImRect handleStart(bb.Min, bb.Min + ImVec2(5, bb.GetHeight()));
-        ImRect handleEnd(bb.Max - ImVec2(5, 0), bb.Max);
-        if (!draggingStart && handleStart.Contains(mouse) && IsMouseClicked(ImGuiMouseButton_Left)) draggingStart = true;
-        if (!draggingEnd && handleEnd.Contains(mouse) && IsMouseClicked(ImGuiMouseButton_Left)) draggingEnd = true;
-        if (draggingStart) {
-            float dx = (mouse.x - bb.Min.x) / perFrame;
-            *startFrame = ctx.OffsetFrame + ctx.StartFrame + (int)round(dx);
-            *duration = (*duration) - dx;
-        }
-        if (draggingEnd) {
-            float dx = (mouse.x - bb.Max.x) / perFrame;
-            *duration = ImMax(1.0f, *duration + dx);
-        }
-        if (!IsMouseDown(ImGuiMouseButton_Left)) {
-            draggingStart = draggingEnd = false;
-        }
-        // Advance cursor
-        ctx.ValuesCursor.y += currentTimelineHeight;
-        return true;
-    }
-
-    IMGUI_API void EndNeoNotifyState()
-    {
-        
-    }
+	IMGUI_API void ShowNotifyState(const char* label, FrameIndexType startFrame, FrameIndexType endFrame)
+	{
+		IM_ASSERT(inSequencer && "Must be inside BeginNeoSequencer");
+		const auto& style = GetNeoSequencerStyle();
+		auto& ctx = sequencerData[currentSequencer];
+		ImGuiWindow* window = GetCurrentWindow();
+		// Calculate pixel positions
+		float perFrame = getPerFrameWidth(ctx);
+		float x0 = ctx.TopBarStartCursor.x + ctx.ValuesWidth + ((startFrame - ctx.StartFrame - ctx.OffsetFrame) * perFrame);
+		float width = (endFrame - startFrame) * perFrame;
+		ImRect bb(ImVec2(x0, ctx.ValuesCursor.y), ImVec2(x0 + width, ctx.ValuesCursor.y + currentTimelineHeight));
+		// Render filled rectangle
+		window->DrawList->AddRectFilled(bb.Min, bb.Max,
+			ColorConvertFloat4ToU32(style.Colors[ImGuiNeoSequencerCol_NotifyState]));
+		// Advance cursor for subsequent items
+		//ctx.ValuesCursor.y += currentTimelineHeight;
+	}
 
     const ImVec4& GetStyleNeoSequencerColorVec4(ImGuiNeoSequencerCol idx)
     {
@@ -1421,5 +1388,6 @@ ImGuiNeoSequencerStyle::ImGuiNeoSequencerStyle()
 
     Colors[ImGuiNeoSequencerCol_SelectionBorder] = ImVec4{0.98f, 0.706f, 0.322f, 0.61f};
     Colors[ImGuiNeoSequencerCol_Selection] = ImVec4{0.98f, 0.706f, 0.322f, 0.33f};
+    Colors[ImGuiNeoSequencerCol_NotifyState] = ImVec4{ 0.6f, 0.6f, 0.6f, 0.8f };;
 
 }

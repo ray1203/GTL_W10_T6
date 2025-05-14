@@ -294,6 +294,7 @@ void UEditorEngine::StartViewer()
     ActiveWorld = ViewerWorld;
 
     ASkeletalMeshActor* SkeletalMeshActor = GEngine->ActiveWorld->SpawnActor<ASkeletalMeshActor>();
+    SkeletalMeshActor->GetSkeletalMeshComponent()->SetAnimationMode(EAnimationMode::AnimationCustomMode);
     SkeletalMeshActor->GetSkeletalMeshComponent()->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(GViewerFilePath));
     Cast<UEditorEngine>(GEngine)->SetViewerTargetComponent(SkeletalMeshActor->GetSkeletalMeshComponent());
     Cast<UEditorEngine>(GEngine)->SetViewerTargetActor(SkeletalMeshActor);

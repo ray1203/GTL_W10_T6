@@ -33,6 +33,22 @@ public:
 
     virtual FPoseContext& GetOutput() override;
 
+    // CurrentTime
+    FORCEINLINE float GetCurrentTime() const { return CurrentTime; }
+    FORCEINLINE void  SetCurrentTime(float InTime) { CurrentTime = InTime; }
+
+    // Is Playing
+    FORCEINLINE bool  IsPlaying() const { return bIsPlaying; }
+    FORCEINLINE void  SetPlayingState(bool bInPlay) { bIsPlaying = bInPlay; }
+
+    // Play Rate
+    FORCEINLINE float GetPlayRate() const { return PlayRate; }
+    FORCEINLINE void  SetPlayRate(float InRate) { PlayRate = InRate; }
+
+    // Is Looping
+    FORCEINLINE bool  IsLooping() const { return bIsLooping; }
+    // SetLooping은 이미 있음
+
     // 크로스페이드 블렌딩 
     void StartCrossfade(UAnimSequence* NewTargetSequence, bool bTargetLooping, float InBlendDuration,  float InTargetPlayRate = 1.f);
     bool IsBlending() const { return bIsBlending; }
