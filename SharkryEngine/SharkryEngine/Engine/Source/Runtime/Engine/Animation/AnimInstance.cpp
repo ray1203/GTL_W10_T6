@@ -1,7 +1,7 @@
 #include "AnimInstance.h"
-#include "Engine/Source/Runtime/Engine/Animation/Skeleton.h"
-#include "Engine/Classes/Components/SkeletalMeshComponent.h"
-
+#include "Animation/Skeleton.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "AnimSequence.h"
 
 UAnimInstance::UAnimInstance()
 {
@@ -56,4 +56,17 @@ void UAnimInstance::SetSkeletalMesh(USkeletalMesh* InSkeletalMesh)
 void UAnimInstance::SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp)
 {
     SkeletalMeshComp = InSkeletalMeshComp;
+}
+
+FPoseContext& UAnimInstance::GetOutput()
+{
+    return Output;
+}
+
+void UAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+{
+}
+
+void UAnimInstance::SetPlaying(bool bInPlaying)
+{
 }

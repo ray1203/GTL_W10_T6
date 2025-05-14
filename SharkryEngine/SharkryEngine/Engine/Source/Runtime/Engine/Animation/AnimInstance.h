@@ -1,11 +1,11 @@
 #pragma once
 #include "UObject/Object.h"
 #include "UObject/ObjectMacros.h"
+#include "AnimTypes.h"
 #include "Components/Mesh/SkeletalMesh.h"
 
-class UAnimSequence;
 class USkeletalMeshComponent;
-
+class UAnimSequence;
 class UAnimInstance : public UObject
 {
     DECLARE_CLASS(UAnimInstance, UObject)
@@ -31,22 +31,14 @@ public:
     USkeletalMesh* GetSkeletalMesh() { return SkeletalMesh; }
     void SetSkeletalMeshComponent(USkeletalMeshComponent* InSkeletalMeshComp);
 
-    void SetIdleAnimSequence(UAnimSequence* InIdleAnimSequence) { IdleAnimSequence = InIdleAnimSequence; }
-    void SetWalkAnimSequence(UAnimSequence* InWalkAnimSequence) { WalkAnimSequence = InWalkAnimSequence; }
-    void SetRunAnimSequence(UAnimSequence* InRunAnimSequence) { RunAnimSequence = InRunAnimSequence; }
-    void SetJumpAnimSequence(UAnimSequence* InJumpAnimSequence) { JumpAnimSequence = InJumpAnimSequence; }
-    UAnimSequence* GetIdleAnimSequence() { return IdleAnimSequence; }
-    UAnimSequence* GetWalkAnimSequence() { return WalkAnimSequence; }
-    UAnimSequence* GetRunAnimSequence() { return RunAnimSequence; }
-    UAnimSequence* GetJumpAnimSequence() { return JumpAnimSequence; }
+    virtual FPoseContext& GetOutput();
+
+    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    virtual void SetPlaying(bool bInPlaying);
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;
     USkeletalMeshComponent* SkeletalMeshComp = nullptr;
-
-    UAnimSequence* IdleAnimSequence = nullptr;
-    UAnimSequence* WalkAnimSequence = nullptr;
-    UAnimSequence* RunAnimSequence = nullptr;
-    UAnimSequence* JumpAnimSequence = nullptr;
+    FPoseContext Output;
 };
 

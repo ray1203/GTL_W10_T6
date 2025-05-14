@@ -1,7 +1,7 @@
 #pragma once
 #include "Components/SkinnedMeshComponent.h"
 #include "Mesh/SkeletalMesh.h"
-#include "Engine/Source/Runtime/Core/Container/Array.h"
+#include "Container/Array.h"
 
 enum class EAnimationMode {
     AnimationBlueprint,
@@ -9,6 +9,7 @@ enum class EAnimationMode {
     AnimationCustomMode
 };;
 
+class UAnimInstance;
 class UAnimSingleNodeInstance;
 struct FAnimNotifyEvent;
 class UAnimSequence;
@@ -34,19 +35,23 @@ public:
     void RefreshBoneTransforms();
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
-    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = false);
+    void InitAnimation();
+    void PlayAnimation(EAnimationMode NewAnimMode, UAnimSequence* NewAnimToPlay, bool bLooping = false);
     void SetAnimationMode(EAnimationMode NewMode);
     EAnimationMode GetAnimationMode() const;
     void SetAnimation(UAnimSequence* NewAnimToPlay);
     void Play(bool bLooping = false);
     void Stop();
     UAnimSingleNodeInstance* GetSingleNodeInstance();
-    void SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance);
+
+    void SetAnimInstance(UAnimInstance* InAnimInstance);
+    UAnimInstance* GetAnimInstance();
 
     void AddAnimAssetName(FString AnimAssetName);
     TArray<FString> GetAnimAssetNames() { return AnimAssetNames; }
 private:
     EAnimationMode AnimationMode = EAnimationMode::AnimationSingleNode;
-    UAnimSingleNodeInstance* AnimInstance = nullptr;
+    UAnimInstance* AnimInstance = nullptr;
+    UAnimSingleNodeInstance* SingleNodeInstance = nullptr;
     TArray<FString> AnimAssetNames;
 };

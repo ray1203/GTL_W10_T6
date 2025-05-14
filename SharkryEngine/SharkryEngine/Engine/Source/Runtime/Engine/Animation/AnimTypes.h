@@ -3,10 +3,8 @@
 #include "Core/Math/Quat.h"
 #include "Core/Math/Vector.h"
 #include "Core/Container/Array.h"
-// 작업 하다보면 아래부분에 재정의 문제 생길 수 있음 유의할것
-#include "Engine/Animation/AnimInstance.h"
 
-
+class UAnimInstance;
 struct FRawAnimSequenceTrack
 {
     TArray<FVector> PosKeys;   // 위치 키프레임
