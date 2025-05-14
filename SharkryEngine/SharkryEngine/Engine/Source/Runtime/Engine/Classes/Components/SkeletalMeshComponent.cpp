@@ -114,6 +114,7 @@ void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRoot
 
 void USkeletalMeshComponent::RefreshBoneTransforms()
 {
+    if (!SkeletalMesh || !SkeletalMesh->Skeleton)return;
     FPoseContext AnimPose = AnimInstance->GetOutput();
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
