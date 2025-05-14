@@ -1,14 +1,14 @@
 #include "Components/SkeletalMeshComponent.h"
-
-#include "Engine/FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
-
 #include "GameFramework/Actor.h"
-
 #include "Animation/AnimInstances/AnimSingleNodeInstance.h"
 #include "Engine/Classes/GameFramework/Character.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimNotify.h"
+#include "AssetImporter/FBX/FBXManager.h"
 
 UObject* USkeletalMeshComponent::Duplicate(UObject* InOuter)
 {
@@ -24,7 +24,6 @@ void USkeletalMeshComponent::TickComponent(float DeltaTime)
 {
     Super::TickComponent(DeltaTime);
     TickAnimation(DeltaTime, false);
-
 }
 
 void USkeletalMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -94,28 +93,6 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
     }
 }
 
-void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
-{
-    if (AnimInstance == nullptr) 
-    {
-        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
-        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
-        AnimInstance->SetSkeletalMesh(SkeletalMesh);
-        AnimInstance->SetSkeletalMeshComponent(this);
-    }
-
-    UAnimationAsset* AnimationAsset = FManagerFBX::GetAnimationAsset(AnimName);
-
-    AnimAssetNames.Add(AnimName);
-
-    UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset);
-
-    if (AnimSequence == nullptr) return;
-    
-    AnimInstance->SetAnimSequence(AnimSequence);
-
-}
-
 void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRootMotion)
 {
     if (AnimInstance != nullptr) 
@@ -144,6 +121,67 @@ void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
     if (CharacterOwner)
     {
         CharacterOwner->HandleAnimNotify(Notify);
+    }
+}
+
+void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
+{
+    SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    SetAnimation(NewAnimToPlay);
+    Play(bLooping);
+}
+
+void USkeletalMeshComponent::SetAnimationMode(EAnimationMode NewMode)
+{
+    AnimationMode = NewMode;
+}
+
+EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
+{
+    return AnimationMode;
+}
+
+void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay)
+{
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
+        SingleNodeInstance->SetPlaying(false);
+    }
+}
+
+void USkeletalMeshComponent::Play(bool bLooping)
+{
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetPlaying(true);
+    }
+}
+
+void USkeletalMeshComponent::Stop()
+{
+    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
+    if (SingleNodeInstance)
+    {
+        SingleNodeInstance->SetPlaying(false);
+    }
+}
+
+UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
+{
+    return Cast<UAnimSingleNodeInstance>(AnimInstance);
+}
+
+void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance)
+{
+    AnimInstance = InAnimInstance;
+    if (AnimInstance)
+    {
+        AnimInstance->SetSkeletalMesh(SkeletalMesh);
+        AnimInstance->SetSkeletalMeshComponent(this);
     }
 }
 

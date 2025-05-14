@@ -54,17 +54,39 @@ public:
     virtual void RegisterLuaType(sol::state& Lua) override; // Lua에 클래스 등록해주는 함수.
     virtual bool BindSelfLuaProperties() override; // LuaEnv에서 사용할 멤버 변수 등록 함수.
 
-
     AController* GetController() const { return Controller; }
 
+    float GetVelocity() const { return Velocity; }
+    float GetWalkSpeed() const { return WalkSpeed; }
+    float GetRunSpeed() const { return RunSpeed; }
+
+    FVector PendingMovement;
+
+    UPROPERTY
+    (float, GravityZ, = -9.8f) // 중력 가속도
+
+    UPROPERTY
+    (bool, bIsJumping, = false) // 점프 중인지 여부
+
+    UPROPERTY
+    (float, InitVelocity, = 6.0f) // 초기 이동 속도
 protected:
     UPROPERTY
     (AController*, Controller, = nullptr) // 현재 조종 중인 컨트롤러
 
 protected:
-    FVector PendingMovement;
+    UPROPERTY
+    (float, Velocity, = 6.0f)
 
     UPROPERTY
-    (float, MoveSpeed, = 6.0f)
+    (float, VerticalVelocity, = 0.0f)
+
+    UPROPERTY
+    (float, WalkSpeed, = 6.0f) // 걷는 속도
+
+    UPROPERTY
+    (float, RunSpeed, = 12.0f) // 뛰는 속도
+
+
 };
 

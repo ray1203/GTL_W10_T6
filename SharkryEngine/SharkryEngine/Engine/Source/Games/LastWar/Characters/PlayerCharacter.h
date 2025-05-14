@@ -4,6 +4,7 @@
 
 class UCameraComponent;
 class UInputComponent;
+class UStaticMeshComponent;
 
 DECLARE_MULTICAST_DELEGATE(FOnCharacterDeath);
 
@@ -30,6 +31,12 @@ public:
     // === 이동 관련 ===
     void MoveForward(float Value);
     void MoveRight(float Value);
+    void Jump();
+    void UpdateVerticalMovement(float DeltaTime);
+    void MoveForwardPress();
+    void MoveForwardRelease();
+    void MoveRightPress();
+    void MoveRightRelease();
 
     void HandleOverlap(AActor* OtherActor);
 
@@ -49,7 +56,6 @@ public:
     void SetSpeed(float NewSpeed) { Speed = NewSpeed; }
     void SetAttackDamage(float NewAttackDamage) { AttackDamage = NewAttackDamage; }
     void AddCharacterMeshCount(int32 InCount);
-
 
     void SetCharacterMeshCount(int32 InCount);
     
@@ -81,5 +87,8 @@ private:
 
     UPROPERTY
     (float, AttackDamage, = 10.0f)
+
+    bool bIsMoveForwardPressed = false;
+    bool bIsMoveRightPressed = false;
 };
 

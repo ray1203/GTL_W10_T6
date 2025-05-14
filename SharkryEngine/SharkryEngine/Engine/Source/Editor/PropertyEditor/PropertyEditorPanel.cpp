@@ -37,7 +37,11 @@
 #include "Engine/CurveManager.h"
 
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
+#include "Animation/AnimSequence.h"
+#include "AssetImporter/FBX/FBXManager.h"
+#include "AssetImporter/FBX/FBXStructs.h"
+#include "Renderer/DepthPrePass.h"
 
 void PropertyEditorPanel::Render()
 {
@@ -1586,29 +1590,20 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             );
         }
 
-        if (ImGui::Button("Generate Test Animation")) 
-        {
-            FLoaderFBX::GenerateTestAnimationAsset();
 
+        TMap<FString, UAnimationAsset*>& AnimAssets = FManagerFBX::GetAnimationAssets();
+        static TArray<const char*> ItemPtrs;
+        ItemPtrs.Empty(AnimAssets.Num());
+        for (const auto& Asset : AnimAssets)
+        {
+            ItemPtrs.Add(*Asset.Key);
         }
 
-        // 1) Buffer to hold user‐entered animation asset name
-        static char AnimAssetBuffer[256] = "mixamo.com";
+        static int CurrentIndex = 0;
 
-        // 2) InputText for the animation asset name
-        ImGui::InputText("Animation Asset Name", AnimAssetBuffer, IM_ARRAYSIZE(AnimAssetBuffer));
-
-        // 3) When button is clicked, convert to FString and call SetAnimAsset
-        if (ImGui::Button("Set Anim Asset"))
+        if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num()))
         {
-            // Convert UTF-8 char buffer to Unreal's TCHAR
-            FString AnimName = AnimAssetBuffer;
-            
-            if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(SkinnedMeshComp)) 
-            {
-                SkeletalMesh->SetAnimAsset(AnimName);
-            }
-            
+            Cast<USkeletalMeshComponent>(SkinnedMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[ItemPtrs[CurrentIndex]]), true);
         }
 
         ImGui::Spacing();

@@ -9,6 +9,11 @@ void UPlayerInput::InitializeDefaultMappings()
     AddAxisMapping({ "MoveForward", EKeys::S, -1.f });
     AddAxisMapping({ "MoveRight",   EKeys::D,  1.f });
     AddAxisMapping({ "MoveRight",   EKeys::A, -1.f });
+    AddActionMapping({ "MoveForwardRelease", EKeys::W });
+    AddActionMapping({ "MoveForwardRelease", EKeys::S });
+    AddActionMapping({ "MoveRightRelease", EKeys::D });
+    AddActionMapping({ "MoveRightRelease", EKeys::A });
+    AddActionMapping({ "Jump", EKeys::SpaceBar });
 }
 
 void UPlayerInput::AddActionMapping(const FInputActionKeyMapping& Mapping)
@@ -54,15 +59,36 @@ void UPlayerInput::InputKey(EKeys::Type Key, EInputEvent EventType)
     // 매핑된 액션 찾기
     for (const auto& M : ActionMappings)
     {
-        if (M.Key == Key)
+        for (const EKeys::Type& Key : PressedKeys)
         {
-            // (필요 시 Shift/Ctrl/Alt 검사 추가)
-            // PlayerController 에서 관리하는 InputComponent 스택에 전달
-            if (APlayerController* PC = Cast<APlayerController>(GetOuter()))
+            if (M.Key == Key)
             {
-                for (UInputComponent* IC : PC->GetInputComponentStack())
+                // (필요 시 Shift/Ctrl/Alt 검사 추가)
+                // PlayerController 에서 관리하는 InputComponent 스택에 전달
+                if (APlayerController* PC = Cast<APlayerController>(GetOuter()))
                 {
-                    IC->InputKey(M.ActionName);
+                    for (UInputComponent* IC : PC->GetInputComponentStack())
+                    {
+                        IC->InputKey(M.ActionName);
+                    }
+                }
+            }
+        }
+    }
+
+    // 속도 조절을 위한 임시 코드, 나중에 삭제
+    for (const auto& M : ActionMappings)
+    {
+        if (M.Key == Key && Key != EKeys::SpaceBar)
+        {
+            if (EventType == IE_Released)
+            {
+                if (APlayerController* PC = Cast<APlayerController>(GetOuter()))
+                {
+                    for (UInputComponent* IC : PC->GetInputComponentStack())
+                    {
+                        IC->InputKey(M.ActionName);
+                    }
                 }
             }
         }

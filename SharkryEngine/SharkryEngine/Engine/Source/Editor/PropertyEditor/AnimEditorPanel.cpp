@@ -82,8 +82,8 @@ void AnimEditorPanel::CreateAnimNotifyControl()
 
     // 선택된 스켈레탈 애니메이션 Instance와 Sequence 가져오기
     USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
-    UAnimSingleNodeInstance* AnimInstance = SkeletalComp->GetAnimInstance();
-    UAnimSequence* AnimSequence = AnimInstance->GetAnimSequence();
+    UAnimSingleNodeInstance* AnimInstance = SkeletalComp->GetSingleNodeInstance();
+    UAnimSequence* AnimSequence = AnimInstance->GetAnimationSequence();
     UAnimDataModel* AnimDataModel = AnimSequence->GetDataModel();
     
     // Sequence와 AnimInstance에서 정보 가져다가 사용

@@ -18,11 +18,12 @@
 #include "Engine/Animation/Skeleton.h"
 #include "Classes/Actors/ASkeletalMeshActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "Actors/DirectionalLightActor.h"
 #include "Actors/AmbientLightActor.h"
+#include "AssetImporter/FBX/FBXManager.h"
 extern FWString GViewerFilePath;
 extern std::vector<std::wstring> AnimAssetList;
 extern FEngineLoop GEngineLoop;
@@ -74,6 +75,8 @@ void UEditorEngine::Init()
     TMap<FString, FString> Config = FEditorConfigManager::GetInstance().Read();
     FString ScenePath = FEditorConfigManager::GetValueFromConfig<std::string>(Config, "ScenePath", "Saved/DefaultLevel.scene");
 
+    // 테스트용 캐릭터
+    //PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
 #ifndef _DEBUG_VIEWER
     LoadLevel(ScenePath);
 #endif // DEBUG_VIEWER
@@ -250,12 +253,10 @@ void UEditorEngine::StartPIE()
     APlayerController* PC = ActiveWorld->SpawnActor<APlayerController>();
     ActiveWorld->AddPlayerController(PC);
 
-    // 2) Character 스폰 및 Possess
-    ACharacter* PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
+    // 2) Character Possess
+    PlayerCharacter = ActiveWorld->SpawnActor<APlayerCharacter>();
     PC->Possess(PlayerCharacter);
 
-
-    //PIEWorld->BeginPlay();
     PIEWorld->BeginPlay();
     GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->ViewTarget.Target = PlayerCharacter;
     //GEngine->ActiveWorld->GetFirstPlayerController()->PlayerCameraManager->StartCameraFade(0.0f, 1.0f, 10.0f, FLinearColor::Red, false, true);
@@ -303,7 +304,7 @@ void UEditorEngine::StartViewer()
     for (std::wstring AnimName : AnimAssetList) 
     {
         const FString AnimNameStr = FString(AnimName);
-        SkeletalMeshActor->GetSkeletalMeshComponent()->SetAnimAsset(AnimNameStr);
+        SkeletalMeshActor->SetAnimationAsset();
     }
 
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))

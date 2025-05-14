@@ -19,13 +19,24 @@
 #include "Camera/CameraModifier/CameraShakeModifier.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Actors/CameraActor.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
+#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "AssetImporter/FBX/FBXManager.h"
+#include "Animation/AnimSequence.h"
 
 APlayerCharacter::APlayerCharacter()
 {
-    BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
+    //BodyMesh->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/Cube/cube-tex.obj"));
+    Cast<USkeletalMeshComponent>(BodyMesh)->SetSkeletalMesh(FManagerFBX::GetSkeletalMesh(L"Contents/Mutant.fbx"));
+    FManagerFBX::CreateAnimationAsset(L"Contents/Idle.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Walking.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Running.fbx");
+    FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx");
+    BodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
     FollowCamera = AddComponent<UCameraComponent>("PlayerCamera");
     FollowCamera->SetupAttachment(RootComponent);
-    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 3.0f));
+    FollowCamera->SetRelativeLocation(FVector(-3.0f, 0.0f, 1.5f));
 }
 
 UObject* APlayerCharacter::Duplicate(UObject* InOuter)
@@ -41,12 +52,48 @@ void APlayerCharacter::BeginPlay()
 {
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
-    SetCharacterMeshCount(1);
+    //SetCharacterMeshCount(1);
+    UAnimSingleNodeInstance* AnimInstance = Cast<USkeletalMeshComponent>(BodyMesh)->GetSingleNodeInstance();
+    if (AnimInstance == nullptr)
+    {
+        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
+        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimInstance(AnimInstance);
+    }
+
+    TMap<FString, UAnimationAsset*> AnimationAssets = FManagerFBX::GetAnimationAssets();
+    for (auto& Anim : AnimationAssets)
+    {
+        if (Anim.Key == "Contents/Idle.fbx")
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Walking.fbx")
+        {
+            AnimInstance->SetWalkAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Running.fbx")
+        {
+            AnimInstance->SetRunAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else if (Anim.Key == "Contents/Jumping.fbx")
+        {
+            AnimInstance->SetJumpAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+        else
+        {
+            AnimInstance->SetIdleAnimSequence(Cast<UAnimSequence>(Anim.Value));
+        }
+
+    }
+    AnimInstance->NativeInitializeAnimation();
 }
   
 void APlayerCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    UpdateVerticalMovement(DeltaTime);
 
     if (!LastWarUI::bShowGameOver && Health <= 0)
     {
@@ -64,6 +111,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
     // Bind input actions and axes here  
     PlayerInputComponent->BindAxis("MoveForward", [this](float Value) { MoveForward(Value); });
     PlayerInputComponent->BindAxis("MoveRight", [this](float Value) { MoveRight(Value); });
+    PlayerInputComponent->BindAction("MoveForwardRelease", [this]() { MoveForwardRelease(); });
+    PlayerInputComponent->BindAction("MoveRightRelease", [this]() { MoveRightRelease(); });
+    PlayerInputComponent->BindAction("Jump", [this]() { Jump(); });
 }
 
 void APlayerCharacter::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -99,7 +149,17 @@ void APlayerCharacter::MoveForward(float Value)
 {
     if (Value != 0.0f)
     {
+        Velocity += 0.1f;
         AddMovementInput(GetActorForwardVector(), Value);
+
+        if (Value >= 0.0f)
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+        }
+        else
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
+        }
     }
 }
 
@@ -107,12 +167,69 @@ void APlayerCharacter::MoveRight(float Value)
 {
     if (Controller && Value != 0.0f)
     {
+        Velocity += 0.1f;
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
-
         SetActorLocation(Location);
+        if (Value >= 0.0f)
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+        }
+        else
+        {
+            BodyMesh->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
+        }
     }
+}
+
+void APlayerCharacter::Jump()
+{
+    if (Controller && !bIsJumping)
+    {
+        bIsJumping = true;
+        VerticalVelocity = 8.0f;
+    }
+}
+
+void APlayerCharacter::UpdateVerticalMovement(float DeltaTime)
+{
+    if (!bIsJumping)
+        return;
+
+    // 중력 적용
+    VerticalVelocity += GravityZ * DeltaTime;
+
+    // 위치 계산
+    FVector Loc = GetActorLocation();
+    Loc.Z += VerticalVelocity * DeltaTime;
+
+    // 바닥 체크
+    if (Loc.Z <= 0.0f)
+    {
+        Loc.Z = 0.0f;
+        VerticalVelocity = 0.f;
+        bIsJumping = false;
+    }
+    SetActorLocation(Loc);
+}
+
+void APlayerCharacter::MoveForwardPress()
+{
+}
+
+void APlayerCharacter::MoveForwardRelease()
+{
+    Velocity = InitVelocity;
+}
+
+void APlayerCharacter::MoveRightPress()
+{
+}
+
+void APlayerCharacter::MoveRightRelease()
+{
+    Velocity = InitVelocity;
 }
 
 void APlayerCharacter::HandleOverlap(AActor* OtherActor)

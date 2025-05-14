@@ -3,8 +3,15 @@
 #include "Mesh/SkeletalMesh.h"
 #include "Engine/Source/Runtime/Core/Container/Array.h"
 
+enum class EAnimationMode {
+    AnimationBlueprint,
+    AnimationSingleNode,
+    AnimationCustomMode
+};;
+
 class UAnimSingleNodeInstance;
 struct FAnimNotifyEvent;
+class UAnimSequence;
 
 class USkeletalMeshComponent : public USkinnedMeshComponent
 {
@@ -23,27 +30,23 @@ public:
     void SetselectedSubMeshIndex(const int& value) { selectedSubMeshIndex = value; }
     int GetselectedSubMeshIndex() const { return selectedSubMeshIndex; };
 
-    void SetAnimAsset(const FString& AnimName);
-
     void TickAnimation(float DeltaTime, bool bNeedsValidRootMotion);
     void RefreshBoneTransforms();
-
-    //virtual uint32 GetNumMaterials() const override;
-    //virtual UMaterial* GetMaterial(uint32 ElementIndex) const override;
-    //virtual uint32 GetMaterialIndex(FName MaterialSlotName) const override;
-    //virtual TArray<FName> GetMaterialSlotNames() const override;
-    //virtual void GetUsedMaterials(TArray<UMaterial*>& Out) const override;
-
-    //virtual int CheckRayIntersection(const FVector& InRayOrigin, const FVector& InRayDirection, float& OutHitDistance) const override;
-
     void HandleAnimNotify(const FAnimNotifyEvent& Notify);
 
-    UAnimSingleNodeInstance* GetAnimInstance() { return AnimInstance; }
+    void PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping = false);
+    void SetAnimationMode(EAnimationMode NewMode);
+    EAnimationMode GetAnimationMode() const;
+    void SetAnimation(UAnimSequence* NewAnimToPlay);
+    void Play(bool bLooping = false);
+    void Stop();
+    UAnimSingleNodeInstance* GetSingleNodeInstance();
+    void SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance);
 
     void AddAnimAssetName(FString AnimAssetName);
     TArray<FString> GetAnimAssetNames() { return AnimAssetNames; }
-
 private:
-    UAnimSingleNodeInstance* AnimInstance= nullptr;
+    EAnimationMode AnimationMode = EAnimationMode::AnimationSingleNode;
+    UAnimSingleNodeInstance* AnimInstance = nullptr;
     TArray<FString> AnimAssetNames;
 };

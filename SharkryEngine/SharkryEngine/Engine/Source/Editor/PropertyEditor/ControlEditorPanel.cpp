@@ -26,11 +26,12 @@
 #include "Actors/SpotLightActor.h"
 #include "Actors/AmbientLightActor.h"
 #include "Actors/ASkeletalMeshActor.h"
+#include "AssetImporter/FBX/FBXManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Games/LastWar/Core/Spawner.h"
 #include "ImGUI/imgui.h"
 #include "UObject/Casts.h"
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 
 void ControlEditorPanel::Render()
 {
@@ -438,7 +439,7 @@ void ControlEditorPanel::CreateModifyButton(const ImVec2 ButtonSize, ImFont* Ico
                     SpawnedActor = World->SpawnActor<ASkeletalMeshActor>();
                     SpawnedActor->SetActorLabel(TEXT("OBJ_Sharkry"));
                     ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(SpawnedActor);
-                    SkeletalActor->SetSkeletalMesh(L"Contents/Sharkry_NoTwist.fbx");
+                    SkeletalActor->SetSkeletalMesh(L"Contents/SharkryAnimation.fbx");
                     break;
                 }
                 case OBJ_TRIANGLE:

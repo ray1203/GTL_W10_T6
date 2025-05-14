@@ -31,7 +31,7 @@ public:
     int GetNotifyTrackCount() { return NotifyTrackCount; }
 
 protected:
-    UAnimDataModel* AnimDataModel;
+    UAnimDataModel* AnimDataModel = nullptr;
 
     int NotifyTrackCount = 1; // 기본적으로 Notify Track 한개는 두도록 함 언리얼도 그렇고 1개는 있어야 한다고 보이기에
 };

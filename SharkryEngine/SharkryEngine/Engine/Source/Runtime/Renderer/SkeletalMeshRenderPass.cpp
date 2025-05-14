@@ -27,8 +27,9 @@
 #include "UnrealEd/EditorViewportClient.h"
 #include "Components/Light/PointLightComponent.h"
 
-#include "FLoaderFBX.h"
+#include "AssetImporter/FBX/FLoaderFBX.h"
 #include "FSkeletalMeshDebugger.h"
+#include "AssetImporter/FBX/FBXStructs.h"
 
 FSkeletalMeshRenderPass::FSkeletalMeshRenderPass()
     : VertexShader(nullptr)
@@ -335,7 +336,7 @@ void FSkeletalMeshRenderPass::UpdateBoneBuffer(const TArray<FMatrix>& SkinningMa
 {
     FBoneMatrixBuffer BufferData = {};
 
-    const int32 CopyCount = FMath::Min(SkinningMatrices.Num(), 128);
+    const int32 CopyCount = FMath::Min(SkinningMatrices.Num(), 512);
     for (int32 i = 0; i < CopyCount; ++i)
     {
         BufferData.BoneMatrices[i] = SkinningMatrices[i];
