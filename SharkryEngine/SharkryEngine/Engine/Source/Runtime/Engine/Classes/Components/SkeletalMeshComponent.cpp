@@ -172,7 +172,7 @@ void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, float Bl
 {
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
     }
     else
     {

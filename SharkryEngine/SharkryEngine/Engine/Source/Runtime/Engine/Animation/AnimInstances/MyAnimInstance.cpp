@@ -125,8 +125,6 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     StateMachine->Update(DeltaSeconds);
 
-    bIsBlending = false;
-
     if (bIsBlending)
     {
         BlendTimeElapsed += DeltaSeconds;
