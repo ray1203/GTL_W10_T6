@@ -1,6 +1,6 @@
 #pragma once
 #include "GameFramework/Actor.h"
-#include "Engine/Classes/GameFramework/Character.h"
+#include "GameFramework/Character.h"
 
 class USkeletalMeshComponent;
 

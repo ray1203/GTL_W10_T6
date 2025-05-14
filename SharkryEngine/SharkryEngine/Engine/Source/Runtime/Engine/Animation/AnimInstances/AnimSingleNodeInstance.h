@@ -1,10 +1,8 @@
 #pragma once
-
 #include "Animation/AnimInstance.h"
-#include "Animation/AnimationStateMachine.h"
-#include "Animation/AnimTypes.h"
 
 class FAnimNotifyEvent;
+class UAnimSequence;
 class UAnimSingleNodeInstance : public UAnimInstance 
 {
     DECLARE_CLASS(UAnimSingleNodeInstance, UAnimInstance)
@@ -13,12 +11,10 @@ public:
     UAnimSingleNodeInstance();
     ~UAnimSingleNodeInstance() = default;
 
-    FPoseContext GetOutput() { return Output; }
-
     virtual void NativeInitializeAnimation() override;
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
     virtual void UpdateNotify(float DeltaSeconds) override;
-    void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f) override;
     UAnimSequence* GetAnimationSequence() { return AnimSequence; }
     void SetPlaying(bool bInPlaying);
 
@@ -30,8 +26,6 @@ public:
 
     UAnimationStateMachine* StateMachine = nullptr;
 
-    EAnimState CurrentState = AS_Idle;
-    EAnimState PreviousState = AS_Idle;
 protected:
     UAnimSequence* AnimSequence = nullptr;
     UAnimSequence* TargetSequence = nullptr; // 

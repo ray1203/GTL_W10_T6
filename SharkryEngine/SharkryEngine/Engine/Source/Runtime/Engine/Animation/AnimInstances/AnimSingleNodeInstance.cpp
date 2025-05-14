@@ -1,8 +1,5 @@
 #include "AnimSingleNodeInstance.h"
 #include "Animation/AnimationStateMachine.h"
-#include "UObject/ObjectFactory.h"
-#include "Engine/Engine.h"
-#include "World/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Animation/AnimNotify.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -19,25 +16,6 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
 
-    // 애니메이션 상태 머신 초기화
-    if (StateMachine == nullptr)
-    {
-        StateMachine = FObjectFactory::ConstructObject<UAnimationStateMachine>(this);
-        TArray<AActor*> ActorsCopy = GEngine->ActiveWorld->GetActiveLevel()->Actors;
-        for (AActor* Actor : ActorsCopy)
-        {
-            if (Actor && Actor->IsA<APawn>())
-            {
-                StateMachine->SetPawn(Cast<APawn>(Actor));
-                break;
-            }
-        }
-    }
-    // 애니메이션 시퀀스 초기화
-    if (AnimSequence == nullptr)
-    {
-        AnimSequence = IdleAnimSequence;
-    }
     CurrentTime = 0.0f;
 }
 
@@ -45,9 +23,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    if (!StateMachine) return;
-
-    StateMachine->Update(DeltaSeconds);
+    if (!bIsPlaying || !AnimSequence) return;
 
     if (!bIsPlaying) return;
 
@@ -227,6 +203,8 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
 {
+    if (!AnimSequence) return;
+
     TArray<FAnimNotifyEvent*> CurFrameNotifies;
 
     // End -> Begin -> Tick 순으로 실행될것임
@@ -318,6 +296,11 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
     AnimSequence = NewSequence;
     bLooping = bIsLooping;
     PlayRate = InPlayRate;
+}
+
+FPoseContext& UAnimSingleNodeInstance::GetOutput()
+{
+    return Output;
 }
 
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)

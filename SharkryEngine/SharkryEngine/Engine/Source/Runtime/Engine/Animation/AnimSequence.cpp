@@ -1,7 +1,7 @@
+#include "Math/JungleMath.h"
 #include "AnimSequence.h"
-#include "Engine/Animation/AnimData/AnimDataModel.h"
-#include "Engine/Source/Runtime/Core/Math/JungleMath.h"
-#include "Engine/Source/Runtime/Engine/Animation/AnimNotify.h"
+#include "AnimData/AnimDataModel.h"
+#include "AnimNotify.h"
 #include "AnimInstance.h"
 
 UAnimSequence::UAnimSequence()
