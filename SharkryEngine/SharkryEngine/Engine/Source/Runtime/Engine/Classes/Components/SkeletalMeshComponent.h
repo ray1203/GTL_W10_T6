@@ -1,6 +1,7 @@
 #pragma once
 #include "Components/SkinnedMeshComponent.h"
 #include "Mesh/SkeletalMesh.h"
+#include "Engine/Source/Runtime/Core/Container/Array.h"
 
 enum class EAnimationMode {
     AnimationBlueprint,
@@ -41,7 +42,11 @@ public:
     void Stop();
     UAnimSingleNodeInstance* GetSingleNodeInstance();
     void SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance);
+
+    void AddAnimAssetName(FString AnimAssetName);
+    TArray<FString> GetAnimAssetNames() { return AnimAssetNames; }
 private:
     EAnimationMode AnimationMode = EAnimationMode::AnimationSingleNode;
     UAnimSingleNodeInstance* AnimInstance = nullptr;
+    TArray<FString> AnimAssetNames;
 };

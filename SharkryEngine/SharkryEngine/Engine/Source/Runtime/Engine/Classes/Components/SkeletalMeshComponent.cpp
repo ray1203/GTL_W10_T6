@@ -195,3 +195,8 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInst
         AnimInstance->SetSkeletalMeshComponent(this);
     }
 }
+
+void USkeletalMeshComponent::AddAnimAssetName(FString AnimAssetName)
+{
+    AnimAssetNames.Add(AnimAssetName);
+}

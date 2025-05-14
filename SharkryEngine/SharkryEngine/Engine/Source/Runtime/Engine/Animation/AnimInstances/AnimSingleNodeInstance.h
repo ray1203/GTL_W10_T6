@@ -19,6 +19,7 @@ public:
     virtual void NativeUpdateAnimation(float DeltaSeconds) override;
     virtual void UpdateNotify(float DeltaSeconds) override;
     void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    UAnimSequence* GetAnimationSequence() { return AnimSequence; }
     void SetPlaying(bool bInPlaying);
 
     // 크로스페이드 블렌딩 
