@@ -99,6 +99,9 @@ struct ImGuiNeoSequencerStyle {
 namespace ImGui {
     typedef int32_t FrameIndexType;
 
+    IMGUI_API bool BeginNeoNotifyState(const char* label, FrameIndexType* startFrame, float* duration, bool* open = nullptr);
+    IMGUI_API void EndNeoNotifyState();
+
     IMGUI_API const ImVec4& GetStyleNeoSequencerColorVec4(ImGuiNeoSequencerCol idx);
     IMGUI_API ImGuiNeoSequencerStyle& GetNeoSequencerStyle();
 
