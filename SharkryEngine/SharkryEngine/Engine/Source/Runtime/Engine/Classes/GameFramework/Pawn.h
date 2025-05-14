@@ -87,6 +87,7 @@ protected:
     UPROPERTY
     (float, RunSpeed, = 12.0f) // 뛰는 속도
 
-
+    UPROPERTY
+    (float, MaxSpeed, = 15.0f) // 최대 속도
 };
 

@@ -145,8 +145,15 @@ void APlayerCharacter::MoveForward(float Value)
 {
     if (Value != 0.0f)
     {
-        Velocity += 0.1f;
+        if (Velocity <= MaxSpeed)
+        {
+            Velocity += 0.1f;
+        }
+
         AddMovementInput(GetActorForwardVector(), Value);
+
+        FVector Location = GetActorLocation();
+        SetActorLocation(Location);
 
         if (Value >= 0.0f)
         {
@@ -163,11 +170,16 @@ void APlayerCharacter::MoveRight(float Value)
 {
     if (Controller && Value != 0.0f)
     {
-        Velocity += 0.1f;
+        if (Velocity <= MaxSpeed)
+        {
+            Velocity += 0.1f;
+        }
+
         AddMovementInput(FVector::RightVector, Value);
 
         FVector Location = GetActorLocation();
         SetActorLocation(Location);
+
         if (Value >= 0.0f)
         {
             BodyMesh->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
