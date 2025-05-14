@@ -90,5 +90,6 @@ private:
 
     bool bIsMoveForwardPressed = false;
     bool bIsMoveRightPressed = false;
+
 };
 

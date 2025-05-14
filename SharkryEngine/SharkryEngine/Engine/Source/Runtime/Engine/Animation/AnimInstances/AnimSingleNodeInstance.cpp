@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimSequence.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
+#include "Math/JungleMath.h"
 
 UAnimSingleNodeInstance::UAnimSingleNodeInstance()
 {
@@ -35,7 +36,7 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
     else
     {
         // 한 번만 재생할 땐 끝 시간을 넘지 않도록 고정
-        CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength());
+        CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength() - KINDA_SMALL_NUMBER);
     }
 
     FPoseContext Pose(this);
@@ -124,7 +125,7 @@ void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
     }
 }
 
-void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate)
+void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration, float InPlayRate)
 {
     if (NewSequence == nullptr || NewSequence == AnimSequence)
     {
@@ -132,8 +133,8 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
     }
 
     AnimSequence = NewSequence;
-    bLooping = bIsLooping;
     PlayRate = InPlayRate;
+    CurrentTime = 0.0f;
 }
 
 FPoseContext& UAnimSingleNodeInstance::GetOutput()
@@ -144,4 +145,9 @@ FPoseContext& UAnimSingleNodeInstance::GetOutput()
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)
 {
     bIsPlaying = bInPlaying;
+}
+
+void UAnimSingleNodeInstance::SetLooping(bool bInLooping)
+{
+    bIsLooping = bInLooping;
 }

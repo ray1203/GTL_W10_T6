@@ -70,11 +70,11 @@ public:
 
     UPROPERTY
     (float, InitVelocity, = 6.0f) // 초기 이동 속도
+
 protected:
     UPROPERTY
     (AController*, Controller, = nullptr) // 현재 조종 중인 컨트롤러
 
-protected:
     UPROPERTY
     (float, Velocity, = 6.0f)
 
@@ -87,6 +87,7 @@ protected:
     UPROPERTY
     (float, RunSpeed, = 12.0f) // 뛰는 속도
 
-
+    UPROPERTY
+    (float, MaxSpeed, = 15.0f) // 최대 속도
 };
 

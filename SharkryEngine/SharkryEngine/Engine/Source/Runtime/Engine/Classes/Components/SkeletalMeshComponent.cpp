@@ -114,9 +114,9 @@ void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRoot
 
 void USkeletalMeshComponent::RefreshBoneTransforms()
 {
-    if (!SkeletalMesh || !SkeletalMesh->Skeleton)return;
+    if (!SkeletalMesh || !SkeletalMesh->Skeleton) return;
     FPoseContext AnimPose = AnimInstance->GetOutput();
-    if (AnimationMode == EAnimationMode::AnimationSingleNode)
+    if (AnimationMode == EAnimationMode::AnimationSingleNode && SingleNodeInstance)
     {
         AnimPose = SingleNodeInstance->GetOutput();
     }
@@ -157,9 +157,10 @@ void USkeletalMeshComponent::InitAnimation()
 void USkeletalMeshComponent::PlayAnimation(EAnimationMode NewAnimMode, UAnimSequence* NewAnimToPlay, bool bLooping)
 {
     SetAnimationMode(NewAnimMode);
-    SetAnimation(NewAnimToPlay);
+    SetAnimation(NewAnimToPlay, bLooping);
     Play(bLooping);
 }
+
 
 void USkeletalMeshComponent::SetAnimationMode(EAnimationMode NewMode)
 {
@@ -171,17 +172,15 @@ EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
     return AnimationMode;
 }
 
-void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay)
+void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay, bool bLooping, float BlendDuration, float InPlayRate)
 {
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
-        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
-        SingleNodeInstance->SetPlaying(false);
+        SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, bLooping);
     }
     else
     {
-        AnimInstance->SetAnimationSequence(NewAnimToPlay, true);
-        AnimInstance->SetPlaying(false);
+        AnimInstance->SetAnimationSequence(NewAnimToPlay, bLooping, 0.3f);
     }
 }
 
@@ -190,10 +189,12 @@ void USkeletalMeshComponent::Play(bool bLooping)
     if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
         SingleNodeInstance->SetPlaying(true);
+        SingleNodeInstance->SetLooping(bLooping);
     }
     else
     {
         AnimInstance->SetPlaying(true);
+        AnimInstance->SetLooping(bLooping);
     }
 }
 

@@ -25,7 +25,7 @@ void UAnimationStateMachine::ProcessState()
     {
         CurrentState = AS_Walk;
     }
-    else if (Pawn->GetVelocity() > Pawn->GetRunSpeed())
+    else if (Pawn->GetVelocity() > Pawn->GetRunSpeed()) 
     {
         CurrentState = AS_Run;
     }

@@ -88,6 +88,15 @@ void ACharacter::HandleAnimNotify(const FAnimNotifyEvent& Notify)
         State = "End";
         break;
     }
+    
+    FString NotifyName = Notify.NotifyName.ToString();
+
+    if (NotifyName == "JumpStart")
+    {
+        // Jump Start Logic
+        bCharacterVerticalPositionChange = true;
+
+    }
 
     /*UE_LOG(LogLevel::Display,
         TEXT("FAnimNotifyEvent: Time=%.3f, Duration=%.3f, Name=%s, State=%s"),

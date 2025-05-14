@@ -33,8 +33,11 @@ public:
 
     virtual FPoseContext& GetOutput();
 
-    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InPlayRate = 1.f);
+    virtual void SetAnimationSequence(UAnimSequence* NewSequence, bool bLooping, float InBlendDuration = 1.f, float InPlayRate = 1.f);
     virtual void SetPlaying(bool bInPlaying);
+    virtual void SetLooping(bool bInLooping);
+
+    virtual void StartCrossfade(UAnimSequence* NewTargetSequence, bool bTargetLooping, float InBlendDuration, float InTargetPlayRate = 1.f);
 
 protected:
     USkeletalMesh* SkeletalMesh = nullptr;

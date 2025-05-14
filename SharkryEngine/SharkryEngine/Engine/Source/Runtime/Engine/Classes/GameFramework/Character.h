@@ -33,5 +33,7 @@ protected:
 
     UPROPERTY
     (UCapsuleComponent*, CollisionCapsule, = nullptr);
+
+    bool bCharacterVerticalPositionChange = false;
 };
 
