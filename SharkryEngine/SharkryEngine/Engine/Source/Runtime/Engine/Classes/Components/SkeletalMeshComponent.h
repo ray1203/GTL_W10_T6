@@ -1,6 +1,7 @@
 #pragma once
 #include "Components/SkinnedMeshComponent.h"
 #include "Mesh/SkeletalMesh.h"
+#include "Engine/Source/Runtime/Core/Container/Array.h"
 
 class UAnimSingleNodeInstance;
 struct FAnimNotifyEvent;
@@ -39,6 +40,10 @@ public:
 
     UAnimSingleNodeInstance* GetAnimInstance() { return AnimInstance; }
 
+    void AddAnimAssetName(FString AnimAssetName);
+    TArray<FString> GetAnimAssetNames() { return AnimAssetNames; }
+
 private:
     UAnimSingleNodeInstance* AnimInstance= nullptr;
+    TArray<FString> AnimAssetNames;
 };

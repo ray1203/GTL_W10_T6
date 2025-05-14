@@ -4,6 +4,7 @@
 #include "CString.h"
 #include "ContainerAllocator.h"
 #include "Core/HAL/PlatformType.h"
+#include <vector>
 
 /*
 # TCHAR가 ANSICHAR인 경우
@@ -358,4 +359,20 @@ inline FString::ElementType* GetData(FString& String)
 inline const FString::ElementType* GetData(const FString& String)
 {
     return String.PrivateString.data();
+}
+
+
+FORCEINLINE std::vector<std::wstring> SplitWString(const std::wstring& str, wchar_t delim) {
+    std::vector<std::wstring> tokens;
+    size_t start = 0;
+    while (true) {
+        size_t pos = str.find(delim, start);
+        if (pos == std::wstring::npos) {
+            tokens.emplace_back(str.substr(start));
+            break;
+        }
+        tokens.emplace_back(str.substr(start, pos - start));
+        start = pos + 1;
+    }
+    return tokens;
 }

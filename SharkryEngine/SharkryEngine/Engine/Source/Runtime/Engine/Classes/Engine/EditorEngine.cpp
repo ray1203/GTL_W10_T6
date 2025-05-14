@@ -24,6 +24,7 @@
 #include "Actors/DirectionalLightActor.h"
 #include "Actors/AmbientLightActor.h"
 extern FWString GViewerFilePath;
+extern std::vector<std::wstring> AnimAssetList;
 extern FEngineLoop GEngineLoop;
 
 namespace PrivateEditorSelection
@@ -299,6 +300,11 @@ void UEditorEngine::StartViewer()
     DirectionalLightActor->SetActorRotation(FRotator(-30.0f, -45.0f, 0.0f));
     GEngine->ActiveWorld->SpawnActor<AAmbientLight>();
 
+    for (std::wstring AnimName : AnimAssetList) 
+    {
+        const FString AnimNameStr = FString(AnimName);
+        SkeletalMeshActor->GetSkeletalMeshComponent()->SetAnimAsset(AnimNameStr);
+    }
 
     if (UPrimitiveComponent* Primitive = Cast<UPrimitiveComponent>(SkeletalMeshActor->GetSkeletalMeshComponent()))
     {

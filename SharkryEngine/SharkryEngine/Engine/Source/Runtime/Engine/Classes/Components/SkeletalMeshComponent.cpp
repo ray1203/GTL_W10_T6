@@ -106,6 +106,8 @@ void USkeletalMeshComponent::SetAnimAsset(const FString& AnimName)
 
     UAnimationAsset* AnimationAsset = FManagerFBX::GetAnimationAsset(AnimName);
 
+    AnimAssetNames.Add(AnimName);
+
     UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationAsset);
 
     if (AnimSequence == nullptr) return;
@@ -143,4 +145,9 @@ void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
     {
         CharacterOwner->HandleAnimNotify(Notify);
     }
+}
+
+void USkeletalMeshComponent::AddAnimAssetName(FString AnimAssetName)
+{
+    AnimAssetNames.Add(AnimAssetName);
 }

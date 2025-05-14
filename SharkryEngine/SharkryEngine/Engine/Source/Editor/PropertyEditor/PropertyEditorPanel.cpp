@@ -1523,12 +1523,12 @@ void PropertyEditorPanel::RenderForCameraComponent(UCameraComponent* CameraCompo
     ImGui::PopStyleColor();
 }
 
-void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* SkeletalMeshComp) const
+void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* SkinnedMeshComp) const
 {
     ImGui::Text("Skinned Mesh Component");
     ImGui::Separator();
 
-    USkeletalMesh* SkeletalMesh = SkeletalMeshComp->GetSkeletalMesh();
+    USkeletalMesh* SkeletalMesh = SkinnedMeshComp->GetSkeletalMesh();
     if (SkeletalMesh)
     {
         FString MeshName = SkeletalMesh->GetName();
@@ -1536,10 +1536,10 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
 
         ImGui::Text("Skeletal Mesh: %s", *MeshName);
         ImGui::Separator();
-        bool IsUsingGpuSkinning = SkeletalMeshComp->IsUsingGpuSkinning();
+        bool IsUsingGpuSkinning = SkinnedMeshComp->IsUsingGpuSkinning();
         if (ImGui::Checkbox("GPU Skinning",&IsUsingGpuSkinning))
         {
-            SkeletalMeshComp->SetUseGpuSkinning(IsUsingGpuSkinning);
+            SkinnedMeshComp->SetUseGpuSkinning(IsUsingGpuSkinning);
         }
         if (ImGui::Button("Open in EngineSIU_Viewer"))
         {
@@ -1552,12 +1552,35 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             std::filesystem::path ViewerExePath = CurrentExeDir.parent_path() / "Viewer_Release" / "SharkryEngine_Viewer.exe";
             std::filesystem::path AbsFbxPath = std::filesystem::absolute(std::filesystem::path(GetData(FilePath)));
 
+            FWString FbxArg = L"\"" + AbsFbxPath.wstring() + L"\"";
+            FWString Params = FbxArg;
+
+            if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(SkinnedMeshComp)) 
+            {
+                FWString AnimArg = L"\"";
+                for (FString AnimAssetName : SkeletalMeshComp->GetAnimAssetNames()) 
+                {
+                    AnimArg += AnimAssetName.ToWideString();
+                    AnimArg += L";";
+                }
+
+                if (!AnimArg.empty() && AnimArg.back() == L';')
+                {
+                    AnimArg.pop_back();
+                }
+
+                AnimArg += L"\"";
+
+                Params = FbxArg + L" " + AnimArg;
+            }
+
+
             // 실행
             ShellExecuteW(
                 nullptr,
                 L"open",
                 ViewerExePath.wstring().c_str(),     // 실행할 exe 경로
-                AbsFbxPath.wstring().c_str(),        // 인자: FBX 경로
+                Params.c_str(),        // 인자: FBX 경로
                 nullptr,
                 SW_SHOWNORMAL
             );
@@ -1581,7 +1604,7 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
             // Convert UTF-8 char buffer to Unreal's TCHAR
             FString AnimName = AnimAssetBuffer;
             
-            if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(SkeletalMeshComp)) 
+            if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(SkinnedMeshComp)) 
             {
                 SkeletalMesh->SetAnimAsset(AnimName);
             }
