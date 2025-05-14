@@ -60,7 +60,7 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
         if (UAnimSequence* Cached = FBX::FBXAnimLoader::LoadAnimFromBinary(BinPath))
         {
             Cached->SetAssetPath(FBXFilePath);
-            FManagerFBX::AddAnimationAsset(CleanedTakeName, Cached);
+            FManagerFBX::AddAnimationAsset(FullName, Cached);
             UE_LOG(LogLevel::Display, TEXT("Animation loaded from binary: %s"), *FullName);
             continue;
         }
@@ -160,8 +160,8 @@ void FBX::FBXAnimLoader::ParseFBXAnim(const FString& FBXFilePath)
 
         // 5) 매니저에 등록
         Sequence->SetAssetPath(FBXFilePath);
-        FManagerFBX::AddAnimationAsset(CleanedTakeName, Sequence);
-        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *CleanedTakeName);
+        FManagerFBX::AddAnimationAsset(FullName, Sequence);
+        UE_LOG(LogLevel::Warning, "Animation ADD : %s", *FullName);
 
         /*FString FileName = FPaths::GetFileNameWithoutExtension(FBXFilePath);
         FString OutputDir = TEXT("Contents/Binary/Animation");
