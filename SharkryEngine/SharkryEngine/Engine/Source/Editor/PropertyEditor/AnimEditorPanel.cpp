@@ -1,6 +1,7 @@
 #include "AnimEditorPanel.h"
 #include "Engine/Animation/AnimSequence.h"
 #include "Engine/Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Engine/Animation/AnimInstances/MyAnimInstance.h"
 #include "Engine/Animation/AnimNotify.h"
 #include "Engine/Animation/AnimData/AnimDataModel.h"
 #include "include/ImNeoSequencer/imgui_neo_sequencer.h"
@@ -13,7 +14,10 @@
 
 void AnimEditorPanel::Render()
 {
-    return;
+    if (!CheckAnimationSelected()) 
+    {
+        return;
+    }
     const ImGuiIO& IO = ImGui::GetIO();
     ImFont* IconFont = IO.Fonts->Fonts[FEATHER_FONT];
 
@@ -59,31 +63,6 @@ void AnimEditorPanel::OnResize(HWND hWnd)
 
 void AnimEditorPanel::CreateAnimNotifyControl()
 {
-    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-
-    // 선택된 스켈레탈 애니메이션 Instance 가져오기
-    /* 선택된 스켈레탈 메시 컴포넌트 가져오기 */
-    AActor* SelectedActor = nullptr;
-
-    for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors) 
-    {
-        if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
-        {
-            SelectedActor = SkeletalActor;
-        }
-    }
-
-    if (!Engine || !SelectedActor) 
-    {
-        ImGui::Text("No Skeletal Mesh Selected");
-        ImGui::End();
-        return;
-    }
-
-    // 선택된 스켈레탈 애니메이션 Instance와 Sequence 가져오기
-    USkeletalMeshComponent* SkeletalComp = SelectedActor->GetComponentByClass<USkeletalMeshComponent>();
-    UAnimSingleNodeInstance* AnimInstance = SkeletalComp->GetSingleNodeInstance();
-    UAnimSequence* AnimSequence = AnimInstance->GetAnimationSequence();
     UAnimDataModel* AnimDataModel = AnimSequence->GetDataModel();
     
     // Sequence와 AnimInstance에서 정보 가져다가 사용
@@ -93,7 +72,7 @@ void AnimEditorPanel::CreateAnimNotifyControl()
     int32_t startFrame = 0;
     int32_t endFrame = AnimDataModel->NumberOfFrames;
     float playLength = AnimDataModel->PlayLength;
-    static bool transformOpen = false;
+    static bool transformOpen = true;
 
     bool doDelete = false;
     TArray<int> RemoveNotifiesIndex;
@@ -153,13 +132,66 @@ void AnimEditorPanel::CreateAnimNotifyControl()
         }
 
         RemoveNotifiesIndex.Sort();
-        for (int i = RemoveNotifiesIndex.Num(); i >= 0; i--) 
+        for (int i = RemoveNotifiesIndex.Num() - 1; i >= 0; i--) 
         {
             AnimSequence->Notifies.RemoveAt(RemoveNotifiesIndex[i]);
         }
 
         ImGui::EndNeoSequencer();
     }
+}
+
+bool AnimEditorPanel::CheckAnimationSelected()
+{
+    AnimSequence = nullptr;
+
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+
+    // 선택된 스켈레탈 애니메이션 Instance 가져오기
+    /* 선택된 스켈레탈 메시 컴포넌트 가져오기 */
+    AActor* SelectedActor = Engine->GetSelectedActor();
+
+    for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors)
+    {
+        if (ASkeletalMeshActor* SkeletalActor = Cast<ASkeletalMeshActor>(Actor))
+        {
+            SelectedActor = SkeletalActor;
+        }
+    }
+
+    if (SelectedActor == nullptr) 
+    {
+        return false;
+    }
+
+    ASkeletalMeshActor* SkeletalMeshActor = nullptr;
+    SkeletalMeshActor = Cast<ASkeletalMeshActor>(SelectedActor);
+    if (SkeletalMeshActor == nullptr) 
+    {
+        return false;
+    }
+
+    // 선택된 스켈레탈 애니메이션 Instance와 Sequence 가져오기
+    USkeletalMeshComponent* SkeletalComp = SkeletalMeshActor->GetSkeletalMeshComponent();
+    if (SkeletalComp == nullptr)
+    {
+        return false;
+    }
+    
+    UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(SkeletalComp->GetAnimInstance());
+
+    if (AnimInstance == nullptr)
+    {
+        return false;
+    }
+    
+    AnimSequence = AnimInstance->GetAnimationSequence();
+    if (AnimSequence == nullptr)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void AnimEditorPanel::SetAnimSequence(UAnimSequence* InAnimSequence)
