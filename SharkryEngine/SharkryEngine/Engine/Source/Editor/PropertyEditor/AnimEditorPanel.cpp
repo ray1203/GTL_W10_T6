@@ -13,6 +13,7 @@
 
 void AnimEditorPanel::Render()
 {
+    return;
     const ImGuiIO& IO = ImGui::GetIO();
     ImFont* IconFont = IO.Fonts->Fonts[FEATHER_FONT];
 
@@ -95,7 +96,7 @@ void AnimEditorPanel::CreateAnimNotifyControl()
     static bool transformOpen = false;
 
     bool doDelete = false;
-    TArray<FAnimNotifyEvent*> NotifiesToRemove;
+    TArray<int> RemoveNotifiesIndex;
 
     if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, { 0, 0 },
         ImGuiNeoSequencerFlags_EnableSelection |
@@ -118,8 +119,9 @@ void AnimEditorPanel::CreateAnimNotifyControl()
 
                 if (ImGui::BeginNeoTimelineEx(timelineLabel))
                 {
-                    for (FAnimNotifyEvent& Notify : AnimSequence->Notifies)
+                    for (int j = 0; j < AnimSequence->Notifies.Num(); j++)
                     {
+                        FAnimNotifyEvent& Notify = AnimSequence->Notifies[j];
                         if (Notify.TrackNum == i)
                         {
                             if (Notify.NotifyMode == ENotifyMode::Single)
@@ -129,13 +131,17 @@ void AnimEditorPanel::CreateAnimNotifyControl()
                                 ImGui::NeoKeyframe(&Notify.TriggerFrame);
                                 if (doDelete && ImGui::IsNeoKeyframeSelected()) 
                                 {
-                                    NotifiesToRemove.Add(&Notify);
+                                    RemoveNotifiesIndex.Add(j);
                                 }
                                 Notify.UpdateTriggerTime(AnimDataModel->NumberOfFrames);
                             }
                             else // NotifyState인 경우
                             {
-
+                                bool open = true;
+                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
+                                ImGui::BeginNeoNotifyState(*Notify.NotifyName.ToString(),
+                                    &Notify.TriggerFrame, &Notify.Duration, &open);
+                                ImGui::EndNeoNotifyState();
                             }
                         }
                     }
@@ -146,9 +152,10 @@ void AnimEditorPanel::CreateAnimNotifyControl()
             ImGui::EndNeoGroup();
         }
 
-        for (FAnimNotifyEvent* NotifyToRemove : NotifiesToRemove) 
+        RemoveNotifiesIndex.Sort();
+        for (int i = RemoveNotifiesIndex.Num(); i >= 0; i--) 
         {
-            AnimSequence->Notifies.Remove(*NotifyToRemove);
+            AnimSequence->Notifies.RemoveAt(RemoveNotifiesIndex[i]);
         }
 
         ImGui::EndNeoSequencer();
