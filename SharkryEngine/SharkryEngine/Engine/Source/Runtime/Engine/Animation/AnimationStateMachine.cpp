@@ -1,7 +1,7 @@
 #include "AnimationStateMachine.h"
 #include "GameFramework/Pawn.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "AnimInstances/AnimSingleNodeInstance.h"
+#include "AnimInstances/MyAnimInstance.h"
 
 UAnimationStateMachine::UAnimationStateMachine()
 {
@@ -53,23 +53,23 @@ void UAnimationStateMachine::ApplyStateChange()
     USkeletalMeshComponent* MeshComp = Pawn->GetComponentByClass<USkeletalMeshComponent>();
     if (!MeshComp) return;
 
-    UAnimSingleNodeInstance* AnimInstance = MeshComp->GetSingleNodeInstance();
+    UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(MeshComp->GetAnimInstance());
     if (!AnimInstance) return;
 
     // 애니메이션 시퀀스 변경
     switch (CurrentState)
     {
     case AS_Idle:
-        MeshComp->PlayAnimation(AnimInstance->GetIdleAnimSequence(), true);
+        MeshComp->PlayAnimation(EAnimationMode::AnimationCustomMode, AnimInstance->GetIdleAnimSequence(), true);
         break;
     case AS_Walk:
-        MeshComp->PlayAnimation(AnimInstance->GetWalkAnimSequence(), true);
+        MeshComp->PlayAnimation(EAnimationMode::AnimationCustomMode, AnimInstance->GetWalkAnimSequence(), true);
         break;
     case AS_Run:
-        MeshComp->PlayAnimation(AnimInstance->GetRunAnimSequence(), true);
+        MeshComp->PlayAnimation(EAnimationMode::AnimationCustomMode, AnimInstance->GetRunAnimSequence(), true);
         break;
     case AS_Jump:
-        MeshComp->PlayAnimation(AnimInstance->GetJumpAnimSequence(), false);
+        MeshComp->PlayAnimation(EAnimationMode::AnimationCustomMode, AnimInstance->GetJumpAnimSequence(), false);
         break;
     }
 }

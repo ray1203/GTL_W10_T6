@@ -21,7 +21,7 @@
 #include "Actors/CameraActor.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
-#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Animation/AnimInstances/MyAnimInstance.h"
 #include "AssetImporter/FBX/FBXManager.h"
 #include "Animation/AnimSequence.h"
 
@@ -53,11 +53,12 @@ void APlayerCharacter::BeginPlay()
     Super::BeginPlay();
     OnActorBeginOverlapHandle = OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::HandleOverlap);
     //SetCharacterMeshCount(1);
-    UAnimSingleNodeInstance* AnimInstance = Cast<USkeletalMeshComponent>(BodyMesh)->GetSingleNodeInstance();
+
+    UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(Cast<USkeletalMeshComponent>(BodyMesh)->GetAnimInstance());
     if (AnimInstance == nullptr)
     {
-        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
-        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+
+        AnimInstance = FObjectFactory::ConstructObject<UMyAnimInstance>(nullptr);
         Cast<USkeletalMeshComponent>(BodyMesh)->SetAnimInstance(AnimInstance);
     }
 

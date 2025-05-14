@@ -3,7 +3,7 @@
 #include "AssetImporter/FBX/FBXManager.h"
 #include "AssetImporter/FBX/FLoaderFBX.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Animation/AnimInstances/AnimSingleNodeInstance.h"
+#include "Animation/AnimInstances/MyAnimInstance.h"
 #include "Animation/AnimSequence.h"
 
 ASkeletalMeshActor::ASkeletalMeshActor()
@@ -25,6 +25,7 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     RootComponent = SkeletalMeshComponent;
 
     SetAnimationAsset();
+    SkeletalMeshComponent->InitAnimation();
 }
 
 UObject* ASkeletalMeshActor::Duplicate(UObject* InOuter)
@@ -53,11 +54,10 @@ void ASkeletalMeshActor::SetSkeletalMesh(const FWString& SkelName)
 
 void ASkeletalMeshActor::SetAnimationAsset()
 {
-    UAnimSingleNodeInstance* AnimInstance = SkeletalMeshComponent->GetSingleNodeInstance();
+    UMyAnimInstance* AnimInstance = Cast<UMyAnimInstance>(SkeletalMeshComponent->GetAnimInstance());
     if (AnimInstance == nullptr)
     {
-        // 이후 SingleNode만 사용하지 않는 경우 수정 필요
-        AnimInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(nullptr);
+        AnimInstance = FObjectFactory::ConstructObject<UMyAnimInstance>(nullptr);
         SkeletalMeshComponent->SetAnimInstance(AnimInstance);
     }
 

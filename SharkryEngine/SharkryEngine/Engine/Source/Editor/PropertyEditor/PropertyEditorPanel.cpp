@@ -1600,10 +1600,9 @@ void PropertyEditorPanel::RenderForSkeletalMeshComponent(USkinnedMeshComponent* 
         }
 
         static int CurrentIndex = 0;
-
         if (ImGui::Combo("Animation##combo", &CurrentIndex, ItemPtrs.GetData(), ItemPtrs.Num()))
         {
-            Cast<USkeletalMeshComponent>(SkinnedMeshComp)->PlayAnimation(Cast<UAnimSequence>(AnimAssets[ItemPtrs[CurrentIndex]]), true);
+            Cast<USkeletalMeshComponent>(SkinnedMeshComp)->PlayAnimation(EAnimationMode::AnimationSingleNode, Cast<UAnimSequence>(AnimAssets[ItemPtrs[CurrentIndex]]), true);
         }
 
         ImGui::Spacing();

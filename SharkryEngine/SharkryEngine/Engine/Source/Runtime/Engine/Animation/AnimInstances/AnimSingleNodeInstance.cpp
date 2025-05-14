@@ -1,8 +1,5 @@
 #include "AnimSingleNodeInstance.h"
 #include "Animation/AnimationStateMachine.h"
-#include "UObject/ObjectFactory.h"
-#include "Engine/Engine.h"
-#include "World/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Animation/AnimNotify.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -18,25 +15,6 @@ void UAnimSingleNodeInstance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
 
-    // 애니메이션 상태 머신 초기화
-    if (StateMachine == nullptr)
-    {
-        StateMachine = FObjectFactory::ConstructObject<UAnimationStateMachine>(this);
-        TArray<AActor*> ActorsCopy = GEngine->ActiveWorld->GetActiveLevel()->Actors;
-        for (AActor* Actor : ActorsCopy)
-        {
-            if (Actor && Actor->IsA<APawn>())
-            {
-                StateMachine->SetPawn(Cast<APawn>(Actor));
-                break;
-            }
-        }
-    }
-    // 애니메이션 시퀀스 초기화
-    if (AnimSequence == nullptr)
-    {
-        AnimSequence = IdleAnimSequence;
-    }
     CurrentTime = 0.0f;
 }
 
@@ -44,25 +22,20 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
     Super::NativeUpdateAnimation(DeltaSeconds);
 
-    if (!StateMachine) return;
+    if (!bIsPlaying || !AnimSequence) return;
 
-    StateMachine->Update(DeltaSeconds);
+    // 재생 속도(PlayRate)를 곱해서야 제대로 속도 조절이 됩니다.
+    CurrentTime += DeltaSeconds * PlayRate;
 
-    if (bIsPlaying && AnimSequence)
+    if (bIsLooping)
     {
-        // 재생 속도(PlayRate)를 곱해서야 제대로 속도 조절이 됩니다.
-        CurrentTime += DeltaSeconds * PlayRate;
-
-        if (bIsLooping)
-        {
-            // 시퀀스 길이를 넘어가면 맨 앞으로 되돌리기
-            CurrentTime = FMath::Fmod(CurrentTime, AnimSequence->GetPlayLength());
-        }
-        else
-        {
-            // 한 번만 재생할 땐 끝 시간을 넘지 않도록 고정
-            CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength());
-        }
+        // 시퀀스 길이를 넘어가면 맨 앞으로 되돌리기
+        CurrentTime = FMath::Fmod(CurrentTime, AnimSequence->GetPlayLength());
+    }
+    else
+    {
+        // 한 번만 재생할 땐 끝 시간을 넘지 않도록 고정
+        CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength());
     }
 
     FPoseContext Pose(this);
@@ -71,22 +44,14 @@ void UAnimSingleNodeInstance::NativeUpdateAnimation(float DeltaSeconds)
 
     AnimSequence->GetAnimationPose(Pose, Extract);
 
-    if (Pose.Pose.BoneTransforms.Num() > 0)
-    {
-        FMatrix& RootLocal = Pose.Pose.BoneTransforms[0];
-        RootLocal.M[3][0] = 0.f;
-        RootLocal.M[3][1] = 0.f;
-        RootLocal.M[3][2] = 0.f;
-    }
-
     Output.Pose = Pose.Pose;
     // Output.Curve = Pose.Curve;
-    
-
 }
 
 void UAnimSingleNodeInstance::UpdateNotify(float DeltaSeconds)
 {
+    if (!AnimSequence) return;
+
     TArray<FAnimNotifyEvent*> CurFrameNotifies;
 
     // End -> Begin -> Tick 순으로 실행될것임
@@ -169,6 +134,11 @@ void UAnimSingleNodeInstance::SetAnimationSequence(UAnimSequence* NewSequence, b
     AnimSequence = NewSequence;
     bLooping = bIsLooping;
     PlayRate = InPlayRate;
+}
+
+FPoseContext& UAnimSingleNodeInstance::GetOutput()
+{
+    return Output;
 }
 
 void UAnimSingleNodeInstance::SetPlaying(bool bInPlaying)

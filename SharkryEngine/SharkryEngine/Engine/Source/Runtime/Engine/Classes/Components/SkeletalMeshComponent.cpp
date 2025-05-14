@@ -95,16 +95,30 @@ void USkeletalMeshComponent::SetProperties(const TMap<FString, FString>& InPrope
 
 void USkeletalMeshComponent::TickAnimation(float DeltaTime, bool bNeedsValidRootMotion)
 {
-    if (AnimInstance != nullptr) 
+    if (AnimationMode == EAnimationMode::AnimationSingleNode)
+    {
+        if (SingleNodeInstance != nullptr)
+        {
+            SingleNodeInstance->UpdateAnimation(DeltaTime);
+            RefreshBoneTransforms();
+        }
+    }
+
+    if (AnimInstance != nullptr)
     {
         AnimInstance->UpdateAnimation(DeltaTime);
         RefreshBoneTransforms();
     }
+    
 }
 
 void USkeletalMeshComponent::RefreshBoneTransforms()
 {
-    const FPoseContext& AnimPose = AnimInstance->GetOutput();
+    FPoseContext AnimPose = AnimInstance->GetOutput();
+    if (AnimationMode == EAnimationMode::AnimationSingleNode)
+    {
+        AnimPose = SingleNodeInstance->GetOutput();
+    }
     
     for (int i = 0; i < AnimPose.Pose.BoneTransforms.Num(); i++) 
     {
@@ -124,9 +138,19 @@ void USkeletalMeshComponent::HandleAnimNotify(const FAnimNotifyEvent& Notify)
     }
 }
 
-void USkeletalMeshComponent::PlayAnimation(UAnimSequence* NewAnimToPlay, bool bLooping)
+void USkeletalMeshComponent::InitAnimation()
 {
-    SetAnimationMode(EAnimationMode::AnimationSingleNode);
+    if (SingleNodeInstance == nullptr)
+    {
+        SingleNodeInstance = FObjectFactory::ConstructObject<UAnimSingleNodeInstance>(this);
+        SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
+        SingleNodeInstance->SetSkeletalMeshComponent(this);
+    }
+}
+
+void USkeletalMeshComponent::PlayAnimation(EAnimationMode NewAnimMode, UAnimSequence* NewAnimToPlay, bool bLooping)
+{
+    SetAnimationMode(NewAnimMode);
     SetAnimation(NewAnimToPlay);
     Play(bLooping);
 }
@@ -143,39 +167,48 @@ EAnimationMode USkeletalMeshComponent::GetAnimationMode() const
 
 void USkeletalMeshComponent::SetAnimation(UAnimSequence* NewAnimToPlay)
 {
-    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
-    if (SingleNodeInstance)
+    if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
-        SingleNodeInstance->SetSkeletalMesh(SkeletalMesh);
         SingleNodeInstance->SetAnimationSequence(NewAnimToPlay, true);
         SingleNodeInstance->SetPlaying(false);
+    }
+    else
+    {
+        AnimInstance->SetAnimationSequence(NewAnimToPlay, true);
+        AnimInstance->SetPlaying(false);
     }
 }
 
 void USkeletalMeshComponent::Play(bool bLooping)
 {
-    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
-    if (SingleNodeInstance)
+    if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
         SingleNodeInstance->SetPlaying(true);
+    }
+    else
+    {
+        AnimInstance->SetPlaying(true);
     }
 }
 
 void USkeletalMeshComponent::Stop()
 {
-    UAnimSingleNodeInstance* SingleNodeInstance = GetSingleNodeInstance();
-    if (SingleNodeInstance)
+    if (AnimationMode == EAnimationMode::AnimationSingleNode)
     {
         SingleNodeInstance->SetPlaying(false);
+    }
+    else
+    {
+        AnimInstance->SetPlaying(false);
     }
 }
 
 UAnimSingleNodeInstance* USkeletalMeshComponent::GetSingleNodeInstance()
 {
-    return Cast<UAnimSingleNodeInstance>(AnimInstance);
+    return SingleNodeInstance;
 }
 
-void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInstance)
+void USkeletalMeshComponent::SetAnimInstance(UAnimInstance* InAnimInstance)
 {
     AnimInstance = InAnimInstance;
     if (AnimInstance)
@@ -183,6 +216,11 @@ void USkeletalMeshComponent::SetAnimInstance(UAnimSingleNodeInstance* InAnimInst
         AnimInstance->SetSkeletalMesh(SkeletalMesh);
         AnimInstance->SetSkeletalMeshComponent(this);
     }
+}
+
+UAnimInstance* USkeletalMeshComponent::GetAnimInstance()
+{
+    return AnimInstance;
 }
 
 void USkeletalMeshComponent::AddAnimAssetName(FString AnimAssetName)
