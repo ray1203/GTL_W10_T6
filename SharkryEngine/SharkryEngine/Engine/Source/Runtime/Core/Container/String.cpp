@@ -63,7 +63,21 @@ FString FString::RightChop(int32 Count) const
     // std::move를 사용하면 불필요한 복사를 피할 수 있습니다 (C++11 이상).
     return FString(std::move(Substring));
 }
+FString FString::TrimStart(const FString& CharsToTrim) const
+{
+    int32 StartIndex = 0;
+    while (StartIndex < Len() && CharsToTrim.Contains(&PrivateString[StartIndex]))
+    {
+        ++StartIndex;
+    }
 
+    if (StartIndex >= Len())
+    {
+        return FString(); // 전부 트리밍되어 빈 문자열
+    }
+
+    return FString(PrivateString.substr(StartIndex));
+}
 void FString::Empty()
 {
     PrivateString.clear();
@@ -153,7 +167,37 @@ int32 FString::Find(
         return FindSubString(StartPosition, -1, -1);
     }
 }
+FString FString::Replace(const FString& From, const FString& To) const
+{
+    if (From.IsEmpty()) return *this; // 빈 문자열 대체는 무시
 
+    FString Result(*this);
+    size_t Pos = 0;
+
+    while (true)
+    {
+        Pos = Result.PrivateString.find(From.PrivateString, Pos);
+        if (Pos == std::string::npos||Pos>=Len())
+            break;
+
+        Result.PrivateString.replace(Pos, From.Len(), To.PrivateString);
+        Pos += To.PrivateString.size(); // To.Len() → To.PrivateString.size()로 명확하게
+    }
+
+    return Result;
+}
+
+
+
+FString FString::Mid(int32 Start, int32 Count) const
+{
+    if (Start < 0 || Start >= Len() || Count <= 0)
+    {
+        return FString();
+    }
+    int32 ClampedCount = FMath::Min(Count, Len() - Start);
+    return FString(PrivateString.substr(Start, ClampedCount));
+}
 void FString::Reserve(int32 CharacterCount)
 {
     PrivateString.reserve(CharacterCount);

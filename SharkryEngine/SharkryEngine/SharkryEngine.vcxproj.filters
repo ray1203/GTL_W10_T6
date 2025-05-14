@@ -819,7 +819,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\FLoaderFBX.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.cpp" />
@@ -838,6 +837,16 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Animation\AnimInstances\AnimSingleNodeInstance.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXAnimLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXConversionUtil.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXManager.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXMaterialLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXMeshLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXSceneLoader.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.cpp" />
+    <ClCompile Include="Engine\Source\Editor\AssetImporter\FPaths.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.cpp">
       <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
     </ClCompile>
@@ -1095,7 +1104,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Camera\CameraModifier\CameraShakeModifier.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SpringArmComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\CurveManager.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\FLoaderFBX.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\ASkeletalMeshActor.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\SkeletalMesh.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\SkeletalMeshComponent.h" />
@@ -1122,6 +1130,17 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationAsset.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimationStateMachine.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimInstances\AnimSingleNodeInstance.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXAnimLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXConversionUtil.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXManager.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXMaterialLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXMeshLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXSceneLoader.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXSkeletonBuilder.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FBXStructs.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimNotify.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FBX\FLoaderFBX.h" />
+    <ClInclude Include="Engine\Source\Editor\AssetImporter\FPaths.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Animation\AnimNotify.h" />
     <ClInclude Include="Engine\Source\ThirdParty\include\ImNeoSequencer\imgui_neo_internal.h">
       <Filter>Engine\Source\ThirdParty\include\ImNeoSequencer</Filter>
