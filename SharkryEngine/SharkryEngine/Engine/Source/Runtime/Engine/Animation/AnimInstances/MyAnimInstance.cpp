@@ -137,7 +137,7 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     else
     {
         // 한 번만 재생할 땐 끝 시간을 넘지 않도록 고정
-        CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength());
+        CurrentTime = FMath::Clamp(CurrentTime, 0.f, AnimSequence->GetPlayLength() - KINDA_SMALL_NUMBER);
     }
     
     FPoseContext Pose(this);
@@ -159,6 +159,7 @@ void UMyAnimInstance::SetAnimationSequence(UAnimSequence* NewSequence, float InP
 
     AnimSequence = NewSequence;
     PlayRate = InPlayRate;
+    CurrentTime = 0.0f;
 }
 
 void UMyAnimInstance::SetPlaying(bool bInPlaying)
