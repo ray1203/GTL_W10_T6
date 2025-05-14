@@ -8,6 +8,8 @@
 
 #endif // !__ICON_FONT_INDEX__
 
+typedef struct HWND__* HWND;
+
 class UEditorPanel
 {
 public:
