@@ -32,6 +32,22 @@ public:
 
     virtual FPoseContext& GetOutput() override;
 
+    // CurrentTime
+    FORCEINLINE float GetCurrentTime() const { return CurrentTime; }
+    FORCEINLINE void  SetCurrentTime(float InTime) { CurrentTime = InTime; }
+
+    // Is Playing
+    FORCEINLINE bool  IsPlaying() const { return bIsPlaying; }
+    FORCEINLINE void  SetPlayingState(bool bInPlay) { bIsPlaying = bInPlay; }
+
+    // Play Rate
+    FORCEINLINE float GetPlayRate() const { return PlayRate; }
+    FORCEINLINE void  SetPlayRate(float InRate) { PlayRate = InRate; }
+
+    // Is Looping
+    FORCEINLINE bool  IsLooping() const { return bIsLooping; }
+    FORCEINLINE void  SetLooping(bool bInLoop) { bIsLooping = bInLoop; }
+
 private:
     UAnimSequence* AnimSequence = nullptr;
     FPoseContext Output;

@@ -63,106 +63,122 @@ void AnimEditorPanel::OnResize(HWND hWnd)
 
 void AnimEditorPanel::CreateAnimNotifyControl()
 {
+    // --- Fetch AnimInstance (custom UMyAnimInstance) ---
+    UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+    USkeletalMeshComponent* SkeletalComp = nullptr;
+    for (AActor* Actor : Engine->ActiveWorld->GetActiveLevel()->Actors) {
+        if (ASkeletalMeshActor* SKActor = Cast<ASkeletalMeshActor>(Actor)) {
+            SkeletalComp = SKActor->GetComponentByClass<USkeletalMeshComponent>();
+            break;
+        }
+    }
+    if (!SkeletalComp) return;
+
+    UMyAnimInstance* MyInst = Cast<UMyAnimInstance>(SkeletalComp->GetAnimInstance());
+    if (!MyInst) {
+        ImGui::Text("Custom AnimInstance not found");
+        return;
+    }
+
+    UAnimSequence* AnimSequence = MyInst->GetAnimationSequence();
+    if (!AnimSequence) {
+        ImGui::Text("No AnimSequence set");
+        return;
+    }
+
     UAnimDataModel* AnimDataModel = AnimSequence->GetDataModel();
-    
-    // Sequence와 AnimInstance에서 정보 가져다가 사용
-    TArray<FAnimNotifyEvent>& NotifyEvents = AnimSequence->Notifies;
+    const float playLength = AnimDataModel->PlayLength;
+    const int   frameCount = AnimDataModel->NumberOfFrames;
 
-    int32_t currentFrame = 0;
+    // --- Playback controls UI ---
+    ImGui::BeginGroup();
+    bool bPlaying = MyInst->IsPlaying();
+    if (ImGui::Button(bPlaying ? "Pause" : "Play")) {
+        MyInst->SetPlayingState(!bPlaying);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        MyInst->SetPlayingState(false);
+        MyInst->SetCurrentTime(0.0f);
+    }
+    ImGui::SameLine();
+    bool bLoop = MyInst->IsLooping();
+    if (ImGui::Checkbox("Loop", &bLoop)) {
+        MyInst->SetLooping(bLoop);
+    }
+    ImGui::SameLine();
+    float rate = MyInst->GetPlayRate();
+    if (ImGui::InputFloat("PlayRate", &rate, 0.1f, 1.0f, "%.2f")) {
+        MyInst->SetPlayRate(rate);
+    }
+    ImGui::EndGroup();
+
+    // --- Time slider ---
+    float currentTime = MyInst->GetCurrentTime();
+    if (ImGui::SliderFloat("Time", &currentTime, 0.0f, playLength, "%.3f s")) {
+        MyInst->SetCurrentTime(currentTime);
+    }
+    int32_t currentFrame = (int32_t)FMath::FloorToInt32((currentTime / playLength) * frameCount);
     int32_t startFrame = 0;
-    int32_t endFrame = AnimDataModel->NumberOfFrames;
-    float playLength = AnimDataModel->PlayLength;
-    static bool transformOpen = true;
+    int32_t endFrame = frameCount;
 
+    static bool transformOpen = true;
     bool doDelete = false;
     TArray<int> RemoveNotifiesIndex;
 
-    if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, { 0, 0 },
+    if (ImGui::BeginNeoSequencer("Sequencer", &currentFrame, &startFrame, &endFrame, ImVec2(0, 0),
         ImGuiNeoSequencerFlags_EnableSelection |
         ImGuiNeoSequencerFlags_Selection_EnableDragging |
         ImGuiNeoSequencerFlags_Selection_EnableDeletion))
     {
-
         if (ImGui::BeginNeoGroup("Notifies", &transformOpen))
         {
-            for (int i = 1; i <= AnimSequence->GetNotifyTrackCount(); i++)
+            // State notifies first
+            for (int track = 1; track <= AnimSequence->GetNotifyTrackCount(); ++track)
             {
                 char timelineLabel[64];
-                snprintf(
-                    timelineLabel,
-                    sizeof(timelineLabel),
-                    "%d##Position%d",   // 화면엔 %d, ID엔 Position%d
-                    i,               // 보여줄 숫자 (1,2,3…)
-                    i                    // 내부 ID uniqueness
-                );
-
+                snprintf(timelineLabel, sizeof(timelineLabel), "%d##Track%d", track, track);
                 if (ImGui::BeginNeoTimelineEx(timelineLabel))
                 {
-                    // State의 범위가 먼저 그려져야 다이아몬드를 가리지 않으므로
-                    for (int j = 0; j < AnimSequence->Notifies.Num(); j++)
+                    for (int j = 0; j < AnimSequence->Notifies.Num(); ++j)
                     {
                         FAnimNotifyEvent& Notify = AnimSequence->Notifies[j];
-                        if (Notify.TrackNum == i)
-                        {
-                            if (Notify.NotifyMode == ENotifyMode::State)
-                            {
-                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
-                                Notify.UpdateTriggerEndFrame(playLength, AnimDataModel->NumberOfFrames);
+                        if (Notify.TrackNum != track || Notify.NotifyMode != ENotifyMode::State) continue;
+                        Notify.UpdateTriggerFrame(playLength, frameCount);
+                        Notify.UpdateTriggerEndFrame(playLength, frameCount);
 
-                                ImGui::ShowNotifyState(*Notify.NotifyName.ToString(), Notify.TriggerFrame, Notify.TriggerEndFrame);
-                                ImGui::NeoKeyframe(&Notify.TriggerFrame);
-                                ImGui::NeoKeyframe(&Notify.TriggerEndFrame);
+                        ImGui::ShowNotifyState(*Notify.NotifyName.ToString(), Notify.TriggerFrame, Notify.TriggerEndFrame);
+                        ImGui::NeoKeyframe(&Notify.TriggerFrame);
+                        ImGui::NeoKeyframe(&Notify.TriggerEndFrame);
+                        Notify.UpdateTriggerTime(playLength, frameCount);
+                        Notify.UpdateTriggerEndTime(playLength, frameCount);
 
-                                Notify.isTriggerEndClicked = ImGui::IsNeoKeyframeSelected();
-
-                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
-                                Notify.UpdateTriggerEndTime(playLength, AnimDataModel->NumberOfFrames);
-
-                                if (doDelete && ImGui::IsNeoKeyframeSelected())
-                                {
-                                    RemoveNotifiesIndex.Add(j);
-                                }
-                            }
-                        }
+                        if (doDelete && ImGui::IsNeoKeyframeSelected()) RemoveNotifiesIndex.Add(j);
                     }
-
-                    for (int j = 0; j < AnimSequence->Notifies.Num(); j++)
+                    // Single keyframe notifies
+                    for (int j = 0; j < AnimSequence->Notifies.Num(); ++j)
                     {
                         FAnimNotifyEvent& Notify = AnimSequence->Notifies[j];
-                        if (Notify.TrackNum == i)
-                        {
-                            if (Notify.NotifyMode == ENotifyMode::Single)
-                            {
-                                // Notify의 TriggerTime을 frame으로 변환
-                                Notify.UpdateTriggerFrame(playLength, AnimDataModel->NumberOfFrames);
-                                ImGui::NeoKeyframe(&Notify.TriggerFrame);
-                                
-                                Notify.UpdateTriggerTime(playLength, AnimDataModel->NumberOfFrames);
-                                
-                                if (doDelete && ImGui::IsNeoKeyframeSelected())
-                                {
-                                    RemoveNotifiesIndex.Add(j);
-                                }
-                            }
-                        }
+                        if (Notify.TrackNum != track || Notify.NotifyMode != ENotifyMode::Single) continue;
+                        Notify.UpdateTriggerFrame(playLength, frameCount);
+                        ImGui::NeoKeyframe(&Notify.TriggerFrame);
+                        Notify.UpdateTriggerTime(playLength, frameCount);
+                        if (doDelete && ImGui::IsNeoKeyframeSelected()) RemoveNotifiesIndex.Add(j);
                     }
-                    
                     ImGui::EndNeoTimeLine();
                 }
             }
-            
             ImGui::EndNeoGroup();
         }
-
         RemoveNotifiesIndex.Sort();
-        for (int i = RemoveNotifiesIndex.Num() - 1; i >= 0; i--) 
+        for (int idx = RemoveNotifiesIndex.Num() - 1; idx >= 0; --idx)
         {
-            AnimSequence->Notifies.RemoveAt(RemoveNotifiesIndex[i]);
+            AnimSequence->Notifies.RemoveAt(RemoveNotifiesIndex[idx]);
         }
-
         ImGui::EndNeoSequencer();
     }
 }
+
 
 bool AnimEditorPanel::CheckAnimationSelected()
 {
