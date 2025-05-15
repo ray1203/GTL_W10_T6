@@ -23,7 +23,7 @@ ASkeletalMeshActor::ASkeletalMeshActor()
     FManagerFBX::CreateAnimationAsset(L"Contents/Jumping.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Idle.fbx");
     FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Walking.fbx");
-        FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Dance.fbx");
+        FManagerFBX::CreateAnimationAsset(L"Contents/Sharkry_Dancing.fbx");
     SetActorTickInEditor(true);
     RootComponent = SkeletalMeshComponent;
 

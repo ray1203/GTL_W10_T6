@@ -20,6 +20,7 @@ enum OBJECTS : uint8
     OBJ_Mutant,
     OBJ_Boss,
     OBJ_Sharkry,
+    OBJ_Sharkry_Dancing,
     OBJ_END
 };
 
