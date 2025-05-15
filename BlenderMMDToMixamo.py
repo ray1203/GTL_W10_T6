@@ -25,12 +25,11 @@ def auto_map_full_location_constraints(source_armature, target_armature):
         "mixamorig:LeftFoot", "mixamorig:RightFoot",
     }
     left_arm_all = {
-        "mixamorig:LeftArm", "mixamorig:LeftForeArm", "mixamorig:LeftHand", "mixamorig:LeftShoulder",
-        "mixamorig:LeftThumbProximal", "mixamorig:LeftThumbIntermediate", "mixamorig:LeftThumbDistal",
-        "mixamorig:LeftIndexProximal", "mixamorig:LeftIndexIntermediate", "mixamorig:LeftIndexDistal",
-        "mixamorig:LeftMiddleProximal", "mixamorig:LeftMiddleIntermediate", "mixamorig:LeftMiddleDistal",
-        "mixamorig:LeftRingProximal", "mixamorig:LeftRingIntermediate", "mixamorig:LeftRingDistal",
-        "mixamorig:LeftLittleProximal", "mixamorig:LeftLittleIntermediate", "mixamorig:LeftLittleDistal",
+        "mixamorig:LeftShoulder", "mixamorig:LeftArm", "mixamorig:LeftForeArm", "mixamorig:LeftHand",
+    }
+
+    right_arm_all = {
+        "mixamorig:RightShoulder", "mixamorig:RightArm", "mixamorig:RightForeArm", "mixamorig:RightHand",
     }
 
     # Mapping: mixamo bone -> mmd bone
@@ -39,10 +38,10 @@ def auto_map_full_location_constraints(source_armature, target_armature):
         #下半身
         #全ての親
         #センター
-        "mixamorig:Hips": "下半身",
-        "mixamorig:Spine": "上半身",
+        "mixamorig:Hips": "上半身",
+        "mixamorig:Spine": "上半身2",
         "mixamorig:Spine1": "上半身2",
-        #"mixamorig:Spine2": "上半身2",
+        "mixamorig:Spine2": "上半身2",
 
         # Neck and Head
         "mixamorig:Neck": "首",
@@ -68,8 +67,8 @@ def auto_map_full_location_constraints(source_armature, target_armature):
         "mixamorig:RightLeg": "ひざ.R",
         "mixamorig:RightFoot": "足首.R",
         
-        #"mixamorig:LeftShoulder": "肩.L",
-        #"mixamorig:RightShoulder": "肩.R",
+        "mixamorig:LeftShoulder": "肩.L",
+        "mixamorig:RightShoulder": "肩.R",
         
 #        # Left Fingers
 #        "mixamorig:LeftThumbProximal": "親指１.L",
@@ -140,17 +139,25 @@ def auto_map_full_location_constraints(source_armature, target_armature):
             con_loc.owner_space = 'WORLD'
             con_loc.target_space = 'WORLD'
 
-            # ✅ 회전 복사 (LOCAL_WITH_PARENT → LOCAL)
+            # ✅ 회전 복사 (방향은 로컬 기준으로 보정)
             con_rot = pbone.constraints.new('COPY_ROTATION')
             con_rot.target = target_armature
             con_rot.subtarget = mmd_bone
-            con_rot.invert_x = True
+            con_rot.owner_space = 'LOCAL'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
+            con_rot.invert_x = True  # ← 보정: Mixamo는 Z forward, MMD는 Y up
             con_rot.invert_z = False
             con_rot.invert_y = False
-            con_rot.owner_space = 'WORLD'
-            con_rot.target_space = 'WORLD'
             print(f"🧍 Hips → {mmd_bone} : Loc(WORLD), Rot(LOCAL_WITH_PARENT)")
-
+        elif mixamo_bone in ["mixamorig:Spine", "mixamorig:Spine1", "mixamorig:Spine2"]:
+            con_rot = pbone.constraints.new('COPY_ROTATION')
+            con_rot.target = target_armature
+            con_rot.subtarget = "上半身2"
+            con_rot.owner_space = 'LOCAL_WITH_PARENT'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
+            con_rot.invert_x = False
+            con_rot.invert_z = False
+            con_rot.invert_y = False
         elif mixamo_bone in legs_all:
             # ✅ 다리 회전 (LOCAL_WITH_PARENT ↔ LOCAL_WITH_PARENT) + 반전
             con_rot = pbone.constraints.new('COPY_ROTATION')
@@ -160,8 +167,33 @@ def auto_map_full_location_constraints(source_armature, target_armature):
             con_rot.target_space = 'LOCAL_WITH_PARENT'
             con_rot.invert_x = True
             con_rot.invert_z = True
-            con_rot.invert_y = False
+#            con_rot.invert_y = False
             print(f"🦵 {mixamo_bone} → {mmd_bone} (leg rot with XZ invert)")
+        elif mixamo_bone =="mixamorig:LeftShoulder":
+            con_rot = pbone.constraints.new('COPY_ROTATION')
+            con_rot.target = target_armature
+            con_rot.subtarget = mmd_bone
+            con_rot.owner_space = 'LOCAL_WITH_PARENT'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
+            con_rot.invert_x = True
+            con_rot.invert_z = True
+            con_rot.invert_y = False
+            con_loc = pbone.constraints.new('COPY_LOCATION')
+            con_loc.target = target_armature
+            con_loc.subtarget = mmd_bone
+            con_loc.owner_space = 'WORLD'
+            con_loc.target_space = 'WORLD'
+        elif mixamo_bone == "mixamorig:RightShoulder":
+            con_rot = pbone.constraints.new('COPY_ROTATION')
+            con_rot.target = target_armature
+            con_rot.subtarget = mmd_bone
+            con_rot.owner_space = 'LOCAL_WITH_PARENT'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
+            con_loc = pbone.constraints.new('COPY_LOCATION')
+            con_loc.target = target_armature
+            con_loc.subtarget = mmd_bone
+            con_loc.owner_space = 'WORLD'
+            con_loc.target_space = 'WORLD'
         elif mixamo_bone in left_arm_all:
             con_rot = pbone.constraints.new('COPY_ROTATION')
             con_rot.target = target_armature
@@ -171,15 +203,26 @@ def auto_map_full_location_constraints(source_armature, target_armature):
             con_rot.invert_x = True
             con_rot.invert_z = True
             con_rot.invert_y = False
-            print(f"🖐️ {mixamo_bone} → {mmd_bone} (left arm rot XZ invert + local/local_parent)")
+            print(f"🖐️ {mixamo_bone} → {mmd_bone} (left arm + XZ invert)")
+
+        elif mixamo_bone in right_arm_all:
+            con_rot = pbone.constraints.new('COPY_ROTATION')
+            con_rot.target = target_armature
+            con_rot.subtarget = mmd_bone
+            con_rot.owner_space = 'LOCAL_WITH_PARENT'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
+            con_rot.invert_x = False
+            con_rot.invert_z = False
+            con_rot.invert_y = False
+            print(f"✋ {mixamo_bone} → {mmd_bone} (right arm normal)")
 
         else:
             # ✅ 그 외는 기본 회전 (WORLD ↔ WORLD)
             con_rot = pbone.constraints.new('COPY_ROTATION')
             con_rot.target = target_armature
             con_rot.subtarget = mmd_bone
-            con_rot.owner_space = 'WORLD'
-            con_rot.target_space = 'WORLD'
+            con_rot.owner_space = 'LOCAL_WITH_PARENT'
+            con_rot.target_space = 'LOCAL_WITH_PARENT'
             con_rot.use_x = True
             con_rot.use_y = True
             con_rot.use_z = True
